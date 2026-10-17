@@ -30,3 +30,9 @@ __pycache__/
 node_modules/
 dist/
 .ipynb_checkpoints/
+
+# Local secrets and test artefacts
+secrets/
+.coverage
+htmlcov/
+.pytest_cache/
