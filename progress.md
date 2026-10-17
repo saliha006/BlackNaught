@@ -14,8 +14,8 @@
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-17 22:40:**
-  - `main`: ingest → register → triage → grading → audit → operator approvals, all live on the VM. 162 tests green on s390x, 98% coverage.
+- **As of 2026-10-17 22:42:**
+  - `main`: ingest → register → triage → grading → audit → approvals → live SSE, all on the VM. 169 tests green on s390x, 98% coverage.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - All other docs stay local and are never pushed: the PRD, briefs, decisions and research.
 
@@ -97,4 +97,10 @@
 - Shipped: argon2id operator login with server-side sessions (hash-only tokens, HttpOnly/SameSite=Strict cookie on /api, 30 min idle / 8 h absolute, lockout after 5 failures, per-IP rate limit), approval endpoint gated on the operator role with 409 for anything not awaiting approval, `decisions.create()` for the agent (escalate / draft_cap_alert / bulk_sms wait for approval), live `/api/agent/decisions`; decisions, approvals and logins are all audited. 162 tests on s390x.
 - Touched: `backend/app/{auth,decisions,main}.py`, `db/migrations/0006_auth_decisions.sql`
 - ⚠️ Conflicts: @ahmed: create agent decisions with `app.decisions.create(db_agent, tool, args, rationale)`; check `state` before acting on anything in `NEEDS_APPROVAL`. @rama: approvals need `POST /api/auth/login {login:'operator', passphrase}` first (cookie-based); the password is in the VM's `secrets/operator_pw`, ask Sali.
+- Conflict status: open
+
+### 2026-10-17 22:42 — SSE stream (task 15) — @sali
+- Shipped: `GET /stream` (sse-starlette) with outage, triage, grade, source_health, audit_checkpoint and stats events; per-client bounded queues with drop-oldest + resync, Last-Event-ID replay from a 2,000-message ring, 50-viewer cap, 15 s ping, `X-Accel-Buffering: no`. 169 tests on s390x.
+- Touched: `backend/app/{sse,runtime,main,triage,grading,bus}.py`, `backend/app/ingest/poller.py`
+- ⚠️ Conflicts: @rama: `new EventSource('/stream')`; on `resync` refetch the REST endpoints; `triage` events only carry counts, so refetch `/api/triage` on them. @ahmed: nginx needs `proxy_buffering off` + `proxy_read_timeout 1h` on `/stream` (system-design-choices §14).
 - Conflict status: open
