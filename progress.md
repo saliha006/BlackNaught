@@ -14,8 +14,8 @@
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-17 22:47:**
-  - `main`: ingest → register → triage → grading → audit → approvals → SSE → k≥11 map, all on the VM. 174 tests green on s390x, 98% coverage.
+- **As of 2026-10-17 22:49:**
+  - `main`: ingest → register → triage → grading → audit → approvals → SSE → k≥11 map → area risk baseline, all on the VM. 178 tests green on s390x, 98% coverage.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - All other docs stay local and are never pushed: the PRD, briefs, decisions and research.
 
@@ -115,4 +115,10 @@
 - Shipped: `backend/app/suppression.py` (primary + complementary suppression across L1/L2/L3, banding from 20), `cellpub.py` publishing every 15 min into `cell_snapshot`, live `/api/cells?level=1..3` with bounds and the worst active outage scale per cell; no bbox/point queries. Property test over 500 random trees. 174 tests on s390x.
 - Touched: `backend/app/{suppression,cellpub,main,runtime}.py`, `db/migrations/0007_cells.sql`
 - ⚠️ Conflicts: @rama: `/api/cells` is live; `patients` is an int or "suppressed", and `bounds` is a closed [lat,lon] ring. Never draw homes; only these cells.
+- Conflict status: open
+
+### 2026-10-17 22:49 — C:/Program Files/Git/areas/risk baseline (task 17) — @sali
+- Shipped: `backend/app/arearisk.py`: per-district, per-month fault rates fitted on the VM from ENWL 1997–2026 (`backend/models/climatology_enwl.json`); `/api/areas/risk?date=` (default tomorrow, UK) returns expected faults and P(≥3) labelled `BASELINE`. New `BASELINE` label in the contract. 178 tests on s390x.
+- Touched: `backend/app/{arearisk,main,schemas,config}.py`, `backend/models/climatology_enwl.json`, `contracts/*`
+- ⚠️ Conflicts: @nate: M8 replaces `arearisk.area_risk(model, day)` (same output shape: district, expected, p_ge_k); your Brier skill should be measured against this climatology. @rama: risk is per ENWL district name (12 districts), not per cell yet.
 - Conflict status: open
