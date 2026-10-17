@@ -22,6 +22,7 @@ class Settings:
     fixtures_dir: Path
     model_path: Path
     signer_url: str | None
+    risk_model_path: Path
 
 
 @lru_cache
@@ -34,4 +35,5 @@ def settings() -> Settings:
         fixtures_dir=Path(os.environ.get("BN_FIXTURES_DIR", "/fixtures")),
         model_path=Path(os.environ.get("BN_MODEL_PATH", "/srv/models/km_enwl.json")),
         signer_url=os.environ.get("BN_SIGNER_URL") or None,
+        risk_model_path=Path(os.environ.get("BN_RISK_MODEL_PATH", "/srv/models/climatology_enwl.json")),
     )

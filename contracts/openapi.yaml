@@ -91,6 +91,10 @@ paths:
   /api/cells:
     get:
       summary: Cells
+      description: 'Whole published map at one level. No bbox or point query on purpose:
+        overlapping windows are a
+
+        differencing attack, and the map is small enough to send whole.'
       operationId: cells_api_cells_get
       parameters:
       - name: level
@@ -121,17 +125,35 @@ paths:
   /api/areas/risk:
     get:
       summary: Areas Risk
+      description: Tomorrow (UK) by default. Climatology from ENWL history until Nate's
+        weather model (M8) replaces it.
       operationId: areas_risk_api_areas_risk_get
+      parameters:
+      - name: date
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Date
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
+                type: array
                 items:
                   $ref: '#/components/schemas/AreaRisk'
-                type: array
                 title: Response Areas Risk Api Areas Risk Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/triage:
     get:
       summary: Triage
@@ -146,6 +168,14 @@ paths:
           minimum: 1
           default: 50
           title: Limit
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Cursor
       responses:
         '200':
           description: Successful Response
@@ -169,6 +199,7 @@ paths:
         required: true
         schema:
           type: string
+          format: uuid
           title: Decision Id
       requestBody:
         required: true
@@ -193,16 +224,32 @@ paths:
     get:
       summary: Agent Decisions
       operationId: agent_decisions_api_agent_decisions_get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          default: 100
+          title: Limit
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
+                type: array
                 items:
                   $ref: '#/components/schemas/AgentDecision'
-                type: array
                 title: Response Agent Decisions Api Agent Decisions Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/agent/grades:
     get:
       summary: Agent Grades
@@ -279,6 +326,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MyHome'
+  /stream:
+    get:
+      summary: Stream
+      operationId: stream_stream_get
+      parameters:
+      - name: last-event-id
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Last-Event-Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/audit/verify:
     get:
       summary: Audit Verify
@@ -356,6 +428,7 @@ components:
           - SIMULATED
           - REPLAY
           - TRANSFERRED
+          - BASELINE
           title: Label
       type: object
       required:
@@ -569,6 +642,7 @@ components:
           - SIMULATED
           - REPLAY
           - TRANSFERRED
+          - BASELINE
           title: Label
       type: object
       required:
@@ -713,6 +787,7 @@ components:
           - SIMULATED
           - REPLAY
           - TRANSFERRED
+          - BASELINE
           title: Label
         power:
           type: string
@@ -771,6 +846,7 @@ components:
           - SIMULATED
           - REPLAY
           - TRANSFERRED
+          - BASELINE
           title: Label
         status:
           type: string
@@ -923,6 +999,7 @@ components:
           - SIMULATED
           - REPLAY
           - TRANSFERRED
+          - BASELINE
           title: Label
       type: object
       required:

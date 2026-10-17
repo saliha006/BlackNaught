@@ -4,7 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-Label = Literal["LIVE", "SIMULATED", "REPLAY", "TRANSFERRED"]
+# BASELINE = a statistical stand-in from real history (e.g. climatology) until the real model replaces it
+Label = Literal["LIVE", "SIMULATED", "REPLAY", "TRANSFERRED", "BASELINE"]
 Scale = Literal["home", "street", "area", "region", "system", "brownout", "unresolved"]
 
 

@@ -277,7 +277,8 @@
         "LIVE",
         "SIMULATED",
         "REPLAY",
-        "TRANSFERRED"
+        "TRANSFERRED",
+        "BASELINE"
       ],
       "title": "Label",
       "type": "string"

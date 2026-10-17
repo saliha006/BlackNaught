@@ -2,7 +2,7 @@
 import json
 import os
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -12,10 +12,11 @@ import uuid
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from sse_starlette.sse import EventSourceResponse
 
-from . import audit, auth, cells as grid, decisions, schemas, sse, stress
+from . import arearisk, audit, auth, cells as grid, decisions, schemas, sse, stress
 from .grading import summarise
 from .config import settings
 from .db import Db
+from .timeparse import LONDON
 
 # Footprint size by customers affected, until the combiner (Ahmed, F3) writes the classified scale.
 STREET_MAX_CUSTOMERS = 100
@@ -28,6 +29,7 @@ async def lifespan(app: FastAPI):
     app.state.api_db = Db("bn_api")
     app.state.runtime = None
     app.state.login_limiter = auth.RateLimiter()
+    app.state.risk_model = json.loads(settings().risk_model_path.read_text())
     if os.environ.get("BN_WORKERS") == "1":
         from .runtime import Runtime
 
@@ -148,8 +150,10 @@ async def cells(request: Request, level: int = Query(default=1, ge=1, le=3)):
 
 
 @app.get("/api/areas/risk", response_model=list[schemas.AreaRisk])
-def areas_risk():
-    return fixture("areas_risk")
+def areas_risk(request: Request, day: date | None = Query(default=None, alias="date")):
+    """Tomorrow (UK) by default. Climatology from ENWL history until Nate's weather model (M8) replaces it."""
+    day = day or (datetime.now(LONDON) + timedelta(days=1)).date()
+    return [{**r, "label": "BASELINE"} for r in arearisk.area_risk(request.app.state.risk_model, day)]
 
 
 @app.get("/api/triage", response_model=schemas.Triage)
