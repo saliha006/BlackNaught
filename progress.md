@@ -14,8 +14,8 @@
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-17 22:49:**
-  - `main`: ingest → register → triage → grading → audit → approvals → SSE → k≥11 map → area risk baseline, all on the VM. 178 tests green on s390x, 98% coverage.
+- **As of 2026-10-17 22:52:**
+  - `main`: everything in Sali's brief through task 17, plus CAP export, live on the VM. 185 tests green on s390x, 98% coverage.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - All other docs stay local and are never pushed: the PRD, briefs, decisions and research.
 
@@ -121,4 +121,10 @@
 - Shipped: `backend/app/arearisk.py`: per-district, per-month fault rates fitted on the VM from ENWL 1997–2026 (`backend/models/climatology_enwl.json`); `/api/areas/risk?date=` (default tomorrow, UK) returns expected faults and P(≥3) labelled `BASELINE`. New `BASELINE` label in the contract. 178 tests on s390x.
 - Touched: `backend/app/{arearisk,main,schemas,config}.py`, `backend/models/climatology_enwl.json`, `contracts/*`
 - ⚠️ Conflicts: @nate: M8 replaces `arearisk.area_risk(model, day)` (same output shape: district, expected, p_ge_k); your Brier skill should be measured against this climatology. @rama: risk is per ENWL district name (12 districts), not per cell yet.
+- Conflict status: open
+
+### 2026-10-17 22:52 — CAP 1.2 export (parked task 18) — @sali
+- Shipped: `backend/app/cap.py` (CAP 1.2 builder: status Exercise, convex-hull polygon or circle, outward codes only, no Z timestamps), export on approval in `decisions.export_cap` (built once, signed when `BN_SIGNER_URL` is set, audited), `GET /api/alerts/cap/{id}` (403 until approved). Tests validate against the official OASIS CAP-v1.2.xsd (`backend/tests/data`). 185 tests on s390x.
+- Touched: `backend/app/{cap,decisions,main,config}.py`, `db/migrations/0008_cap.sql`, `backend/tests/data/CAP-v1.2.xsd`
+- ⚠️ Conflicts: @ahmed: your `draft_cap_alert` tool should call `decisions.create(db, 'draft_cap_alert', {outage_id, headline, description, instruction}, rationale)`; headline text from Granite is capped at 140 chars. @rama: preview the XML from `/api/alerts/cap/{decision_id}` after approval.
 - Conflict status: open
