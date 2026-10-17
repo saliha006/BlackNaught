@@ -14,8 +14,8 @@
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-17 22:34:**
-  - `main`: live ingest → encrypted register → triage → horizon grading, all running 24/7 on the VM. 146 tests green on s390x, 98% coverage.
+- **As of 2026-10-17 22:37:**
+  - `main`: ingest → register → triage → grading → audit chain, all live on the VM. 153 tests green on s390x, 98% coverage.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - All other docs stay local and are never pushed: the PRD, briefs, decisions and research.
 
@@ -85,4 +85,10 @@
 - Shipped: grader task (`backend/app/grading.py`) running every 60 s on the VM; evidence-based outcome rules (explicit restore → 0/1, still listed after the horizon → 1, otherwise censored with a reason); live `/api/agent/grades` with censoring bounds and an hourly trend. 146 tests on s390x.
 - Touched: `backend/app/{grading,runtime,main}.py`, `db/migrations/0005_grading.sql`
 - ⚠️ Conflicts: @ahmed: recalibration should read `v_grades` (UKPN rows are the trustworthy ones; `censored` rows carry a reason). @rama: `/api/agent/grades` is live.
+- Conflict status: open
+
+### 2026-10-17 22:37 — audit chain (task 13) — @sali
+- Shipped: `backend/app/audit.py`: append (canonical JSON via `audit_append`), checkpoints every 500 rows / 5 min (signed when `BN_SIGNER_URL` is set, otherwise stored unsigned and reported as `sig_ok: null`), live `/api/audit/verify` that locates the first tampered row; model load is audited at boot. 153 tests on s390x.
+- Touched: `backend/app/{audit,runtime,main,config}.py`
+- ⚠️ Conflicts: @ahmed: the signer contract the backend calls is `POST /sign {purpose, payload_b64}` → `{alg, key_id, sig_b64}` and `POST /verify {payload_b64, sig_b64}` → `{ok}`. Set `BN_SIGNER_URL` for the app once it's up. Off-box publication of checkpoints is still yours.
 - Conflict status: open
