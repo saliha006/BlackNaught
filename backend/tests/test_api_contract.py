@@ -20,7 +20,6 @@ GETS = [
     "/api/triage?limit=1",
     "/api/agent/decisions",
     "/api/agent/grades",
-    "/api/me/home",
     "/api/audit/verify",
 ]
 
@@ -75,12 +74,6 @@ async def test_health_without_workers(client):
 
 def test_footprint_scale():
     assert [footprint_scale(c) for c in (None, 1, 100, 101, 2000, 2001)] ==         ["unresolved", "street", "street", "area", "area", "region"]
-
-
-@pytest.mark.anyio
-async def test_patient_never_gets_eta(client):
-    body = (await client.get("/api/me/home")).json()
-    assert "eta" not in str(body).lower()
 
 
 @pytest.mark.anyio

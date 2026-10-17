@@ -12,9 +12,9 @@ import uuid
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from sse_starlette.sse import EventSourceResponse
 
-from . import arearisk, audit, auth, cells as grid, decisions, schemas, sse, stress
+from . import arearisk, audit, auth, cells as grid, decisions, home, schemas, sse, stress
 from .grading import summarise
-from .config import settings
+from .config import read_secret, settings
 from .db import Db
 from .timeparse import LONDON
 
@@ -30,6 +30,7 @@ async def lifespan(app: FastAPI):
     app.state.runtime = None
     app.state.login_limiter = auth.RateLimiter()
     app.state.risk_model = json.loads(settings().risk_model_path.read_text())
+    app.state.bidx_key = bytes.fromhex(read_secret("bidx_key"))
     if os.environ.get("BN_WORKERS") == "1":
         from .runtime import Runtime
 
@@ -59,7 +60,7 @@ async def health(request: Request):
         "ok": db_ok,
         "db": db_ok,
         "writer_lag": runtime.writer.lag if runtime else 0,
-        "model": "none",
+        "model": runtime.scorer.model.model_id if runtime else "none",
         "uptime_s": int((datetime.now(UTC) - request.app.state.started_at).total_seconds()),
     }
 
@@ -187,13 +188,21 @@ async def triage(request: Request, limit: int = Query(default=50, ge=1, le=200),
     }
 
 
-async def operator(request: Request) -> auth.Principal:
+async def _principal(request: Request, role: str) -> auth.Principal:
     principal = await auth.resolve(request.app.state.api_db, request.cookies.get(auth.COOKIE))
     if principal is None:
         raise HTTPException(401, "login required")
-    if principal.role != "operator":
-        raise HTTPException(403, "operator only")
+    if principal.role != role:
+        raise HTTPException(403, f"{role} only")
     return principal
+
+
+async def operator(request: Request) -> auth.Principal:
+    return await _principal(request, "operator")
+
+
+async def household(request: Request) -> auth.Principal:
+    return await _principal(request, "household")
 
 
 @app.post("/api/decisions/{decision_id}/approve", response_model=schemas.DecisionState)
@@ -271,8 +280,12 @@ async def logout(request: Request):
 
 
 @app.get("/api/me/home", response_model=schemas.MyHome)
-def me_home():
-    return fixture("me_home")
+async def me_home(request: Request, who: auth.Principal = Depends(household)):
+    """No id parameter on purpose: the household comes from the session, so one home can't ask for another."""
+    body = await home.view(request.app.state.api_db, who.login, request.app.state.bidx_key)
+    if body is None:
+        raise HTTPException(404, "no register entry for this household")
+    return body
 
 
 @app.get("/stream")

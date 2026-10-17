@@ -5,14 +5,18 @@ Phone numbers come from Ofcom's 07700 900000–900999 range, reserved for drama,
 Backup figures follow PRD §2: cylinders ~8–20 h, modern ventilator batteries ~15 h, older ~6 h, IPS 1–3 h.
 """
 import argparse
+import os
 import random
+import secrets
 import uuid
+from pathlib import Path
 from typing import Any
 
 import pg8000.native
 
 from .cells import cell_id
 from .config import read_secret
+from .auth import _hasher
 from .crypto import blind_index, encrypt
 from .db import connect
 
@@ -98,18 +102,43 @@ def seed(conn: pg8000.native.Connection, per_outage: int, two_houses: int | None
     return len(rows)
 
 
+def households(conn: pg8000.native.Connection, n: int, out: Path) -> int:
+    """Demo logins for households inside live faults. Passphrases go only to `out` on the VM (mode 600)."""
+    picks = conn.run(
+        "SELECT DISTINCT pa.household_id FROM bn.patient pa JOIN bn.outage o ON o.status = 'active'"
+        " LIMIT :n", n=n)
+    lines = []
+    for i, (household_id,) in enumerate(picks, 1):
+        login, passphrase = f"home-{i}", secrets.token_urlsafe(18)
+        conn.run("INSERT INTO bn.principal (login, role, household_id, pw_hash) VALUES (:l, 'household',"
+                 " CAST(:h AS uuid), :p) ON CONFLICT (login) DO UPDATE SET household_id = EXCLUDED.household_id,"
+                 " pw_hash = EXCLUDED.pw_hash, failed = 0, locked_until = NULL",
+                 l=login, h=str(household_id), p=_hasher.hash(passphrase))
+        lines.append(f"{login} {passphrase}")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text("\n".join(lines) + "\n")
+    os.chmod(out, 0o600)
+    return len(lines)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--per-outage", type=int, default=15)  # ≥ 15 per demo cell so k≥11 cells aren't all hidden
     parser.add_argument("--two-houses", type=int)
     parser.add_argument("--max-age-h", type=float, default=6.0)
+    parser.add_argument("--households", type=int, default=0, help="also create N demo household logins")
+    parser.add_argument("--households-out", type=Path, default=Path("/srv/secrets/households.txt"))
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--database")
     args = parser.parse_args()
     conn = connect("bn_migrator", args.database)
     try:
         conn.run("SET ROLE bn_owner")
-        print("patients:", seed(conn, args.per_outage, args.two_houses, random.Random(args.seed), args.max_age_h))
+        if args.per_outage:
+            print("patients:", seed(conn, args.per_outage, args.two_houses, random.Random(args.seed), args.max_age_h))
+        if args.households:
+            print("household logins:", households(conn, args.households, args.households_out),
+                  "(passphrases in", args.households_out, ")")
     finally:
         conn.close()
 
