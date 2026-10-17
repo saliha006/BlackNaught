@@ -14,8 +14,8 @@
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-17 22:52:**
-  - `main`: everything in Sali's brief through task 17, plus CAP export, live on the VM. 185 tests green on s390x, 98% coverage.
+- **As of 2026-10-17 22:55:**
+  - `main`: every task in Sali's brief through task 19 (CAP, /me/home) live on the VM. 188 tests green on s390x, 98% coverage.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - All other docs stay local and are never pushed: the PRD, briefs, decisions and research.
 
@@ -127,4 +127,10 @@
 - Shipped: `backend/app/cap.py` (CAP 1.2 builder: status Exercise, convex-hull polygon or circle, outward codes only, no Z timestamps), export on approval in `decisions.export_cap` (built once, signed when `BN_SIGNER_URL` is set, audited), `GET /api/alerts/cap/{id}` (403 until approved). Tests validate against the official OASIS CAP-v1.2.xsd (`backend/tests/data`). 185 tests on s390x.
 - Touched: `backend/app/{cap,decisions,main,config}.py`, `db/migrations/0008_cap.sql`, `backend/tests/data/CAP-v1.2.xsd`
 - ⚠️ Conflicts: @ahmed: your `draft_cap_alert` tool should call `decisions.create(db, 'draft_cap_alert', {outage_id, headline, description, instruction}, rationale)`; headline text from Granite is capped at 140 chars. @rama: preview the XML from `/api/alerts/cap/{decision_id}` after approval.
+- Conflict status: open
+
+### 2026-10-17 22:55 — /me/home (parked task 19) — @sali
+- Shipped: `GET /api/me/home` (household session only, no id parameter; power state via the postcode blind index, own reserve clock, next action, frequency context, never an ETA), `me_home_patients()` SECURITY DEFINER function, `python -m app.seed --households N` (passphrases written only to the VM's git-ignored `backend/secrets/households.txt`), `/api/health` now reports the loaded model. 188 tests on s390x.
+- Touched: `backend/app/{home,main,seed}.py`, `db/migrations/0009_me_home.sql`
+- ⚠️ Conflicts: @rama: `/api/me/home` needs a household login (`home-1..3` on the VM; ask Sali for passphrases). `voltage` stays empty until @ahmed's sensor simulator feeds households.
 - Conflict status: open
