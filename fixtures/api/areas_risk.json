@@ -1,0 +1,14 @@
+[
+  {
+    "district": "Manchester",
+    "p_ge_k": 0.31,
+    "expected": 2.4,
+    "label": "LIVE"
+  },
+  {
+    "district": "Lancaster",
+    "p_ge_k": 0.12,
+    "expected": 0.9,
+    "label": "LIVE"
+  }
+]

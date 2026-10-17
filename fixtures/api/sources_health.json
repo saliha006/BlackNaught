@@ -1,0 +1,41 @@
+{
+  "at": "2026-10-17T22:00:00+00:00",
+  "sources": [
+    {
+      "source": "ukpn",
+      "status": "ok",
+      "interval_s": 120,
+      "staleness_s": 41,
+      "records_last": 62,
+      "consecutive_failures": 0,
+      "label": "LIVE"
+    },
+    {
+      "source": "ssen",
+      "status": "ok",
+      "interval_s": 120,
+      "staleness_s": 75,
+      "records_last": 7,
+      "consecutive_failures": 0,
+      "label": "LIVE"
+    },
+    {
+      "source": "npg",
+      "status": "stale",
+      "interval_s": 120,
+      "staleness_s": 410,
+      "records_last": 92,
+      "consecutive_failures": 3,
+      "label": "LIVE"
+    },
+    {
+      "source": "elexon",
+      "status": "ok",
+      "interval_s": 30,
+      "staleness_s": 12,
+      "records_last": 4,
+      "consecutive_failures": 0,
+      "label": "LIVE"
+    }
+  ]
+}

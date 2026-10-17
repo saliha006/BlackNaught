@@ -1,0 +1,33 @@
+{
+  "household": "home-ama",
+  "label": "SIMULATED",
+  "power": "off",
+  "since": "2026-10-17T20:52:00+00:00",
+  "reserve": {
+    "device": "o2_cylinder",
+    "ends_at": "2026-10-18T02:00:00+00:00",
+    "hours_left": 3.8
+  },
+  "voltage": [
+    {
+      "t": "2026-10-17T20:40:00+00:00",
+      "pu": 0.98
+    },
+    {
+      "t": "2026-10-17T20:50:00+00:00",
+      "pu": 0.87
+    },
+    {
+      "t": "2026-10-17T20:52:00+00:00",
+      "pu": 0.0
+    }
+  ],
+  "bands": {
+    "brownout_pu": 0.9
+  },
+  "next_action": "Switch to your cylinder now. Reply 2 if you need help.",
+  "grid_context": {
+    "hz": 50.02,
+    "note": "grid health: the same for everyone"
+  }
+}

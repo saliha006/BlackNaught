@@ -1,0 +1,1076 @@
+openapi: 3.1.0
+info:
+  title: Blacknaught API
+  version: 0.1.0
+paths:
+  /api/health:
+    get:
+      summary: Health
+      operationId: health_api_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /api/sources/health:
+    get:
+      summary: Sources Health
+      operationId: sources_health_api_sources_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourcesHealth'
+  /api/outages:
+    get:
+      summary: Outages
+      operationId: outages_api_outages_get
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            pattern: ^(active|restored|vanished|planned)$
+          - type: 'null'
+          title: Status
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Outage'
+                title: Response Outages Api Outages Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/grids/{grid}/stress:
+    get:
+      summary: Grid Stress
+      operationId: grid_stress_api_grids__grid__stress_get
+      parameters:
+      - name: grid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Grid
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GridStress'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/cells:
+    get:
+      summary: Cells
+      operationId: cells_api_cells_get
+      parameters:
+      - name: level
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 3
+          minimum: 1
+          default: 1
+          title: Level
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cell'
+                title: Response Cells Api Cells Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/areas/risk:
+    get:
+      summary: Areas Risk
+      operationId: areas_risk_api_areas_risk_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AreaRisk'
+                type: array
+                title: Response Areas Risk Api Areas Risk Get
+  /api/triage:
+    get:
+      summary: Triage
+      operationId: triage_api_triage_get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Triage'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/decisions/{decision_id}/approve:
+    post:
+      summary: Approve
+      operationId: approve_api_decisions__decision_id__approve_post
+      parameters:
+      - name: decision_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Decision Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Approval'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionState'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/agent/decisions:
+    get:
+      summary: Agent Decisions
+      operationId: agent_decisions_api_agent_decisions_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AgentDecision'
+                type: array
+                title: Response Agent Decisions Api Agent Decisions Get
+  /api/agent/grades:
+    get:
+      summary: Agent Grades
+      operationId: agent_grades_api_agent_grades_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Grades'
+  /api/alerts/cap/{decision_id}:
+    get:
+      summary: Cap Alert
+      operationId: cap_alert_api_alerts_cap__decision_id__get
+      parameters:
+      - name: decision_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Decision Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+            application/cap+xml: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/auth/login:
+    post:
+      summary: Login
+      operationId: login_api_auth_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResult'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/auth/logout:
+    post:
+      summary: Logout
+      operationId: logout_api_auth_logout_post
+      responses:
+        '204':
+          description: Successful Response
+  /api/me/home:
+    get:
+      summary: Me Home
+      operationId: me_home_api_me_home_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyHome'
+  /api/audit/verify:
+    get:
+      summary: Audit Verify
+      operationId: audit_verify_api_audit_verify_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditVerify'
+components:
+  schemas:
+    AgentDecision:
+      properties:
+        id:
+          type: string
+          title: Id
+        tool:
+          type: string
+          title: Tool
+        state:
+          type: string
+          title: State
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        args_summary:
+          type: string
+          title: Args Summary
+        rationale:
+          items:
+            type: string
+          type: array
+          title: Rationale
+      type: object
+      required:
+      - id
+      - tool
+      - state
+      - created_at
+      - args_summary
+      - rationale
+      title: AgentDecision
+    Approval:
+      properties:
+        approve:
+          type: boolean
+          title: Approve
+        note:
+          type: string
+          maxLength: 500
+          title: Note
+          default: ''
+      type: object
+      required:
+      - approve
+      title: Approval
+    AreaRisk:
+      properties:
+        district:
+          type: string
+          title: District
+        p_ge_k:
+          type: number
+          title: P Ge K
+        expected:
+          type: number
+          title: Expected
+        label:
+          type: string
+          enum:
+          - LIVE
+          - SIMULATED
+          - REPLAY
+          - TRANSFERRED
+          title: Label
+      type: object
+      required:
+      - district
+      - p_ge_k
+      - expected
+      - label
+      title: AreaRisk
+    AuditVerify:
+      properties:
+        ok:
+          type: boolean
+          title: Ok
+        rows:
+          type: integer
+          title: Rows
+        first_bad_seq:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: First Bad Seq
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+        last_checkpoint:
+          anyOf:
+          - $ref: '#/components/schemas/CheckpointStatus'
+          - type: 'null'
+        took_ms:
+          type: integer
+          title: Took Ms
+      type: object
+      required:
+      - ok
+      - rows
+      - first_bad_seq
+      - reason
+      - last_checkpoint
+      - took_ms
+      title: AuditVerify
+    Cell:
+      properties:
+        cell_id:
+          type: string
+          title: Cell Id
+        level:
+          type: integer
+          maximum: 3.0
+          minimum: 1.0
+          title: Level
+        bounds:
+          items:
+            prefixItems:
+            - type: number
+            - type: number
+            type: array
+            maxItems: 2
+            minItems: 2
+          type: array
+          title: Bounds
+        patients:
+          anyOf:
+          - type: integer
+          - type: string
+            const: suppressed
+          title: Patients
+        outage_scale:
+          anyOf:
+          - type: string
+            enum:
+            - home
+            - street
+            - area
+            - region
+            - system
+            - brownout
+            - unresolved
+          - type: 'null'
+          title: Outage Scale
+        risk_tomorrow:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Risk Tomorrow
+      type: object
+      required:
+      - cell_id
+      - level
+      - bounds
+      - patients
+      - outage_scale
+      - risk_tomorrow
+      title: Cell
+    CheckpointStatus:
+      properties:
+        seq:
+          type: integer
+          title: Seq
+        sig_ok:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Sig Ok
+        head_matches:
+          type: boolean
+          title: Head Matches
+      type: object
+      required:
+      - seq
+      - sig_ok
+      - head_matches
+      title: CheckpointStatus
+    DecisionState:
+      properties:
+        decision_id:
+          type: string
+          title: Decision Id
+        state:
+          type: string
+          enum:
+          - auto_done
+          - awaiting_approval
+          - approved
+          - rejected
+          - exported
+          - expired
+          title: State
+        audit_seq:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Audit Seq
+      type: object
+      required:
+      - decision_id
+      - state
+      - audit_seq
+      title: DecisionState
+    Grades:
+      properties:
+        by_horizon:
+          items:
+            $ref: '#/components/schemas/HorizonGrade'
+          type: array
+          title: By Horizon
+        trend:
+          items:
+            additionalProperties:
+              anyOf:
+              - type: number
+              - type: string
+            type: object
+          type: array
+          title: Trend
+      type: object
+      required:
+      - by_horizon
+      - trend
+      title: Grades
+    GridContext:
+      properties:
+        hz:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Hz
+        note:
+          type: string
+          title: Note
+      type: object
+      required:
+      - hz
+      - note
+      title: GridContext
+    GridStress:
+      properties:
+        grid:
+          type: string
+          title: Grid
+        hz:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Hz
+        measured_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Measured At
+        state:
+          type: string
+          enum:
+          - NORMAL
+          - STRESSED
+          - EMERGENCY
+          - SPLIT_SUSPECTED
+          - UNKNOWN
+          title: State
+        seconds_to_next_rung:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Seconds To Next Rung
+        label:
+          type: string
+          enum:
+          - LIVE
+          - SIMULATED
+          - REPLAY
+          - TRANSFERRED
+          title: Label
+      type: object
+      required:
+      - grid
+      - hz
+      - measured_at
+      - state
+      - seconds_to_next_rung
+      - label
+      title: GridStress
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        ok:
+          type: boolean
+          title: Ok
+        db:
+          type: boolean
+          title: Db
+        writer_lag:
+          type: integer
+          title: Writer Lag
+        model:
+          type: string
+          title: Model
+        uptime_s:
+          type: integer
+          title: Uptime S
+      type: object
+      required:
+      - ok
+      - db
+      - writer_lag
+      - model
+      - uptime_s
+      title: Health
+    HorizonGrade:
+      properties:
+        h:
+          type: integer
+          title: H
+        model_id:
+          type: string
+          title: Model Id
+        source:
+          type: string
+          title: Source
+        brier:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Brier
+        n:
+          type: integer
+          title: N
+        n_censored:
+          type: integer
+          title: N Censored
+        bound:
+          anyOf:
+          - prefixItems:
+            - type: number
+            - type: number
+            type: array
+            maxItems: 2
+            minItems: 2
+          - type: 'null'
+          title: Bound
+      type: object
+      required:
+      - h
+      - model_id
+      - source
+      - brier
+      - n
+      - n_censored
+      - bound
+      title: HorizonGrade
+    Login:
+      properties:
+        login:
+          type: string
+          maxLength: 64
+          minLength: 1
+          title: Login
+        passphrase:
+          type: string
+          maxLength: 256
+          minLength: 1
+          title: Passphrase
+      type: object
+      required:
+      - login
+      - passphrase
+      title: Login
+    LoginResult:
+      properties:
+        role:
+          type: string
+          enum:
+          - operator
+          - household
+          title: Role
+      type: object
+      required:
+      - role
+      title: LoginResult
+    ModelInfo:
+      properties:
+        id:
+          type: string
+          title: Id
+        sha256:
+          type: string
+          title: Sha256
+        label:
+          type: string
+          title: Label
+      type: object
+      required:
+      - id
+      - sha256
+      - label
+      title: ModelInfo
+    MyHome:
+      properties:
+        household:
+          type: string
+          title: Household
+        label:
+          type: string
+          enum:
+          - LIVE
+          - SIMULATED
+          - REPLAY
+          - TRANSFERRED
+          title: Label
+        power:
+          type: string
+          enum:
+          - 'on'
+          - 'off'
+          - unknown
+          title: Power
+        since:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Since
+        reserve:
+          $ref: '#/components/schemas/Reserve'
+        voltage:
+          items:
+            $ref: '#/components/schemas/VoltagePoint'
+          type: array
+          title: Voltage
+        bands:
+          additionalProperties:
+            type: number
+          type: object
+          title: Bands
+        next_action:
+          type: string
+          title: Next Action
+        grid_context:
+          $ref: '#/components/schemas/GridContext'
+      type: object
+      required:
+      - household
+      - label
+      - power
+      - since
+      - reserve
+      - voltage
+      - bands
+      - next_action
+      - grid_context
+      title: MyHome
+    Outage:
+      properties:
+        id:
+          type: integer
+          title: Id
+        source:
+          type: string
+          title: Source
+        label:
+          type: string
+          enum:
+          - LIVE
+          - SIMULATED
+          - REPLAY
+          - TRANSFERRED
+          title: Label
+        status:
+          type: string
+          enum:
+          - active
+          - restored
+          - vanished
+          - planned
+          title: Status
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+        restored_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Restored At
+        elapsed_h:
+          type: number
+          title: Elapsed H
+        customers:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Customers
+        priority_customers:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Priority Customers
+        scale:
+          type: string
+          enum:
+          - home
+          - street
+          - area
+          - region
+          - system
+          - brownout
+          - unresolved
+          title: Scale
+        cell_l1:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cell L1
+        centroid:
+          anyOf:
+          - prefixItems:
+            - type: number
+            - type: number
+            type: array
+            maxItems: 2
+            minItems: 2
+          - type: 'null'
+          title: Centroid
+        postcode_count:
+          type: integer
+          title: Postcode Count
+      type: object
+      required:
+      - id
+      - source
+      - label
+      - status
+      - started_at
+      - restored_at
+      - elapsed_h
+      - customers
+      - priority_customers
+      - scale
+      - cell_l1
+      - centroid
+      - postcode_count
+      title: Outage
+    RemainingHours:
+      properties:
+        q50:
+          type: number
+          title: Q50
+        q75:
+          type: number
+          title: Q75
+        q90:
+          type: number
+          title: Q90
+      type: object
+      required:
+      - q50
+      - q75
+      - q90
+      title: RemainingHours
+    Reserve:
+      properties:
+        device:
+          type: string
+          title: Device
+        ends_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Ends At
+        hours_left:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Hours Left
+      type: object
+      required:
+      - device
+      - ends_at
+      - hours_left
+      title: Reserve
+    SourceState:
+      properties:
+        source:
+          type: string
+          title: Source
+        status:
+          type: string
+          enum:
+          - ok
+          - stale
+          - down
+          - degraded
+          title: Status
+        interval_s:
+          type: integer
+          title: Interval S
+        staleness_s:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Staleness S
+        records_last:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Records Last
+        consecutive_failures:
+          type: integer
+          title: Consecutive Failures
+        label:
+          type: string
+          enum:
+          - LIVE
+          - SIMULATED
+          - REPLAY
+          - TRANSFERRED
+          title: Label
+      type: object
+      required:
+      - source
+      - status
+      - interval_s
+      - staleness_s
+      - records_last
+      - consecutive_failures
+      - label
+      title: SourceState
+    SourcesHealth:
+      properties:
+        at:
+          type: string
+          format: date-time
+          title: At
+        sources:
+          items:
+            $ref: '#/components/schemas/SourceState'
+          type: array
+          title: Sources
+      type: object
+      required:
+      - at
+      - sources
+      title: SourcesHealth
+    Triage:
+      properties:
+        tick_at:
+          type: string
+          format: date-time
+          title: Tick At
+        model:
+          $ref: '#/components/schemas/ModelInfo'
+        items:
+          items:
+            $ref: '#/components/schemas/TriageItem'
+          type: array
+          title: Items
+        next_cursor:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Next Cursor
+      type: object
+      required:
+      - tick_at
+      - model
+      - items
+      - next_cursor
+      title: Triage
+    TriageItem:
+      properties:
+        rank:
+          type: integer
+          title: Rank
+        patient_ref:
+          type: string
+          title: Patient Ref
+        outage_id:
+          type: integer
+          title: Outage Id
+        scale:
+          type: string
+          enum:
+          - home
+          - street
+          - area
+          - region
+          - system
+          - brownout
+          - unresolved
+          title: Scale
+        device:
+          type: string
+          title: Device
+        reserve_left_h:
+          type: number
+          title: Reserve Left H
+        remaining_h:
+          $ref: '#/components/schemas/RemainingHours'
+        q_used:
+          type: string
+          enum:
+          - q50
+          - q75
+          - q90
+          title: Q Used
+        harm:
+          type: number
+          title: Harm
+        escalate:
+          type: boolean
+          title: Escalate
+        why:
+          items:
+            type: string
+          type: array
+          title: Why
+        decision_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Decision Id
+      type: object
+      required:
+      - rank
+      - patient_ref
+      - outage_id
+      - scale
+      - device
+      - reserve_left_h
+      - remaining_h
+      - q_used
+      - harm
+      - escalate
+      - why
+      - decision_id
+      title: TriageItem
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    VoltagePoint:
+      properties:
+        t:
+          type: string
+          format: date-time
+          title: T
+        pu:
+          type: number
+          title: Pu
+      type: object
+      required:
+      - t
+      - pu
+      title: VoltagePoint

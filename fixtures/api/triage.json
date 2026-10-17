@@ -1,0 +1,53 @@
+{
+  "tick_at": "2026-10-17T22:00:30+00:00",
+  "model": {
+    "id": "fixture",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "label": "FIXTURE"
+  },
+  "items": [
+    {
+      "rank": 1,
+      "patient_ref": "P-3F2A1C",
+      "outage_id": 101,
+      "scale": "street",
+      "device": "o2_concentrator",
+      "reserve_left_h": 4.0,
+      "remaining_h": {
+        "q50": 2.4,
+        "q75": 4.0,
+        "q90": 7.9
+      },
+      "q_used": "q90",
+      "harm": 4.6,
+      "escalate": true,
+      "why": [
+        "no backup → q90",
+        "q90 7.9 h > reserve 4.0 h"
+      ],
+      "decision_id": "6f1c2d3e-0000-4000-8000-000000000001"
+    },
+    {
+      "rank": 2,
+      "patient_ref": "P-8B71D0",
+      "outage_id": 101,
+      "scale": "street",
+      "device": "ventilator",
+      "reserve_left_h": 15.0,
+      "remaining_h": {
+        "q50": 2.4,
+        "q75": 4.0,
+        "q90": 7.9
+      },
+      "q_used": "q50",
+      "harm": 0.0,
+      "escalate": false,
+      "why": [
+        "reserve 15.0 h > 2 × q50 → q50",
+        "SMS check only"
+      ],
+      "decision_id": null
+    }
+  ],
+  "next_cursor": null
+}

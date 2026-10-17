@@ -1,0 +1,38 @@
+{
+  "by_horizon": [
+    {
+      "h": 2,
+      "model_id": "m1-km",
+      "source": "ukpn",
+      "brier": 0.19,
+      "n": 37,
+      "n_censored": 4,
+      "bound": [
+        0.17,
+        0.22
+      ]
+    },
+    {
+      "h": 4,
+      "model_id": "m1-km",
+      "source": "ukpn",
+      "brier": 0.21,
+      "n": 29,
+      "n_censored": 6,
+      "bound": [
+        0.18,
+        0.26
+      ]
+    }
+  ],
+  "trend": [
+    {
+      "at": "2026-10-17T23:00:00+00:00",
+      "brier": 0.2
+    },
+    {
+      "at": "2026-10-18T03:00:00+00:00",
+      "brier": 0.19
+    }
+  ]
+}

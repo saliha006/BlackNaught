@@ -19,6 +19,7 @@ class Settings:
     db_port: int
     db_name: str
     migrations_dir: Path
+    fixtures_dir: Path
 
 
 @lru_cache
@@ -28,4 +29,5 @@ def settings() -> Settings:
         db_port=int(os.environ.get("BN_DB_PORT", "5432")),
         db_name=os.environ.get("BN_DB_NAME", "blacknaught"),
         migrations_dir=Path(os.environ.get("BN_MIGRATIONS_DIR", "/db/migrations")),
+        fixtures_dir=Path(os.environ.get("BN_FIXTURES_DIR", "/fixtures")),
     )
