@@ -66,10 +66,12 @@ class Poller:
     """Runs `poll()` every interval; `poll` returns (records, degraded)."""
 
     def __init__(self, health: SourceHealth, poll: Callable[[], Awaitable[tuple[int, bool]]],
-                 sleep: Sleep = asyncio.sleep):
+                 sleep: Sleep = asyncio.sleep, on_status: Callable[[SourceHealth], None] | None = None):
         self.health = health
         self.poll = poll
         self.sleep = sleep
+        self.on_status = on_status
+        self._last_status: str | None = None
 
     async def poll_once(self) -> bool:
         now = datetime.now(UTC)
@@ -79,9 +81,17 @@ class Poller:
         except (httpx.HTTPError, TimeoutError, KeyError, ValueError) as exc:
             self.health.failure(now, f"{type(exc).__name__}: {exc}")
             log.warning("%s poll failed: %s", self.health.source, exc)
+            self._report(now)
             return False
         self.health.success(now, records, degraded)
+        self._report(now)
         return True
+
+    def _report(self, now: datetime) -> None:
+        status = self.health.status(now)
+        if self.on_status is not None and status != self._last_status:
+            self.on_status(self.health)
+        self._last_status = status
 
     def next_interval(self) -> float:
         base = self.health.interval_s

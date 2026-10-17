@@ -15,6 +15,7 @@ from .ingest.feeds import Outage
 from .ingest.poller import Poller, new_client
 from .ingest.sources import DNO, dno_poll, elexon_poll
 from .sensors import SensorTracker
+from .sse import Broadcaster
 from .survival import load
 from .triage import Scorer
 from .writer import Writer
@@ -24,12 +25,14 @@ log = logging.getLogger(__name__)
 INTERVALS = {"ukpn": 120, "npg": 120, "ssen": 120, "elexon": 30}
 COUNT_FLUSH_S = 60
 SWEEP_S = 30
+STATS_S = 5
 
 
 class Runtime:
     def __init__(self) -> None:
         self.started_at = datetime.now(UTC)
         self.bus = EventBus()
+        self.broadcaster = Broadcaster()
         self.sensors = SensorTracker(self.started_at)
         self.health = {s: SourceHealth(s, i) for s, i in INTERVALS.items()}
         self.ingest_db = Db("bn_ingest")
@@ -41,11 +44,14 @@ class Runtime:
         url = settings().signer_url
         self.signer = audit.HttpSigner(self.client, url) if url else None
         self.checkpointer = audit.Checkpointer(self.grader.db, self.signer)
+        self.scorer.on_ranked = lambda summary: self.broadcaster.publish("triage", summary)
+        self.grader.on_graded = lambda n: self.broadcaster.publish("grade", {"graded": n})
         self.tasks: list[asyncio.Task] = []
 
     async def outages_changed(self, source: str, changed: list[tuple[int, Outage]]) -> None:
         now = datetime.now(UTC)
         for outage_id, o in changed:
+            self.broadcaster.publish("outage", {"id": outage_id, "source": source, "status": o.status})
             await self.bus.publish({
                 "event_id": event_id(source, o.source_ref, o.content_hash.hex()),
                 "source": source, "observed_at": now, "received_at": now, "label": "LIVE",
@@ -80,12 +86,30 @@ class Runtime:
                 seen, dropped = self.bus.take_counts()
                 for kind in seen.keys() | dropped.keys():
                     self.writer.put("event_counts", (minute_of(now), kind, seen[kind], dropped[kind]))
-            await self.checkpointer.maybe_checkpoint(now)
+            checkpoint = await self.checkpointer.maybe_checkpoint(now)
+            if checkpoint is not None:
+                self.broadcaster.publish("audit_checkpoint", {"seq": checkpoint})
+
+    async def stats(self) -> None:
+        """Coalesced live numbers for the control room (one message every few seconds, not one per event)."""
+        last_total = self.bus.total
+        while True:
+            await asyncio.sleep(STATS_S)
+            total = self.bus.total
+            self.broadcaster.publish("stats", {
+                "events_per_s": round((total - last_total) / STATS_S, 1),
+                "critical_q": self.bus.critical.qsize(), "bulk_q": self.bus.bulk.qsize(),
+                "writer_lag": self.writer.lag, "dropped": sum(self.bus.dropped.values()),
+            })
+            last_total = total
+
+    def source_changed(self, health: SourceHealth) -> None:
+        self.broadcaster.publish("source_health", health.as_dict(datetime.now(UTC)))
 
     def pollers(self) -> list[Poller]:
-        out = [Poller(self.health[s], dno_poll(s, self.client, self.ingest_db, self.geocoder, self.outages_changed))
-               for s in DNO]
-        out.append(Poller(self.health["elexon"], elexon_poll(self.client, self.writer)))
+        out = [Poller(self.health[s], dno_poll(s, self.client, self.ingest_db, self.geocoder, self.outages_changed),
+                      on_status=self.source_changed) for s in DNO]
+        out.append(Poller(self.health["elexon"], elexon_poll(self.client, self.writer), on_status=self.source_changed))
         return out
 
     def start(self) -> None:
@@ -94,6 +118,7 @@ class Runtime:
         self.tasks.append(asyncio.create_task(self.housekeeping(), name="housekeeping"))
         self.tasks.append(asyncio.create_task(self.scorer.run(), name="scorer"))
         self.tasks.append(asyncio.create_task(self.grader.run(), name="grader"))
+        self.tasks.append(asyncio.create_task(self.stats(), name="stats"))
         self.tasks += [asyncio.create_task(p.run(), name=f"poll:{p.health.source}") for p in self.pollers()]
 
     async def stop(self) -> None:

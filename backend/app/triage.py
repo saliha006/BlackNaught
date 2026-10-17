@@ -8,6 +8,7 @@ import asyncio
 import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
 from .crypto import blind_index
@@ -29,6 +30,7 @@ class Scorer:
         self.model = model
         self.bidx_key = bidx_key
         self.wake = asyncio.Event()
+        self.on_ranked: Callable[[dict], None] | None = None
         self.last_logged: dict[int, datetime] = {}
         # model calls block (TF graph mode once M2 lands), so they get their own thread off the event loop
         self._model_thread = ThreadPoolExecutor(max_workers=1, thread_name_prefix="scorer-model")
@@ -91,6 +93,9 @@ class Scorer:
                      for s in scored],
                 model=[self.model.model_id] * len(scored),
             )
+        if self.on_ranked is not None:
+            self.on_ranked({"tick_at": now, "ranked": len(scored), "escalate": sum(s[2].escalate for s in scored),
+                            "model": self.model.model_id})
         await self._log_predictions(now, elapsed, predictions)
         await self.db.run("DELETE FROM triage_snapshot WHERE tick_at < :cut", cut=now - RETENTION)
         return len(scored)

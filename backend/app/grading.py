@@ -7,6 +7,7 @@ time, NPg (no restore signal at all), or a feed that stayed dead across the hori
 """
 import asyncio
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -51,6 +52,7 @@ def judge(p: dict[str, Any], now: datetime) -> Outcome | None:
 class Grader:
     def __init__(self, db: Db):
         self.db = db
+        self.on_graded: Callable[[int], None] | None = None
 
     async def tick(self, now: datetime | None = None) -> int:
         now = now or datetime.now(UTC)
@@ -79,6 +81,8 @@ class Grader:
                 at=now, id=[g[0] for g in graded], y=[g[1].y for g in graded],
                 r=[g[1].reason for g in graded], b=[g[2] for g in graded],
             )
+            if self.on_graded is not None:
+                self.on_graded(len(graded))
         return len(graded)
 
     async def run(self) -> None:

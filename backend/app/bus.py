@@ -22,6 +22,7 @@ class EventBus:
         self.bulk: asyncio.Queue[dict[str, Any]] = asyncio.Queue(BULK_MAX)
         self.seen: Counter[str] = Counter()
         self.dropped: Counter[str] = Counter()
+        self.total = 0  # never reset; the live stats ticker turns it into events/s
         self._wake = asyncio.Event()
 
     async def publish(self, event: dict[str, Any]) -> None:
@@ -53,6 +54,7 @@ class EventBus:
 
     async def _dispatch(self, event: dict[str, Any], handle: Handler) -> None:
         self.seen[event["payload"]["kind"]] += 1
+        self.total += 1
         await handle(event)
 
 

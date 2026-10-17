@@ -9,9 +9,10 @@ from typing import Any
 
 import uuid
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
+from sse_starlette.sse import EventSourceResponse
 
-from . import audit, auth, decisions, schemas, stress
+from . import audit, auth, decisions, schemas, sse, stress
 from .grading import summarise
 from .config import settings
 from .db import Db
@@ -233,6 +234,20 @@ async def logout(request: Request):
 @app.get("/api/me/home", response_model=schemas.MyHome)
 def me_home():
     return fixture("me_home")
+
+
+@app.get("/stream")
+async def stream(request: Request, last_event_id: int | None = Header(default=None)):
+    runtime = request.app.state.runtime
+    if runtime is None:
+        raise HTTPException(503, "live workers are not running")
+    try:
+        client, backlog = runtime.broadcaster.subscribe(last_event_id)
+    except sse.TooManyClients:
+        raise HTTPException(503, "too many live viewers", headers={"Retry-After": "10"})
+    # X-Accel-Buffering stops nginx holding events back in its proxy buffer
+    return EventSourceResponse(runtime.broadcaster.stream(client, backlog), ping=15, send_timeout=10,
+                               headers={"X-Accel-Buffering": "no"})
 
 
 @app.get("/api/audit/verify", response_model=schemas.AuditVerify)
