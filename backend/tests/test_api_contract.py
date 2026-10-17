@@ -96,7 +96,8 @@ async def test_limits_validated(client):
 
 @pytest.mark.anyio
 async def test_cap_alert_404_until_approved(client):
-    assert (await client.get("/api/alerts/cap/abc")).status_code == 404
+    assert (await client.get("/api/alerts/cap/00000000-0000-4000-8000-000000000000")).status_code == 404
+    assert (await client.get("/api/alerts/cap/abc")).status_code == 422
 
 
 def test_event_envelope_validates_and_rejects():

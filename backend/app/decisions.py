@@ -2,12 +2,14 @@
 
 Ahmed's agent calls create(); the control room approves through POST /api/decisions/{id}/approve.
 """
+import hashlib
 import json
 import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from . import audit
+from . import audit, cap
+from .config import settings
 from .db import Db
 
 NEEDS_APPROVAL = frozenset({"escalate", "draft_cap_alert", "bulk_sms"})
@@ -37,3 +39,29 @@ async def approve(db: Db, decision_id: str, approve_it: bool, approver: str, not
     seq = await audit.append(db, "approval", approver, decision_id,
                              {"approve": approve_it, "note": note, "result": state or "not_awaiting_approval"})
     return state, seq
+
+
+async def export_cap(db: Db, decision_id: str, approver: str, signer: audit.HttpSigner | None) -> str | None:
+    """Build, sign and store the CAP XML for an approved draft_cap_alert. Returns the identifier, or None if the
+    decision isn't an approved CAP draft."""
+    rows = await db.rows("SELECT tool, state, args FROM v_decisions WHERE decision_id = CAST(:id AS uuid)",
+                         id=decision_id)
+    if not rows or rows[0]["tool"] != "draft_cap_alert" or rows[0]["state"] != "approved":
+        return None
+    args = rows[0]["args"]
+    outage = (await db.rows("SELECT source, postcodes, lat, lon FROM v_outage_public WHERE outage_id = :o",
+                            o=args["outage_id"]))[0]
+    geo = await db.rows("SELECT lat, lon FROM v_postcode_geo WHERE postcode = ANY(:p)", p=outage["postcodes"])
+    points = [(g["lat"], g["lon"]) for g in geo] or [(outage["lat"], outage["lon"])]
+    severity = await db.rows("SELECT severe FROM v_outage_severity WHERE outage_id = :o", o=args["outage_id"])
+    xml = cap.build(decision_id, settings().cap_sender, approver, points, cap.area_desc(outage["postcodes"]),
+                    severe=bool(severity and severity[0]["severe"]), confirmed=outage["source"] in ("ukpn", "npg", "ssen"),
+                    headline=args.get("headline"), description=args.get("description"),
+                    instruction=args.get("instruction"))
+    sig = (await signer.sign(xml.encode()))["sig_b64"] if signer is not None else None
+    identifier = f"blacknaught-{decision_id}"
+    await db.run("SELECT cap_store(CAST(:id AS uuid), :ident, :xml, :sig)", id=decision_id, ident=identifier,
+                 xml=xml, sig=sig)
+    await audit.append(db, "cap_export", approver, decision_id,
+                       {"identifier": identifier, "signed": sig is not None, "sha256": hashlib.sha256(xml.encode()).hexdigest()})
+    return identifier

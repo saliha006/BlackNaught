@@ -199,9 +199,13 @@ async def operator(request: Request) -> auth.Principal:
 @app.post("/api/decisions/{decision_id}/approve", response_model=schemas.DecisionState)
 async def approve(request: Request, decision_id: uuid.UUID, body: schemas.Approval,
                   who: auth.Principal = Depends(operator)):
-    state, seq = await decisions.approve(request.app.state.api_db, str(decision_id), body.approve, who.login, body.note)
+    db = request.app.state.api_db
+    state, seq = await decisions.approve(db, str(decision_id), body.approve, who.login, body.note)
     if state is None:
         raise HTTPException(409, "decision is not awaiting approval")
+    if state == "approved":
+        runtime = request.app.state.runtime
+        await decisions.export_cap(db, str(decision_id), who.login, runtime.signer if runtime else None)
     return {"decision_id": str(decision_id), "state": state, "audit_seq": seq}
 
 
@@ -229,8 +233,17 @@ async def agent_grades(request: Request):
 
 
 @app.get("/api/alerts/cap/{decision_id}", responses={200: {"content": {"application/cap+xml": {}}}})
-def cap_alert(decision_id: str):
-    raise HTTPException(404, "no approved CAP alert for this decision")
+async def cap_alert(request: Request, decision_id: uuid.UUID):
+    db = request.app.state.api_db
+    stored = await db.rows("SELECT xml, sig_b64 FROM v_cap_alert WHERE decision_id = :id", id=str(decision_id))
+    if stored:
+        headers = {"X-Signature-ML-DSA-65": stored[0]["sig_b64"]} if stored[0]["sig_b64"] else {}
+        return Response(stored[0]["xml"], media_type="application/cap+xml", headers=headers)
+    exists = await db.rows("SELECT state FROM v_decisions WHERE decision_id = :id AND tool = 'draft_cap_alert'",
+                           id=str(decision_id))
+    if exists:
+        raise HTTPException(403, "CAP alert is not approved")
+    raise HTTPException(404, "no CAP alert for this decision")
 
 
 @app.post("/api/auth/login", response_model=schemas.LoginResult)
