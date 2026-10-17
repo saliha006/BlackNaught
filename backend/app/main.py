@@ -7,9 +7,11 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query, Request, Response
+import uuid
 
-from . import audit, schemas, stress
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
+
+from . import audit, auth, decisions, schemas, stress
 from .grading import summarise
 from .config import settings
 from .db import Db
@@ -24,6 +26,7 @@ async def lifespan(app: FastAPI):
     app.state.started_at = datetime.now(UTC)
     app.state.api_db = Db("bn_api")
     app.state.runtime = None
+    app.state.login_limiter = auth.RateLimiter()
     if os.environ.get("BN_WORKERS") == "1":
         from .runtime import Runtime
 
@@ -157,14 +160,37 @@ async def triage(request: Request, limit: int = Query(default=50, ge=1, le=200),
     }
 
 
+async def operator(request: Request) -> auth.Principal:
+    principal = await auth.resolve(request.app.state.api_db, request.cookies.get(auth.COOKIE))
+    if principal is None:
+        raise HTTPException(401, "login required")
+    if principal.role != "operator":
+        raise HTTPException(403, "operator only")
+    return principal
+
+
 @app.post("/api/decisions/{decision_id}/approve", response_model=schemas.DecisionState)
-def approve(decision_id: str, body: schemas.Approval):
-    return {**fixture("decision_state"), "decision_id": decision_id, "state": "approved" if body.approve else "rejected"}
+async def approve(request: Request, decision_id: uuid.UUID, body: schemas.Approval,
+                  who: auth.Principal = Depends(operator)):
+    state, seq = await decisions.approve(request.app.state.api_db, str(decision_id), body.approve, who.login, body.note)
+    if state is None:
+        raise HTTPException(409, "decision is not awaiting approval")
+    return {"decision_id": str(decision_id), "state": state, "audit_seq": seq}
 
 
 @app.get("/api/agent/decisions", response_model=list[schemas.AgentDecision])
-def agent_decisions():
-    return fixture("agent_decisions")
+async def agent_decisions(request: Request, limit: int = Query(default=100, ge=1, le=500)):
+    rows = await request.app.state.api_db.rows(
+        "SELECT decision_id, tool, state, created_at, args, rationale FROM v_decisions"
+        " ORDER BY created_at DESC LIMIT :limit", limit=limit)
+    return [{
+        "id": str(r["decision_id"]),
+        "tool": r["tool"],
+        "state": r["state"],
+        "created_at": r["created_at"],
+        "args_summary": json.dumps(r["args"], sort_keys=True)[:200],
+        "rationale": r["rationale"] or [],
+    } for r in rows]
 
 
 @app.get("/api/agent/grades", response_model=schemas.Grades)
@@ -181,13 +207,27 @@ def cap_alert(decision_id: str):
 
 
 @app.post("/api/auth/login", response_model=schemas.LoginResult)
-def login(body: schemas.Login):
-    raise HTTPException(401, "invalid credentials")
+async def login(request: Request, response: Response, body: schemas.Login):
+    client = request.client.host if request.client else "unknown"
+    if not request.app.state.login_limiter.allow(client):
+        raise HTTPException(429, "too many login attempts", headers={"Retry-After": "60"})
+    db = request.app.state.api_db
+    result = await auth.login(db, body.login, body.passphrase)
+    await audit.append(db, "login", body.login, None, {"ok": result is not None, "client": client})
+    if result is None:
+        raise HTTPException(401, "invalid credentials")
+    principal, token = result
+    response.set_cookie(auth.COOKIE, token, httponly=True, samesite="strict", path="/api",
+                        secure=request.headers.get("x-forwarded-proto") == "https" or request.url.scheme == "https")
+    return {"role": principal.role}
 
 
 @app.post("/api/auth/logout", status_code=204)
-def logout():
-    return Response(status_code=204)
+async def logout(request: Request):
+    await auth.logout(request.app.state.api_db, request.cookies.get(auth.COOKIE))
+    response = Response(status_code=204)
+    response.delete_cookie(auth.COOKIE, path="/api")
+    return response
 
 
 @app.get("/api/me/home", response_model=schemas.MyHome)

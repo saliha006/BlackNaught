@@ -95,17 +95,7 @@ async def test_limits_validated(client):
 
 
 @pytest.mark.anyio
-async def test_approve_and_reject(client):
-    r = await client.post("/api/decisions/abc/approve", json={"approve": False})
-    assert r.json()["state"] == "rejected"
-    r = await client.post("/api/decisions/abc/approve", json={"approve": True, "note": "ok"})
-    assert r.json() == {"decision_id": "abc", "state": "approved", "audit_seq": 42}
-
-
-@pytest.mark.anyio
-async def test_login_rejects_until_auth_ships(client):
-    assert (await client.post("/api/auth/login", json={"login": "x", "passphrase": "y"})).status_code == 401
-    assert (await client.post("/api/auth/logout")).status_code == 204
+async def test_cap_alert_404_until_approved(client):
     assert (await client.get("/api/alerts/cap/abc")).status_code == 404
 
 
