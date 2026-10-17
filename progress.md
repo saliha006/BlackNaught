@@ -117,7 +117,7 @@
 - ⚠️ Conflicts: @rama: `/api/cells` is live; `patients` is an int or "suppressed", and `bounds` is a closed [lat,lon] ring. Never draw homes; only these cells.
 - Conflict status: open
 
-### 2026-10-17 22:49 — C:/Program Files/Git/areas/risk baseline (task 17) — @sali
+### 2026-10-17 22:49 — /areas/risk baseline (task 17) — @sali
 - Shipped: `backend/app/arearisk.py`: per-district, per-month fault rates fitted on the VM from ENWL 1997–2026 (`backend/models/climatology_enwl.json`); `/api/areas/risk?date=` (default tomorrow, UK) returns expected faults and P(≥3) labelled `BASELINE`. New `BASELINE` label in the contract. 178 tests on s390x.
 - Touched: `backend/app/{arearisk,main,schemas,config}.py`, `backend/models/climatology_enwl.json`, `contracts/*`
 - ⚠️ Conflicts: @nate: M8 replaces `arearisk.area_risk(model, day)` (same output shape: district, expected, p_ge_k); your Brier skill should be measured against this climatology. @rama: risk is per ENWL district name (12 districts), not per cell yet.
