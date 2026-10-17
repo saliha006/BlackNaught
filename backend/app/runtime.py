@@ -8,6 +8,7 @@ from .config import read_secret, settings
 from .db import Db
 from .events import event_id
 from .geocode import Geocoder
+from .grading import Grader
 from .health import SourceHealth
 from .ingest.feeds import Outage
 from .ingest.poller import Poller, new_client
@@ -35,6 +36,7 @@ class Runtime:
         self.client = new_client()
         self.geocoder = Geocoder(self.ingest_db, self.client)
         self.scorer = Scorer(Db("bn_agent"), load(settings().model_path), bytes.fromhex(read_secret("bidx_key")))
+        self.grader = Grader(Db("bn_agent"))
         self.tasks: list[asyncio.Task] = []
 
     async def outages_changed(self, source: str, changed: list[tuple[int, Outage]]) -> None:
@@ -83,6 +85,7 @@ class Runtime:
         self.tasks.append(asyncio.create_task(self.bus.consume(self.handle), name="bus"))
         self.tasks.append(asyncio.create_task(self.housekeeping(), name="housekeeping"))
         self.tasks.append(asyncio.create_task(self.scorer.run(), name="scorer"))
+        self.tasks.append(asyncio.create_task(self.grader.run(), name="grader"))
         self.tasks += [asyncio.create_task(p.run(), name=f"poll:{p.health.source}") for p in self.pollers()]
 
     async def stop(self) -> None:
@@ -95,3 +98,4 @@ class Runtime:
         self.ingest_db.close()
         self.writer.db.close()
         self.scorer.db.close()
+        self.grader.db.close()

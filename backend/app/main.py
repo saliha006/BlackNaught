@@ -10,6 +10,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Query, Request, Response
 
 from . import schemas, stress
+from .grading import summarise
 from .config import settings
 from .db import Db
 
@@ -167,8 +168,11 @@ def agent_decisions():
 
 
 @app.get("/api/agent/grades", response_model=schemas.Grades)
-def agent_grades():
-    return fixture("agent_grades")
+async def agent_grades(request: Request):
+    rows = await request.app.state.api_db.rows(
+        "SELECT horizon_h, model_id, source, brier, censored, p_still_off, graded_at FROM v_grades"
+    )
+    return summarise(rows)
 
 
 @app.get("/api/alerts/cap/{decision_id}", responses={200: {"content": {"application/cap+xml": {}}}})
