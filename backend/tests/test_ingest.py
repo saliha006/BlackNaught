@@ -370,4 +370,6 @@ async def test_elexon_poll_writes_and_windows(ingest_db, superuser):
         batch.append(writer.queue.get_nowait())
     await writer.flush(batch)
     assert superuser.run("SELECT count(*) FROM freq_reading")[0][0] == n
-    assert {"from", "to"} <= set(seen_params[0]) and seen_params[1]["from"] > seen_params[0]["from"]
+    latest = max(t for t, _ in feeds.parse_elexon(load("elexon.json")))
+    assert {"from", "to"} <= set(seen_params[0])
+    assert seen_params[1]["from"] == (latest - timedelta(seconds=60)).strftime("%Y-%m-%dT%H:%M:%SZ")

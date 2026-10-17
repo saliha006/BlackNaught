@@ -2,8 +2,8 @@ import os
 
 import pytest
 
-os.environ.setdefault("BN_DB_NAME", "blacknaught_test")
-TEST_DB = os.environ["BN_DB_NAME"]
+# forced, not setdefault: compose sets BN_DB_NAME=blacknaught and the session fixture drops schema bn
+os.environ["BN_DB_NAME"] = TEST_DB = "blacknaught_test"
 
 from app.db import Db, connect  # noqa: E402
 from app.migrate import migrate  # noqa: E402
@@ -15,6 +15,7 @@ def anyio_backend():
 
 
 def reset_schema() -> None:
+    assert TEST_DB.endswith("_test"), "refusing to drop schema outside a test database"
     conn = connect("postgres", TEST_DB)
     try:
         conn.run("DROP SCHEMA IF EXISTS bn CASCADE")
