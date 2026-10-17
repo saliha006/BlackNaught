@@ -1,0 +1,32 @@
+# Docs stay local. Only progress.md (conflict board) and README.md (submission) go to GitHub.
+*.md
+!progress.md
+!README.md
+
+# Research bundle, raw data, models
+DATATHON INFO/
+data/
+*.csv
+*.zip
+*.gguf
+*.img
+*.npz
+*.keras
+*.h5
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_*
+
+# Tooling
+.claude/
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+dist/
+.ipynb_checkpoints/
