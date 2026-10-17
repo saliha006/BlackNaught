@@ -14,8 +14,8 @@
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-17 22:32:**
-  - `main`: foundation → live ingest → encrypted register → harm-hours triage running live on the VM. 133 tests green on s390x, 98% coverage.
+- **As of 2026-10-17 22:34:**
+  - `main`: live ingest → encrypted register → triage → horizon grading, all running 24/7 on the VM. 146 tests green on s390x, 98% coverage.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - All other docs stay local and are never pushed: the PRD, briefs, decisions and research.
 
@@ -79,4 +79,10 @@
 - Shipped: harm-hours triage (`backend/app/{survival,harm,triage}.py`), KM fallback fitted on the VM from 312,936 ENWL outages (`backend/models/km_enwl.json`, also in `evidence/`), live `/api/triage` with cursor paging, predictions logged for grading every 15 min, UKPN umbrella records with placeholder dates rejected, seeder only uses faults under 6 h old. 133 tests on s390x.
 - Touched: `backend/app/*`, `db/migrations/0004_triage.sql`, `backend/models/km_enwl.json`
 - ⚠️ Conflicts: @nate: triage calls `model.predict(elapsed_h)` and expects `{quantiles:{q50,q75,q90}, surv:[24]}`; swap `KmModel` for M2 behind the same shape (`app/triage.py`). @rama: `/api/triage` is live; `why` reasons are display-ready. @ahmed: the agent should read `v_triage_latest`; `decision_id` is null until your agent writes decisions.
+- Conflict status: open
+
+### 2026-10-17 22:34 — horizon grading (F7) — @sali
+- Shipped: grader task (`backend/app/grading.py`) running every 60 s on the VM; evidence-based outcome rules (explicit restore → 0/1, still listed after the horizon → 1, otherwise censored with a reason); live `/api/agent/grades` with censoring bounds and an hourly trend. 146 tests on s390x.
+- Touched: `backend/app/{grading,runtime,main}.py`, `db/migrations/0005_grading.sql`
+- ⚠️ Conflicts: @ahmed: recalibration should read `v_grades` (UKPN rows are the trustworthy ones; `censored` rows carry a reason). @rama: `/api/agent/grades` is live.
 - Conflict status: open
