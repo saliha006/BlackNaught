@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 
 import pytest
 from fastapi import HTTPException
+from sse_starlette.sse import ServerSentEvent
 from starlette.requests import Request
 
 from app import sse
@@ -25,7 +26,9 @@ async def test_live_messages_reach_subscribers():
     b.publish("outage", {"id": 1})
     b.publish("triage", {"ranked": 3})
     got = await take(gen, 2)
-    assert [(m["id"], m["event"]) for m in got] == [(1, "outage"), (2, "triage")]
+    assert [(m["id"], m["event"]) for m in got] == [("1", "outage"), ("2", "triage")]
+    # every message must survive sse-starlette's own encoder (it rejects non-string ids)
+    assert ServerSentEvent(**got[0]).encode().startswith(b"id: 1")
     await gen.aclose()
     assert not b.clients
 
@@ -39,6 +42,7 @@ async def test_reconnect_replays_from_last_event_id():
     assert [m[0] for m in backlog] == [4, 5]
     got = await take(b.stream(client, backlog), 2)
     assert got[0]["retry"] == 3000
+    assert all(ServerSentEvent(**m).encode() for m in got)
 
 
 def test_gap_older_than_ring_asks_for_resync():
@@ -58,7 +62,7 @@ async def test_slow_client_drops_its_own_oldest_and_resyncs():
         b.publish("stats", {"i": i})
     assert slow.queue.qsize() == sse.PER_CLIENT and slow.behind
     first = await take(b.stream(slow, []), 2)
-    assert first[0]["event"] == sse.RESYNC and first[1]["id"] == 4  # 1..3 were dropped for this client only
+    assert first[0]["event"] == sse.RESYNC and first[1]["id"] == "4"  # 1..3 were dropped for this client only
     assert fast.queue.qsize() == sse.PER_CLIENT
 
 

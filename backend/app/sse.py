@@ -66,12 +66,12 @@ class Broadcaster:
     async def stream(self, client: Client, backlog: list[tuple[int, str, str]]) -> AsyncIterator[dict[str, Any]]:
         try:
             for message_id, event, data in backlog:
-                yield {"id": message_id, "event": event, "data": data, "retry": 3000}
+                yield {"id": str(message_id), "event": event, "data": data, "retry": 3000}
             while True:
                 message_id, event, data = await client.queue.get()
                 if client.behind:
                     client.behind = False
-                    yield {"id": message_id, "event": RESYNC, "data": "{}"}
-                yield {"id": message_id, "event": event, "data": data}
+                    yield {"id": str(message_id), "event": RESYNC, "data": "{}"}
+                yield {"id": str(message_id), "event": event, "data": data}
         finally:
             self.unsubscribe(client)
