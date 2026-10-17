@@ -14,8 +14,8 @@
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-17 22:55:**
-  - `main`: every task in Sali's brief through task 19 (CAP, /me/home) live on the VM. 188 tests green on s390x, 98% coverage.
+- **As of 2026-10-17 22:58:**
+  - `main`: every task in Sali's brief (1–20) live on the VM. 194 tests green on s390x, 98% coverage.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - All other docs stay local and are never pushed: the PRD, briefs, decisions and research.
 
@@ -133,4 +133,10 @@
 - Shipped: `GET /api/me/home` (household session only, no id parameter; power state via the postcode blind index, own reserve clock, next action, frequency context, never an ETA), `me_home_patients()` SECURITY DEFINER function, `python -m app.seed --households N` (passphrases written only to the VM's git-ignored `backend/secrets/households.txt`), `/api/health` now reports the loaded model. 188 tests on s390x.
 - Touched: `backend/app/{home,main,seed}.py`, `db/migrations/0009_me_home.sql`
 - ⚠️ Conflicts: @rama: `/api/me/home` needs a household login (`home-1..3` on the VM; ask Sali for passphrases). `voltage` stays empty until @ahmed's sensor simulator feeds households.
+- Conflict status: open
+
+### 2026-10-17 22:58 — IODA wide-area signal (parked task 20) — @sali
+- Shipped: `backend/app/ingest/ioda.py`: ping-slash24 dip detector (latest 2 windows below 0.9× the trailing 2 h median; calibrated on the real Sri Lanka 9 Feb 2025 blackout, recorded as a fixture), control countries FR/DE/US to discard IODA-wide artifacts (≥3 countries at once), polled every 10 min; dips go to the bus (`ioda_signal`) and SSE (`ioda`). 194 tests on s390x.
+- Touched: `backend/app/ingest/{ioda,sources}.py`, `backend/app/runtime.py`, `fixtures/feeds/ioda_lk_blackout.json`
+- ⚠️ Conflicts: @ahmed: `ioda_signal` events (region = ISO country, value = ratio) are the wide-area input for your evidence combiner's region/system scale.
 - Conflict status: open
