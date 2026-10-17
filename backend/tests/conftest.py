@@ -38,7 +38,7 @@ def superuser():
 
 
 @pytest.fixture
-async def db_factory():
+def db_factory():
     opened: list[Db] = []
 
     def make(role: str) -> Db:
