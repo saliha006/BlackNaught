@@ -12,7 +12,7 @@ import uuid
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from sse_starlette.sse import EventSourceResponse
 
-from . import audit, auth, decisions, schemas, sse, stress
+from . import audit, auth, cells as grid, decisions, schemas, sse, stress
 from .grading import summarise
 from .config import settings
 from .db import Db
@@ -120,9 +120,31 @@ async def grid_stress(request: Request, grid: str):
     }
 
 
+def _at_level(cell_l1: str, level: int) -> str:
+    for _ in range(level - 1):
+        cell_l1 = grid.parent(cell_l1)
+    return cell_l1
+
+
 @app.get("/api/cells", response_model=list[schemas.Cell])
-def cells(level: int = Query(default=1, ge=1, le=3)):
-    return [c for c in fixture("cells") if c["level"] == level]
+async def cells(request: Request, level: int = Query(default=1, ge=1, le=3)):
+    """Whole published map at one level. No bbox or point query on purpose: overlapping windows are a
+    differencing attack, and the map is small enough to send whole."""
+    db = request.app.state.api_db
+    published = {r["cell_id"]: r["patients"] for r in
+                 await db.rows("SELECT cell_id, patients FROM v_cells_published WHERE level = :l", l=level)}
+    worst: dict[str, int] = {}
+    for r in await db.rows("SELECT cell_l1, customers FROM v_outage_cells"):
+        cell = _at_level(r["cell_l1"], level)
+        worst[cell] = max(worst.get(cell, 0), r["customers"] or 0)
+    return [{
+        "cell_id": cell,
+        "level": level,
+        "bounds": grid.bounds(cell),
+        "patients": "suppressed" if cell in published and published[cell] is None else published.get(cell, 0),
+        "outage_scale": footprint_scale(worst[cell]) if cell in worst else None,
+        "risk_tomorrow": None,
+    } for cell in sorted(published.keys() | worst.keys())]
 
 
 @app.get("/api/areas/risk", response_model=list[schemas.AreaRisk])

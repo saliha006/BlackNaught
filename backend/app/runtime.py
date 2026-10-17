@@ -3,7 +3,7 @@ import asyncio
 import logging
 from datetime import UTC, datetime
 
-from . import audit
+from . import audit, cellpub
 from .bus import EventBus, minute_of
 from .config import read_secret, settings
 from .db import Db
@@ -119,6 +119,7 @@ class Runtime:
         self.tasks.append(asyncio.create_task(self.scorer.run(), name="scorer"))
         self.tasks.append(asyncio.create_task(self.grader.run(), name="grader"))
         self.tasks.append(asyncio.create_task(self.stats(), name="stats"))
+        self.tasks.append(asyncio.create_task(cellpub.run(self.grader.db), name="cells"))
         self.tasks += [asyncio.create_task(p.run(), name=f"poll:{p.health.source}") for p in self.pollers()]
 
     async def stop(self) -> None:
