@@ -1,4 +1,5 @@
 """One poll function per source: fetch → validate per record → store → notify."""
+import asyncio
 import logging
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
@@ -9,7 +10,7 @@ import httpx
 from ..db import Db
 from ..geocode import GeocodeError, Geocoder
 from ..writer import Writer
-from . import feeds, store
+from . import feeds, ioda, store
 from .poller import get_json, get_paged
 
 log = logging.getLogger(__name__)
@@ -84,6 +85,19 @@ def elexon_poll(client: httpx.AsyncClient, writer: Writer) -> Callable[[], Await
             writer.put("freq_reading", ("gb", measured_at, hz))
         if readings:
             last_seen[:] = [max(m for m, _ in readings)]
+        return len(readings), False
+
+    return poll
+
+
+def ioda_poll(client: httpx.AsyncClient,
+              on_dips: Callable[[list[ioda.Reading]], Awaitable[None]]) -> Callable[[], Awaitable[tuple[int, bool]]]:
+    async def poll() -> tuple[int, bool]:
+        now = datetime.now(UTC)
+        readings = await asyncio.gather(*(ioda.fetch(client, c, now) for c in ioda.TARGETS + ioda.CONTROLS))
+        dips = ioda.confirmed_dips(list(readings))
+        if dips:
+            await on_dips(dips)
         return len(readings), False
 
     return poll

@@ -65,7 +65,7 @@ async def test_workers_start_and_stop_cleanly_through_lifespan(quiet, monkeypatc
         await rt.bus.publish(_sensor_event("heartbeat", "s9"))
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t") as c:
             sources = (await c.get("/api/sources/health")).json()["sources"]
-            assert {s["source"] for s in sources} == {"ukpn", "npg", "ssen", "elexon"}
+            assert {s["source"] for s in sources} == {"ukpn", "npg", "ssen", "elexon", "ioda"}
             assert all(s["status"] == "stale" for s in sources)  # nothing polled yet, never "ok"
         await asyncio.sleep(0.6)
     assert all(t.done() for t in rt.tasks)

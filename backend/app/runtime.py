@@ -13,7 +13,8 @@ from .grading import Grader
 from .health import SourceHealth
 from .ingest.feeds import Outage
 from .ingest.poller import Poller, new_client
-from .ingest.sources import DNO, dno_poll, elexon_poll
+from .ingest import ioda
+from .ingest.sources import DNO, dno_poll, elexon_poll, ioda_poll
 from .sensors import SensorTracker
 from .sse import Broadcaster
 from .survival import load
@@ -22,7 +23,7 @@ from .writer import Writer
 
 log = logging.getLogger(__name__)
 
-INTERVALS = {"ukpn": 120, "npg": 120, "ssen": 120, "elexon": 30}
+INTERVALS = {"ukpn": 120, "npg": 120, "ssen": 120, "elexon": 30, "ioda": 600}
 COUNT_FLUSH_S = 60
 SWEEP_S = 30
 STATS_S = 5
@@ -103,6 +104,16 @@ class Runtime:
             })
             last_total = total
 
+    async def internet_dips(self, dips: list[ioda.Reading]) -> None:
+        for d in dips:
+            self.broadcaster.publish("ioda", {"country": d.country, "ratio": round(d.ratio, 3), "at": d.at})
+            await self.bus.publish({
+                "event_id": event_id("ioda", d.country, d.at.isoformat()), "source": "ioda",
+                "observed_at": d.at, "received_at": datetime.now(UTC), "label": "LIVE",
+                "payload": {"kind": "ioda_signal", "region": d.country, "datasource": ioda.DATASOURCE,
+                            "value": d.ratio},
+            })
+
     def source_changed(self, health: SourceHealth) -> None:
         self.broadcaster.publish("source_health", health.as_dict(datetime.now(UTC)))
 
@@ -110,6 +121,7 @@ class Runtime:
         out = [Poller(self.health[s], dno_poll(s, self.client, self.ingest_db, self.geocoder, self.outages_changed),
                       on_status=self.source_changed) for s in DNO]
         out.append(Poller(self.health["elexon"], elexon_poll(self.client, self.writer), on_status=self.source_changed))
+        out.append(Poller(self.health["ioda"], ioda_poll(self.client, self.internet_dips), on_status=self.source_changed))
         return out
 
     def start(self) -> None:
