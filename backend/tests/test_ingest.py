@@ -55,9 +55,18 @@ def test_npg_merges_rows_by_reference():
     assert len(outages) == len({r["reference"] for r in records}) < len(records)
     for o in outages:
         rows = o.raw["rows"]
-        assert o.customers == sum(r.get("totalconfirmedpowercut") or 0 for r in rows)
-        assert o.started_at == min(feeds.timeparse.iso(r["loggedtime"]) for r in rows)
+        assert o.customers == sum(r.get("totalconfirmedpowercut") or r.get("totalpredictedpowercut") or 0
+                                  for r in rows)
+        assert o.started_at == min(feeds.timeparse.uk_wall_clock(r["loggedtime"]) for r in rows)
         assert not o.restored_explicit and o.status in ("active", "planned")
+    assert all(o.customers > 0 for o in outages)
+
+
+def test_npg_times_are_uk_wall_clock_not_utc():
+    row = {"reference": "R1", "loggedtime": "2026-10-17T22:03:00+00:00", "natureofoutage": "Fault",
+           "totalconfirmedpowercut": 0, "totalpredictedpowercut": 12, "postcode": ["TS21 1NH"]}
+    o = feeds.parse_npg([row])[0]
+    assert o.started_at == datetime(2026, 10, 17, 21, 3, tzinfo=UTC) and o.customers == 12
 
 
 def test_ssen_resolved_is_approximate():

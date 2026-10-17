@@ -83,16 +83,17 @@ def parse_npg(records: list[dict[str, Any]]) -> list[Outage]:
                 source="npg",
                 source_ref=r["reference"],
                 status="planned" if planned else "active",
-                started_at=timeparse.iso(r["loggedtime"]),
+                started_at=timeparse.uk_wall_clock(r["loggedtime"]),
                 customers=0,
                 lat=r.get("lat"),
                 lon=r.get("lng"),
                 feeder={"type": r.get("type")},
                 raw={"rows": []},
             )
-        current.customers += r.get("totalconfirmedpowercut") or 0
+        # about half the rows carry only a predicted count until the DNO confirms customers off supply
+        current.customers += r.get("totalconfirmedpowercut") or r.get("totalpredictedpowercut") or 0
         current.postcodes = _postcodes(current.postcodes + list(r.get("postcode") or []))
-        current.started_at = min(current.started_at, timeparse.iso(r["loggedtime"]))
+        current.started_at = min(current.started_at, timeparse.uk_wall_clock(r["loggedtime"]))
         current.raw["rows"].append(r)
     return list(merged.values())
 

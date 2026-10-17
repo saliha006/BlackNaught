@@ -13,6 +13,12 @@ def uk_local(value: str) -> datetime:
     return parsed.replace(tzinfo=LONDON, fold=0).astimezone(UTC)
 
 
+def uk_wall_clock(value: str) -> datetime:
+    """NPg labels UK local times as +00:00 (an updatedate of 22:05+00:00 arrived at 21:09 UTC in BST),
+    so the offset is discarded and the wall-clock time read as Europe/London."""
+    return uk_local(datetime.fromisoformat(value.replace("Z", "+00:00")).replace(tzinfo=None).isoformat())
+
+
 def iso(value: str) -> datetime:
     """ISO-8601 with an offset: '+00:00', '+0000' or 'Z'."""
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))

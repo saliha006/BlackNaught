@@ -33,6 +33,7 @@ services:
       BN_SECRETS_DIR: /run/secrets
       BN_MIGRATIONS_DIR: /db/migrations
       BN_FIXTURES_DIR: /fixtures
+      BN_WORKERS: "${BN_WORKERS:-1}"
     secrets: [pg_super_pw, db_migrator_pw, db_ingest_pw, db_api_pw, db_agent_pw, bidx_key, dek, operator_pw]
     ports: ["127.0.0.1:8000:8000"]
     mem_limit: 3g

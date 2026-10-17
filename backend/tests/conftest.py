@@ -4,6 +4,8 @@ import pytest
 
 # forced, not setdefault: compose sets BN_DB_NAME=blacknaught and the session fixture drops schema bn
 os.environ["BN_DB_NAME"] = TEST_DB = "blacknaught_test"
+# the app container runs with BN_WORKERS=1; tests must never start live pollers
+os.environ["BN_WORKERS"] = "0"
 
 from app.db import Db, connect  # noqa: E402
 from app.migrate import migrate  # noqa: E402

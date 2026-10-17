@@ -31,6 +31,11 @@ def test_iso_offsets(raw):
     assert timeparse.iso(raw) == datetime(2026, 10, 17, 21, 40, tzinfo=UTC)
 
 
+def test_uk_wall_clock_ignores_a_wrong_offset():
+    assert timeparse.uk_wall_clock("2026-10-17T22:05:29+00:00") == datetime(2026, 10, 17, 21, 5, 29, tzinfo=UTC)
+    assert timeparse.uk_wall_clock("2026-01-17T22:05:29+00:00") == datetime(2026, 1, 17, 22, 5, 29, tzinfo=UTC)
+
+
 def test_iso_rejects_naive():
     with pytest.raises(ValueError, match="without offset"):
         timeparse.iso("2026-10-17T21:40:00")
