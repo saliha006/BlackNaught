@@ -14,8 +14,8 @@
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-17 22:09:**
-  - `main`: backend foundation + contract freeze + event pipeline. 60 tests green on the VM (s390x), 98% coverage.
+- **As of 2026-10-17 22:17:**
+  - `main`: foundation, contract freeze, event pipeline and live ingest (UKPN/NPg/SSEN/Elexon). 103 tests green on the VM (s390x), 98% coverage.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - All other docs stay local and are never pushed: the PRD, briefs, decisions and research.
 
@@ -55,4 +55,10 @@
 - Shipped: batching writer (`backend/app/writer.py`), event bus with critical/bulk queues (`bus.py`), sensor state tracker (`sensors.py`), per-source time parsing (`timeparse.py`). 60 tests on s390x.
 - Touched: `backend/app/{writer,bus,sensors,timeparse}.py`
 - ⚠️ Conflicts: @ahmed: your simulator should publish events through `EventBus.publish` (dicts shaped like `contracts/events.schema.json`); `SensorTracker.cell_counts()` is the quorum input for your combiner. Silence = dropout, never down.
+- Conflict status: open
+
+### 2026-10-17 22:17 — live grid ingest (F1) — @sali
+- Shipped: pollers for UKPN, Northern Powergrid, SSEN (every 120 s) and Elexon (every 30 s) with retries, Retry-After and backoff; per-record validation (more than 50% bad = degraded); outage versioning with `vanished` after 2 missed polls (never `restored`); NPg rows merged by incident reference; postcodes.io cache; `/api/outages`, `/api/grids/gb/stress`, `/api/sources/health` and `/api/health` now live (workers start when `BN_WORKERS=1`). 103 tests on s390x, 98% coverage.
+- Touched: `backend/app/{ingest/*,geocode,health,cells,stress,runtime,main}.py`, `fixtures/feeds/*` (recorded on the VM), `events.schema.json` (`dno_fault` gains `outage_id`)
+- ⚠️ Conflicts: @rama: `/api/outages` is now live data; `scale` is an interim rule by customers affected until the combiner lands. @ahmed: `dno_fault` events now carry `outage_id`; `stress.state()` is a band rule; the interim scale rule lives in `main.footprint_scale` (both yours/Nate's to replace). @nate: ENWL + UKPN historic CSVs are downloading to `~/data/raw/` on the VM.
 - Conflict status: open
