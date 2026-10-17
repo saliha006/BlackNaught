@@ -61,7 +61,7 @@ async def test_workers_start_and_stop_cleanly_through_lifespan(quiet, monkeypatc
     monkeypatch.setenv("BN_WORKERS", "1")
     async with app.router.lifespan_context(app):
         rt = app.state.runtime
-        assert {t.get_name() for t in rt.tasks} == {"writer", "bus", "housekeeping"}
+        assert {t.get_name() for t in rt.tasks} == {"writer", "bus", "housekeeping", "scorer"}
         await rt.bus.publish(_sensor_event("heartbeat", "s9"))
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t") as c:
             sources = (await c.get("/api/sources/health")).json()["sources"]

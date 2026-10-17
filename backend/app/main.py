@@ -126,10 +126,34 @@ def areas_risk():
 
 
 @app.get("/api/triage", response_model=schemas.Triage)
-def triage(limit: int = Query(default=50, ge=1, le=200)):
-    snapshot = dict(fixture("triage"))
-    snapshot["items"] = snapshot["items"][:limit]
-    return snapshot
+async def triage(request: Request, limit: int = Query(default=50, ge=1, le=200),
+                 cursor: int = Query(default=0, ge=0)):
+    rows = await request.app.state.api_db.rows(
+        "SELECT * FROM v_triage_latest WHERE rank > :cursor ORDER BY rank LIMIT :limit", cursor=cursor, limit=limit + 1
+    )
+    runtime = request.app.state.runtime
+    model = runtime.scorer.model if runtime else None
+    items = [{
+        "rank": r["rank"],
+        "patient_ref": r["patient_ref"],
+        "outage_id": r["outage_id"],
+        "scale": footprint_scale(r["customers"]),
+        "device": r["device"],
+        "reserve_left_h": r["why"]["reserve_left_h"],
+        "remaining_h": r["why"]["remaining_h"],
+        "q_used": r["q_used"],
+        "harm": r["harm"],
+        "escalate": r["escalate"],
+        "why": r["why"]["reasons"],
+        "decision_id": None,
+    } for r in rows[:limit]]
+    return {
+        "tick_at": rows[0]["tick_at"] if rows else datetime.now(UTC),
+        "model": {"id": model.model_id, "sha256": model.sha256, "label": model.label} if model
+        else {"id": rows[0]["model_id"] if rows else "none", "sha256": "", "label": "UNKNOWN"},
+        "items": items,
+        "next_cursor": rows[limit - 1]["rank"] if len(rows) > limit else None,
+    }
 
 
 @app.post("/api/decisions/{decision_id}/approve", response_model=schemas.DecisionState)

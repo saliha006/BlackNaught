@@ -4,6 +4,7 @@ import logging
 from datetime import UTC, datetime
 
 from .bus import EventBus, minute_of
+from .config import read_secret, settings
 from .db import Db
 from .events import event_id
 from .geocode import Geocoder
@@ -12,6 +13,8 @@ from .ingest.feeds import Outage
 from .ingest.poller import Poller, new_client
 from .ingest.sources import DNO, dno_poll, elexon_poll
 from .sensors import SensorTracker
+from .survival import load
+from .triage import Scorer
 from .writer import Writer
 
 log = logging.getLogger(__name__)
@@ -31,6 +34,7 @@ class Runtime:
         self.writer = Writer(Db("bn_ingest"))
         self.client = new_client()
         self.geocoder = Geocoder(self.ingest_db, self.client)
+        self.scorer = Scorer(Db("bn_agent"), load(settings().model_path), bytes.fromhex(read_secret("bidx_key")))
         self.tasks: list[asyncio.Task] = []
 
     async def outages_changed(self, source: str, changed: list[tuple[int, Outage]]) -> None:
@@ -46,7 +50,9 @@ class Runtime:
     async def handle(self, event: dict) -> None:
         payload = event["payload"]
         kind = payload["kind"]
-        if kind in ("heartbeat", "last_gasp"):
+        if kind == "dno_fault":
+            self.scorer.wake.set()  # re-rank now rather than waiting for the next 30 s tick
+        elif kind in ("heartbeat", "last_gasp"):
             track = self.sensors.heartbeat if kind == "heartbeat" else self.sensors.last_gasp
             transition = track(payload["sensor_id"], payload["cell_l1"], event["label"], event["observed_at"])
             if transition:
@@ -76,6 +82,7 @@ class Runtime:
         self.tasks = [asyncio.create_task(self.writer.run(), name="writer")]
         self.tasks.append(asyncio.create_task(self.bus.consume(self.handle), name="bus"))
         self.tasks.append(asyncio.create_task(self.housekeeping(), name="housekeeping"))
+        self.tasks.append(asyncio.create_task(self.scorer.run(), name="scorer"))
         self.tasks += [asyncio.create_task(p.run(), name=f"poll:{p.health.source}") for p in self.pollers()]
 
     async def stop(self) -> None:
@@ -87,3 +94,4 @@ class Runtime:
         await self.client.aclose()
         self.ingest_db.close()
         self.writer.db.close()
+        self.scorer.db.close()

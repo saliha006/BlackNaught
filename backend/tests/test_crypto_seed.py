@@ -1,6 +1,7 @@
 import random
 import sys
 import uuid
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -77,10 +78,12 @@ async def test_seed_places_patients_on_real_footprints(db_factory, superuser):
     superuser.run("TRUNCATE outage, outage_version, postcode_geo, patient RESTART IDENTITY CASCADE")
     superuser.run("INSERT INTO postcode_geo VALUES ('N1 3LD', 51.5456, -0.0890, 'E01', 'Islington', true, now()),"
                   " ('N1 3LE', 51.5445, -0.0891, 'E01', 'Islington', true, now())")
-    o = feeds.Outage("ukpn", "INCD-9", "active", feeds.timeparse.iso("2026-10-17T20:00:00Z"),
+    old = feeds.Outage("ukpn", "INCD-OLD", "active", datetime.now(UTC) - timedelta(days=2),
+                       postcodes=["N1 3LD"], lat=51.545, lon=-0.089)
+    o = feeds.Outage("ukpn", "INCD-9", "active", datetime.now(UTC) - timedelta(hours=1),
                      postcodes=["N1 3LD", "N1 3LE"], lat=51.545, lon=-0.089)
-    await store.sync(db_factory("bn_ingest"), "ukpn", [o], feeds.timeparse.iso("2026-10-17T21:00:00Z"))
-    n = seed(superuser, per_outage=15, two_houses=1, rng=random.Random(5))
+    await store.sync(db_factory("bn_ingest"), "ukpn", [o, old], datetime.now(UTC))
+    n = seed(superuser, per_outage=15, two_houses=1, rng=random.Random(5))  # the 2-day-old fault gets nobody
     assert n == 17
     assert superuser.run("SELECT count(DISTINCT cell_l1) FROM patient")[0][0] >= 1
     dek, bidx = keys()

@@ -62,21 +62,27 @@ VALUES (CAST(:id AS uuid), CAST(:household AS uuid), :cell, :bidx, :contact, :de
 """
 
 
-def footprints(conn: pg8000.native.Connection, limit: int) -> list[tuple[int, str, float, float]]:
-    """(outage_id, postcode, lat, lon) for active real faults, using geocoded postcodes."""
+def footprints(conn: pg8000.native.Connection, limit: int, max_age_h: float) -> list[tuple[int, str, float, float]]:
+    """(outage_id, postcode, lat, lon) for recent active real faults, using geocoded postcodes.
+
+    Only recent faults: someone enrolled on a days-old fault would long since have run out of reserve, which makes
+    every synthetic patient escalate and tells the demo nothing.
+    """
     return conn.run(
         "SELECT o.outage_id, g.postcode, g.lat, g.lon FROM bn.outage o"
         " JOIN bn.postcode_geo g ON g.postcode = ANY(o.postcodes) AND g.valid"
-        " WHERE o.status = 'active' ORDER BY o.outage_id, g.postcode LIMIT :limit",
-        limit=limit,
+        " WHERE o.status = 'active' AND o.started_at > now() - make_interval(secs => CAST(:age AS float8) * 3600)"
+        " ORDER BY o.outage_id, g.postcode LIMIT :limit",
+        limit=limit, age=max_age_h,
     )
 
 
-def seed(conn: pg8000.native.Connection, per_outage: int, two_houses: int | None, rng: random.Random) -> int:
+def seed(conn: pg8000.native.Connection, per_outage: int, two_houses: int | None, rng: random.Random,
+         max_age_h: float = 6.0) -> int:
     dek, bidx = keys()
     rows: list[dict[str, Any]] = []
     by_outage: dict[int, list[tuple[str, float, float]]] = {}
-    for outage_id, postcode, lat, lon in footprints(conn, 5000):
+    for outage_id, postcode, lat, lon in footprints(conn, 5000, max_age_h):
         by_outage.setdefault(outage_id, []).append((postcode, lat, lon))
     for outage_id, places in by_outage.items():
         for k in range(per_outage):
@@ -96,13 +102,14 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--per-outage", type=int, default=15)  # ≥ 15 per demo cell so k≥11 cells aren't all hidden
     parser.add_argument("--two-houses", type=int)
+    parser.add_argument("--max-age-h", type=float, default=6.0)
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--database")
     args = parser.parse_args()
     conn = connect("bn_migrator", args.database)
     try:
         conn.run("SET ROLE bn_owner")
-        print("patients:", seed(conn, args.per_outage, args.two_houses, random.Random(args.seed)))
+        print("patients:", seed(conn, args.per_outage, args.two_houses, random.Random(args.seed), args.max_age_h))
     finally:
         conn.close()
 

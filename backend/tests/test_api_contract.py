@@ -78,15 +78,6 @@ def test_footprint_scale():
 
 
 @pytest.mark.anyio
-async def test_triage_two_houses_story(client):
-    items = (await client.get("/api/triage")).json()["items"]
-    concentrator, ventilator = items[0], items[1]
-    assert concentrator["escalate"] and concentrator["q_used"] == "q90"
-    assert not ventilator["escalate"]
-    assert concentrator["outage_id"] == ventilator["outage_id"]
-
-
-@pytest.mark.anyio
 async def test_patient_never_gets_eta(client):
     body = (await client.get("/api/me/home")).json()
     assert "eta" not in str(body).lower()

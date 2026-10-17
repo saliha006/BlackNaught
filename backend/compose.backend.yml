@@ -27,6 +27,7 @@ services:
       - ../db:/db:ro
       - ../fixtures:/fixtures:ro
       - ../contracts:/contracts
+      - ../../data/raw:/data/raw:ro
     environment:
       BN_DB_HOST: db
       BN_DB_NAME: blacknaught

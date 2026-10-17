@@ -38,6 +38,13 @@ def test_ukpn_parse_real_feed():
         assert o.cell_l1 is None or o.cell_l1.startswith("L1:")
 
 
+def test_ukpn_umbrella_records_with_placeholder_dates_are_rejected():
+    umbrella = {"incidentreference": "MULT-1", "creationdatetime": "0001-01-01T00:00:00", "statusid": 0,
+                "powercuttype": "Multiple", "fullpostcodedata": None}
+    valid, rejected = split_valid([umbrella], feeds.parse_ukpn)
+    assert not valid and "placeholder timestamp" in rejected[0][1]
+
+
 def test_ukpn_status_mapping():
     base = {"incidentreference": "I", "creationdatetime": "2026-10-17T10:00:00", "fullpostcodedata": "N13LD;N13LE"}
     rows = [{**base, "statusid": 5, "powercuttype": "Restored", "restoreddatetime": "2026-10-17T12:00:00"},

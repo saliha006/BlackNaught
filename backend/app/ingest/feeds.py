@@ -14,6 +14,7 @@ NPG_URL = "https://northernpowergrid.opendatasoft.com/api/explore/v2.1/catalog/d
 SSEN_URL = "https://ssen-powertrack-api.opcld.com/gridiview/reporter/info/livefaults"
 ELEXON_URL = "https://data.elexon.co.uk/bmrs/api/v1/system/frequency"
 UKPN_RESTORED_STATUS = 5
+EARLIEST_PLAUSIBLE_YEAR = 2000
 
 
 @dataclass
@@ -43,6 +44,13 @@ class Outage:
         return hashlib.sha256(json.dumps(key, default=str).encode()).digest()
 
 
+def _plausible(at: datetime) -> datetime:
+    """UKPN's 'Multiple' umbrella records carry .NET's DateTime.MinValue (0001-01-01) as their start."""
+    if at.year < EARLIEST_PLAUSIBLE_YEAR:
+        raise ValueError(f"placeholder timestamp {at.isoformat()}")
+    return at
+
+
 def _postcodes(values: list[str]) -> list[str]:
     return sorted({p for p in (normalise(v) for v in values) if p})
 
@@ -57,7 +65,7 @@ def parse_ukpn(records: list[dict[str, Any]]) -> list[Outage]:
             source="ukpn",
             source_ref=r["incidentreference"],
             status=status,
-            started_at=timeparse.uk_local(r["creationdatetime"]),
+            started_at=_plausible(timeparse.uk_local(r["creationdatetime"])),
             restored_at=timeparse.uk_local(r["restoreddatetime"]) if r.get("restoreddatetime") else None,
             restored_explicit=restored and bool(r.get("restoreddatetime")),
             customers=r.get("nocustomeraffected"),
