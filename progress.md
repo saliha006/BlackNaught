@@ -14,8 +14,8 @@
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-17 22:21:**
-  - `main`: foundation, contracts, event pipeline, live ingest, encrypted synthetic register. 113 tests green on the VM (s390x), 98% coverage.
+- **As of 2026-10-17 22:23:**
+  - `main`: foundation, contracts, pipeline, live ingest running 24/7 on the VM, encrypted register. 115 tests green on s390x, 98% coverage.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - All other docs stay local and are never pushed: the PRD, briefs, decisions and research.
 
@@ -68,3 +68,9 @@
 - Touched: `backend/app/{crypto,seed}.py`, `backend/tests/conftest.py`
 - ⚠️ Conflicts: @ahmed: the DEK is read from `secrets/dek` for now; wrapping it with your signer's KEK is still open (PRD §14). @nate: device/reserve mix in `seed.DEVICES` uses PRD §2 ranges until your household distributions land; swap them in there.
 - Conflict status: open
+
+### 2026-10-17 22:23 — NPg time + customer fix — @sali
+- Shipped: NPg `loggedtime` parsed as UK wall-clock (the feed mislabels BST as +00:00); customers fall back to `totalpredictedpowercut`; tests force `BN_WORKERS=0`. Live ingest now runs continuously on the VM (`compose.backend.yml`, `BN_WORKERS=1`). 115 tests on s390x.
+- Touched: `backend/app/{timeparse,ingest/feeds}.py`, `backend/compose.backend.yml`, `backend/tests/*`
+- ⚠️ Conflicts: none
+- Conflict status: none
