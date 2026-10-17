@@ -14,8 +14,8 @@
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-17 22:42:**
-  - `main`: ingest → register → triage → grading → audit → approvals → live SSE, all on the VM. 169 tests green on s390x, 98% coverage.
+- **As of 2026-10-17 22:44:**
+  - `main`: ingest → register → triage → grading → audit → approvals → live SSE, all running on the VM. 169 tests green on s390x, 98% coverage.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - All other docs stay local and are never pushed: the PRD, briefs, decisions and research.
 
@@ -104,3 +104,9 @@
 - Touched: `backend/app/{sse,runtime,main,triage,grading,bus}.py`, `backend/app/ingest/poller.py`
 - ⚠️ Conflicts: @rama: `new EventSource('/stream')`; on `resync` refetch the REST endpoints; `triage` events only carry counts, so refetch `/api/triage` on them. @ahmed: nginx needs `proxy_buffering off` + `proxy_read_timeout 1h` on `/stream` (system-design-choices §14).
 - Conflict status: open
+
+### 2026-10-17 22:44 — SSE id fix — @sali
+- Shipped: SSE event ids are strings (sse-starlette rejected ints and the stream crashed on its first event, caught on the VM); tests now encode every message with `ServerSentEvent`. Live check: stats + triage events streaming, 0 errors. 169 tests on s390x.
+- Touched: `backend/app/sse.py`, `backend/tests/test_sse.py`
+- ⚠️ Conflicts: none
+- Conflict status: none
