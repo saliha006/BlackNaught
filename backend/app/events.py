@@ -29,6 +29,7 @@ class LastGasp(_Payload):
 
 class DnoFault(_Payload):
     kind: Literal["dno_fault"] = "dno_fault"
+    outage_id: int
     source_ref: str
     status: Literal["active", "restored", "vanished", "planned"]
     postcodes: list[str]

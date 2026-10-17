@@ -6,7 +6,8 @@ from pydantic import ValidationError
 
 from app.contracts import export
 from app.events import Event, event_id
-from app.main import app
+from app.ingest import feeds, store
+from app.main import app, footprint_scale
 
 GETS = [
     "/api/health",
@@ -26,8 +27,9 @@ GETS = [
 
 @pytest.fixture
 async def client():
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as c:
-        yield c
+    async with app.router.lifespan_context(app):
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as c:
+            yield c
 
 
 @pytest.mark.anyio
@@ -37,11 +39,42 @@ async def test_every_get_endpoint_serves_its_contract(client, path):
     assert r.status_code == 200, r.text
 
 
+@pytest.fixture
+async def seeded(db_factory, superuser):
+    superuser.run("TRUNCATE outage, outage_version, freq_reading RESTART IDENTITY CASCADE")
+    now = datetime.now(UTC)
+    rows = [feeds.Outage("ukpn", "A", "active", now, customers=40, postcodes=["N1 3LD", "N1 3LE"], lat=51.54, lon=-0.09),
+            feeds.Outage("ssen", "B", "restored", now, restored_at=now, customers=5000)]
+    db = db_factory("bn_ingest")
+    await store.sync(db, "ukpn", rows[:1], now)
+    await store.sync(db, "ssen", rows[1:], now)
+    superuser.run("INSERT INTO freq_reading VALUES ('gb', now() - interval '1 min', 49.95), ('gb', now(), 49.70)")
+
+
 @pytest.mark.anyio
-async def test_status_filter(client):
-    r = await client.get("/api/outages?status=restored")
-    assert {o["status"] for o in r.json()} == {"restored"}
+async def test_outages_come_from_the_database(client, seeded):
+    body = (await client.get("/api/outages")).json()
+    assert {o["source"] for o in body} == {"ukpn", "ssen"}
+    active = (await client.get("/api/outages?status=active")).json()
+    assert len(active) == 1 and active[0]["postcode_count"] == 2 and active[0]["scale"] == "street"
+    assert active[0]["centroid"] == [51.54, -0.09] and active[0]["cell_l1"].startswith("L1:")
     assert (await client.get("/api/outages?status=bogus")).status_code == 422
+
+
+@pytest.mark.anyio
+async def test_stress_uses_latest_reading(client, seeded):
+    body = (await client.get("/api/grids/gb/stress")).json()
+    assert body["hz"] == 49.7 and body["state"] == "STRESSED" and body["label"] == "LIVE"
+
+
+@pytest.mark.anyio
+async def test_health_without_workers(client):
+    assert (await client.get("/api/health")).json()["db"] is True
+    assert (await client.get("/api/sources/health")).json()["sources"] == []
+
+
+def test_footprint_scale():
+    assert [footprint_scale(c) for c in (None, 1, 100, 101, 2000, 2001)] ==         ["unresolved", "street", "street", "area", "area", "region"]
 
 
 @pytest.mark.anyio
@@ -93,7 +126,7 @@ def test_event_envelope_validates_and_rejects():
         "observed_at": now,
         "received_at": now,
         "label": "LIVE",
-        "payload": {"kind": "dno_fault", "source_ref": "INC1", "status": "active", "postcodes": ["N1 3LD"]},
+        "payload": {"kind": "dno_fault", "outage_id": 1, "source_ref": "INC1", "status": "active", "postcodes": ["N1 3LD"]},
     }
     assert Event.model_validate(ok).payload.kind == "dno_fault"
     with pytest.raises(ValidationError):
