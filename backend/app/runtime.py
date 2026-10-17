@@ -3,6 +3,7 @@ import asyncio
 import logging
 from datetime import UTC, datetime
 
+from . import audit
 from .bus import EventBus, minute_of
 from .config import read_secret, settings
 from .db import Db
@@ -37,6 +38,9 @@ class Runtime:
         self.geocoder = Geocoder(self.ingest_db, self.client)
         self.scorer = Scorer(Db("bn_agent"), load(settings().model_path), bytes.fromhex(read_secret("bidx_key")))
         self.grader = Grader(Db("bn_agent"))
+        url = settings().signer_url
+        self.signer = audit.HttpSigner(self.client, url) if url else None
+        self.checkpointer = audit.Checkpointer(self.grader.db, self.signer)
         self.tasks: list[asyncio.Task] = []
 
     async def outages_changed(self, source: str, changed: list[tuple[int, Outage]]) -> None:
@@ -61,7 +65,10 @@ class Runtime:
                 self.writer.put("sensor_transition", transition)
 
     async def housekeeping(self) -> None:
-        """Dropout sweep every 30 s; per-minute event counts every 60 s."""
+        """Dropout sweep every 30 s; per-minute event counts every 60 s; audit checkpoints when due."""
+        model = self.scorer.model
+        await audit.append(self.grader.db, "model_loaded", "system", model.model_id,
+                           {"sha256": model.sha256, "label": model.label})
         ticks = 0
         while True:
             await asyncio.sleep(SWEEP_S)
@@ -73,6 +80,7 @@ class Runtime:
                 seen, dropped = self.bus.take_counts()
                 for kind in seen.keys() | dropped.keys():
                     self.writer.put("event_counts", (minute_of(now), kind, seen[kind], dropped[kind]))
+            await self.checkpointer.maybe_checkpoint(now)
 
     def pollers(self) -> list[Poller]:
         out = [Poller(self.health[s], dno_poll(s, self.client, self.ingest_db, self.geocoder, self.outages_changed))

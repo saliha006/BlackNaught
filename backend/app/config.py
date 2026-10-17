@@ -21,6 +21,7 @@ class Settings:
     migrations_dir: Path
     fixtures_dir: Path
     model_path: Path
+    signer_url: str | None
 
 
 @lru_cache
@@ -32,4 +33,5 @@ def settings() -> Settings:
         migrations_dir=Path(os.environ.get("BN_MIGRATIONS_DIR", "/db/migrations")),
         fixtures_dir=Path(os.environ.get("BN_FIXTURES_DIR", "/fixtures")),
         model_path=Path(os.environ.get("BN_MODEL_PATH", "/srv/models/km_enwl.json")),
+        signer_url=os.environ.get("BN_SIGNER_URL") or None,
     )

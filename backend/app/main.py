@@ -9,7 +9,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request, Response
 
-from . import schemas, stress
+from . import audit, schemas, stress
 from .grading import summarise
 from .config import settings
 from .db import Db
@@ -196,5 +196,6 @@ def me_home():
 
 
 @app.get("/api/audit/verify", response_model=schemas.AuditVerify)
-def audit_verify():
-    return fixture("audit_verify")
+async def audit_verify(request: Request):
+    runtime = request.app.state.runtime
+    return await audit.verify(request.app.state.api_db, runtime.signer if runtime else None)
