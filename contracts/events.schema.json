@@ -8,6 +8,10 @@
           "title": "Kind",
           "type": "string"
         },
+        "outage_id": {
+          "title": "Outage Id",
+          "type": "integer"
+        },
         "source_ref": {
           "title": "Source Ref",
           "type": "string"
@@ -31,6 +35,7 @@
         }
       },
       "required": [
+        "outage_id",
         "source_ref",
         "status",
         "postcodes"

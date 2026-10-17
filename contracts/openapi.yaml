@@ -39,6 +39,15 @@ paths:
             pattern: ^(active|restored|vanished|planned)$
           - type: 'null'
           title: Status
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 2000
+          minimum: 1
+          default: 500
+          title: Limit
       responses:
         '200':
           description: Successful Response
