@@ -108,7 +108,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 08:52:**
+- **As of 2026-10-18 09:23:**
   - `main`: full backend live on the VM + home-sensor probe; 222 backend tests green on s390x, 96% coverage; frontend 145 tests. Live UI: https://148-100-78-95.sslip.io:8443 (proof.sh re-run 05:10). README for judges is live.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
@@ -972,4 +972,10 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Tests: 263 on s390x (30 in audit and contract), 18 offbox and relay tests on the laptop, and the workflow YAML parses. Deployed with `restart app`, about 5 s of downtime.
 - Touched: `backend/app/main.py`, `backend/app/schemas.py`, `backend/tests/test_audit.py`, `backend/tests/test_api_contract.py`, `contracts/openapi.yaml`, `offbox/publish.py`, `offbox/tests/test_publish.py`, `.github/workflows/audit-checkpoints.yml`
 - ⚠️ Conflicts: @sali: one new read-only route in your `main.py`, and `openapi.yaml` re-exported (it only adds that route). Please keep the `audit-checkpoints` branch and the workflow when you delete `context`. The laptop loop stops once the Action's first run is green.
+- Conflict status: open
+
+### 2026-10-18 09:23 — dashboard layout + Back navigation — @sali — done
+- Shipped: Back from the map or the dashboard now returns to the landing page (views swap with replaceState). Dashboard: forecast + charts left, sticky tabs right, two houses full width at the bottom, opened. Checked in headless Chromium (both Back paths land on the landing page).
+- Touched: `frontend/src/main.ts`, `frontend/src/styles.css`
+- ⚠️ Conflicts: @rama: the charts moved out of the Power cuts tab into the dashboard's left column.
 - Conflict status: open
