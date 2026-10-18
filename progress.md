@@ -12,6 +12,18 @@
 - Conflict status: open | resolved by @<Name> <date>
 ```
 
+## Who owns what
+Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if you touch it. Full task lists are in each person's brief (`builder-file-<name>.md`, shared on Discord), not on GitHub.
+
+| Who | Role | Branch | Owns (paths / pieces) | How the rest plugs into it |
+|---|---|---|---|---|
+| **Sali** `saliha006` | Backend; repo + docs owner | `sali-backend` | `/backend`, `/db`, `contracts/openapi.yaml`. Ingest, triage, grading, audit chain, operator login + approvals, SSE `/stream`, k≥11 map, area-risk baseline, CAP export, `/me/home`, IODA. **Status: brief tasks 1–20 done and live on the VM** | Everything is served under `/api/*` (docs at `/api/docs`) |
+| **Ahmed** `meep-boop` | Platform + agent; **VM owner** | `ahmed-platform` | `/infra` (team compose, nginx edge with PQ TLS, LUKS), `/agent` (agent loop, evidence combiner), signer (ML-DSA), sensor simulator, Granite, NNPA serving, VM keys + portal restarts | Agent creates decisions with `app.decisions.create()`; signer contract `POST /sign`, `POST /verify` (set `BN_SIGNER_URL`); simulator publishes events per `contracts/events.schema.json` |
+| **Nate** `aldrichbanas07` | Data + ML | `nate-ml` | `/ml`, `grids/*.yaml`, `contracts/model.md`. M2 duration model, M8 weather fault risk, LR table, household distributions, evaluation numbers | M2 replaces `KmModel` behind `predict(elapsed_h) → {quantiles, surv[24]}`; M8 replaces `arearisk.area_risk()`; data in `~/data/raw/` on the VM |
+| **Rama** `rama0623` | Frontend; video edit lead | `Rama-Frontend` | `/frontend` (Vite + TS + MapLibre): map, triage list, two-houses card, agent panel, audit view, CAP/SMS previews, "my home"; screen recordings + video edit | Builds against the live `/api/*` + `/stream` (mocks in `fixtures/api/`); `dist/` is served by Ahmed's nginx |
+
+**Shared** (anyone may edit; flag it): `contracts/*`, `fixtures/*`, `docker-compose.yml`.
+
 ## How we work (read once)
 **GitHub:**
 - Code and push from your **own laptop**, as yourself: `git config user.email` must be your GitHub email, because judges read the history.
