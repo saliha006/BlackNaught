@@ -6,4 +6,7 @@ export function formatElapsed(hours: number): string {
   return m === 0 ? `${h} h` : `${h} h ${m} min`;
 }
 
+export const formatAgo = (seconds: number) =>
+  seconds < 120 ? `${seconds} s ago` : `${Math.round(seconds / 60)} min ago`;
+
 export const formatCount = (n: number | null) => (n === null ? '–' : n.toLocaleString('en-GB'));

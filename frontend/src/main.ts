@@ -4,15 +4,21 @@ import '@fontsource/ibm-plex-sans/500.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import './styles.css';
 import './landing.css';
-import { ApiError, getAreaRisk, getCells, getOutages, getStress, getTriage, isLive } from './api';
+import km from '../../backend/models/km_enwl.json';
+import { ApiError, getAreaRisk, getCells, getGrades, getOutages, getSourcesHealth, getStress, getTriage, isLive } from './api';
+import { renderAccuracy } from './charts/accuracy';
+import { chartCard, setBadge, showUnavailable } from './charts/card';
+import { renderFeeds } from './charts/feeds';
+import { renderOutageLength } from './charts/outageLength';
+import { renderRisk } from './charts/risk';
 import { renderControls } from './controls';
 import { isLocated } from './geo';
 import { setupLanding } from './landing';
 import { createMap, type LayerGroup, type OutageMap, type Padding } from './map';
 import { markSelected, renderOutageList, sortOutages } from './outageList';
 import { renderPredict } from './predict';
-import { allOperators, escalatedOutages, type Filters, filterOutages } from './state';
-import type { Cell, Outage } from './types';
+import { allOperators, escalatedOutages, type Filters, filterOutages, showsSource } from './state';
+import type { AreaRisk, Cell, Grades, Outage, SourceHealth } from './types';
 
 // The opening dive is slower than a click-to-fly so the city has time to build up around the beam.
 const DIVE_MS = 5200;
@@ -34,6 +40,11 @@ let cells: Cell[] = [];
 let visible: Outage[] = [];
 let escalated = new Set<number>();
 let onMap = false;
+let outagesLoaded = false;
+let panelsLoaded = false;
+let grades: Grades | null = null;
+let risk: AreaRisk[] | null = null;
+let feeds: SourceHealth[] | null = null;
 
 const filters: Filters = { operators: allOperators(), escalationsOnly: false };
 const layers: Record<LayerGroup, boolean> = { beams: true, sweep: true, cells: true };
@@ -42,6 +53,30 @@ const controls = renderControls($('#controls'), filters, layers, {
   filters: render,
   layer: (group, on) => map?.setLayerVisible(group, on),
 });
+
+const analysis = $('#analysis');
+const cards = {
+  length: chartCard(analysis, 'Outage length vs history', 'Live cuts on the survival curve of 312,936 ENWL outages', 'LIVE'),
+  accuracy: chartCard(analysis, 'Prediction accuracy', 'Brier score of predictions graded against real GB restorations', 'LIVE'),
+  risk: chartCard(analysis, "Tomorrow's risk", 'Chance of 3 or more faults per ENWL district; not filtered by operator', null),
+  feeds: chartCard(analysis, 'Feed health', 'Time since each feed last delivered; the tick marks stale (2× its polling interval)', 'LIVE'),
+};
+for (const card of Object.values(cards)) card.note.textContent = 'Loading…';
+
+/** Charts follow the same filters as the map and list, so every number on screen agrees. */
+function renderCharts() {
+  if (outagesLoaded) renderOutageLength(cards.length, km.curve, visible, escalated);
+  // Until the panel data arrives, "unavailable" would be a lie; the cards keep saying Loading.
+  if (!panelsLoaded) return;
+  if (grades) renderAccuracy(cards.accuracy, grades, filters.operators);
+  else showUnavailable(cards.accuracy, 'Grading');
+  if (risk) {
+    setBadge(cards.risk, risk[0]?.label ?? null);
+    renderRisk(cards.risk, risk);
+  } else showUnavailable(cards.risk, 'The district forecast');
+  if (feeds) renderFeeds(cards.feeds, feeds.filter((f) => showsSource(filters, f.source)));
+  else showUnavailable(cards.feeds, 'Feed health');
+}
 
 /** The space the toggle row, Predict strip and outage panel cover, so the camera centres on the open part of the map. */
 function chromePadding(): Padding {
@@ -58,6 +93,7 @@ function render() {
   count.textContent = String(visible.length);
   const filtered = visible.length < active.length;
   renderOutageList(list, visible, (o) => pick(o.id), filtered ? 'No power cuts match these filters.' : undefined);
+  renderCharts();
 }
 
 function pick(id: number, duration?: number) {
@@ -117,6 +153,7 @@ async function start() {
   map = m;
   active = outages.filter((o) => o.status === 'active');
   cells = cellData;
+  outagesLoaded = true;
   escalated = escalatedOutages(triage);
   controls.setEscalations(triage ? escalated.size : null);
 
@@ -126,10 +163,26 @@ async function start() {
   if (onMap) dive();
 }
 
-// Each layer fails on its own: a missing forecast shows "No data" without holding up the map.
-Promise.all([getAreaRisk().catch(() => null), getStress().catch(() => null)]).then(([risk, stress]) =>
-  renderPredict($('#predict-tiles'), risk, stress),
-);
+// Each panel fails on its own: a missing forecast shows "No data" without holding up the map.
+Promise.all([
+  getAreaRisk().catch(() => null),
+  getStress().catch(() => null),
+  getGrades().catch(() => null),
+  getSourcesHealth().catch(() => null),
+]).then(([riskData, stress, gradeData, health]) => {
+  risk = riskData;
+  grades = gradeData;
+  feeds = health?.sources ?? null;
+  panelsLoaded = true;
+  renderPredict($('#predict-tiles'), risk, stress);
+  renderCharts();
+});
+
+let resizeTimer = 0;
+addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = window.setTimeout(renderCharts, 150);
+});
 
 start().catch((err: Error) => {
   list.replaceChildren();

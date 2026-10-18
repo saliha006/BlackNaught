@@ -1,4 +1,4 @@
-import type { AreaRisk, Cell, GridStress, Outage, SourceHealth, Triage } from './types';
+import type { AreaRisk, Cell, Grades, GridStress, Outage, SourceHealth, Triage } from './types';
 
 export const isLive = import.meta.env.MODE === 'live';
 
@@ -30,6 +30,8 @@ export const getCells = () =>
 
 export const getTriage = (limit = 3) =>
   isLive ? live<Triage>(`/api/triage?limit=${limit}`) : fixture<Triage>('triage');
+
+export const getGrades = () => (isLive ? live<Grades>('/api/agent/grades') : fixture<Grades>('agent_grades'));
 
 export const getAreaRisk = () => (isLive ? live<AreaRisk[]>('/api/areas/risk') : fixture<AreaRisk[]>('areas_risk'));
 

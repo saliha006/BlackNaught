@@ -1,7 +1,7 @@
 import km from '../../backend/models/km_enwl.json';
 import { getSourcesHealth, getTriage } from './api';
 import { mountAsciiBolt } from './asciiBolt';
-import { formatElapsed } from './format';
+import { formatAgo, formatElapsed } from './format';
 import type { SourceHealth, TriageItem } from './types';
 
 const DEVICE_NAMES: Record<string, string> = {
@@ -46,7 +46,7 @@ export function triageRow(item: TriageItem): string {
 }
 
 export function sourceRow(s: SourceHealth): string {
-  const age = s.staleness_s === null ? '–' : s.staleness_s < 120 ? `${s.staleness_s} s ago` : `${Math.round(s.staleness_s / 60)} min ago`;
+  const age = s.staleness_s === null ? '–' : formatAgo(s.staleness_s);
   return `
     <tr>
       <th scope="row">${SOURCE_NAMES[s.source] ?? s.source}</th>

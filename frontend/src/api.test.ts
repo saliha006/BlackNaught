@@ -14,6 +14,9 @@ describe('fixture mode', () => {
     expect((await api.getCells())[0].cell_id).toBe('L1:5153:-6');
     expect((await api.getTriage()).items[0].patient_ref).toBe('P-3F2A1C');
     expect((await api.getSourcesHealth()).sources.map((s) => s.source)).toContain('npg');
+    expect((await api.getGrades()).by_horizon.length).toBeGreaterThan(0);
+    expect((await api.getAreaRisk())[0].district).toBe('Manchester');
+    expect((await api.getStress()).state).toBe('NORMAL');
   });
 });
 

@@ -355,12 +355,239 @@ body {
   color: var(--text-faint);
 }
 
+/* The rail scrolls as a whole; the list is capped so the analysis below it stays one scroll away */
+.panel {
+  overflow-y: auto;
+  scrollbar-color: var(--n-3) transparent;
+}
+
 .panel__list {
+  flex: none;
+  max-height: 40vh;
   list-style: none;
   margin: 0;
   padding: 0 var(--space-3) var(--space-3);
   overflow-y: auto;
   scrollbar-color: var(--n-3) transparent;
+}
+
+/* Analysis cards and chart marks: white for the data, grey for context, amber/red only for severity */
+.analysis {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  background: rgb(0 0 0 / 0.2);
+}
+
+.card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.card__head > div {
+  flex: 1;
+}
+
+.card__head h3 {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 500;
+}
+
+.card__sub,
+.card__note {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--text-faint);
+}
+
+.card__note {
+  color: var(--text-muted);
+}
+
+.card__toggle {
+  flex: none;
+  padding: 2px var(--space-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font: 500 0.75rem / 1.4 var(--font-sans);
+  cursor: pointer;
+}
+
+.card__toggle[aria-pressed='true'] {
+  background: var(--n-9);
+  color: var(--n-0);
+}
+
+.card__plot svg {
+  display: block;
+  overflow: visible;
+}
+
+.card__rows {
+  margin-top: var(--space-3);
+}
+
+.card__plot .grid {
+  stroke: rgb(255 255 255 / 0.08);
+  stroke-width: 1;
+}
+
+.card__plot .reference {
+  stroke: rgb(255 255 255 / 0.28);
+  stroke-width: 1;
+}
+
+.card__plot .tick {
+  fill: var(--text-faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.card__plot .value {
+  fill: var(--text);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.card__plot .line {
+  fill: none;
+  stroke: var(--n-9);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.card__plot .area {
+  fill: rgb(237 237 239 / 0.1);
+}
+
+.card__plot .crosshair {
+  stroke: rgb(255 255 255 / 0.4);
+  stroke-width: 1;
+}
+
+.card__plot .track {
+  fill: rgb(255 255 255 / 0.06);
+}
+
+.card__plot [data-tone='ink'] {
+  fill: var(--n-9);
+}
+
+.card__plot [data-tone='context'] {
+  fill: var(--n-5);
+}
+
+.card__plot [data-tone='risk'] {
+  fill: var(--sev-risk);
+}
+
+.card__plot [data-tone='escalate'] {
+  fill: var(--sev-escalate);
+}
+
+/* Surface ring keeps dots legible where they sit on the line or on each other */
+.card__plot .dot {
+  stroke: #141518;
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.card__plot .hit,
+.card__plot .dot-hit {
+  fill: transparent;
+  cursor: default;
+}
+
+.card__plot .hit:focus-visible,
+.card__plot .dot-hit:focus-visible {
+  outline: none;
+  stroke: var(--n-9);
+  stroke-width: 1.5;
+}
+
+.card__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.legend__line {
+  width: 14px;
+  height: 2px;
+  background: var(--n-9);
+}
+
+.legend__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--n-9);
+}
+
+.legend__dot[data-tone='escalate'] {
+  background: var(--sev-escalate);
+}
+
+.card__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.card__table th,
+.card__table td {
+  padding: var(--space-1) var(--space-2) var(--space-1) 0;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.card__table th {
+  font-weight: 500;
+  color: var(--text-faint);
+}
+
+.chart-tip {
+  position: fixed;
+  z-index: 20;
+  display: grid;
+  gap: 2px;
+  max-width: 260px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-s);
+  background: rgb(19 19 21 / 0.95);
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 10px));
+}
+
+.chart-tip strong {
+  font-weight: 500;
+  color: var(--text);
 }
 
 .panel__loading,

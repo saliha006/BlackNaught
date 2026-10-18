@@ -54,6 +54,22 @@ export interface SourceHealth {
   label: Label;
 }
 
+export interface HorizonGrade {
+  h: number;
+  model_id: string;
+  source: string;
+  // Null while every prediction at this horizon is still censored: the outage hasn't resolved either way.
+  brier: number | null;
+  n: number;
+  n_censored: number;
+  bound: [number, number] | null;
+}
+
+export interface Grades {
+  by_horizon: HorizonGrade[];
+  trend: { at: string; brier: number; n?: number }[];
+}
+
 export interface AreaRisk {
   district: string;
   p_ge_k: number;
