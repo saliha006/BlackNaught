@@ -108,7 +108,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 11:15:**
+- **As of 2026-10-18 11:39:**
   - `main`: full backend live on the VM + home-sensor probe; 222 backend tests green on s390x, 96% coverage; frontend 152 tests. Live UI: https://148-100-78-95.sslip.io:8443 (proof.sh re-run 05:10). README for judges is live.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
@@ -996,3 +996,10 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts: @rama: the landing page gains the glance section; map beams now start off. Note at the top of your brief.
 - Conflict status: open
 
+
+### 2026-10-18 11:39 — live map in a macOS-style window on the landing page — @sali — done
+- Shipped: replaces the glance panel. The control room's map moves into a 93%-wide window (traffic-light title bar) between the navbar and the bolt, with fog, pins and radar; the location is asked on load (Sali's call); a small card says Checking your area, then You're safe (green) / Not safe (amber or red), and the map flies to the person. Refused location shows Location is off, never safe. Two-finger move on touch so one finger scrolls the page. Checked in headless Chromium: allowed (Manchester), refused, phone; 152 frontend tests.
+- Revert point: git tag `pre-terminal-map` (and `frontend/dist.pre-terminal` on the VM).
+- Touched: `frontend/index.html`, `src/main.ts`, `src/map.ts`, `src/status.ts` (new), `src/landing.css`; removed `src/glance.ts`
+- ⚠️ Conflicts: @rama: the landing page's glance panel is now the map window; the map element moves between the window and the control room.
+- Conflict status: open
