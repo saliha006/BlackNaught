@@ -5,6 +5,7 @@ import {
   Map as MapLibreMap,
   type MapOptions,
   NavigationControl,
+  Popup,
   setWorkerUrl,
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -50,9 +51,13 @@ const CITY = {
 // Sensor sweeps only read once streets are visible; below this they are a few pixels wide.
 const SWEEP_MINZOOM = 11;
 const BEAM_GLOW_OPACITY = 0.14;
+// The two severity hues from styles.css (--sev-escalate, --sev-risk) as sRGB, since MapLibre doesn't parse oklch()
+const FOG = { severe: '#e5484d', moderate: '#f0b13e' };
+const SEVERITY_WORD = { severe: 'Severe', moderate: 'Moderate' } as const;
+const OPERATOR_NAMES: Record<string, string> = { ukpn: 'UK Power Networks', ssen: 'SSEN', npg: 'Northern Powergrid' };
 
 export interface OutageMap {
-  setData(outages: Outage[], cells: Cell[]): void;
+  setData(outages: Outage[], cells: Cell[], escalated?: Set<number>): void;
   /** Fly down to street level over an outage. `duration` in ms; longer for the opening dive. */
   focus(outage: Located, duration?: number): void;
   onSelect(handler: (id: number) => void): void;
@@ -255,6 +260,25 @@ export async function createMap(container: HTMLElement, padding: () => Padding):
     paint: { 'line-color': '#ffffff', 'line-opacity': 0.35, 'line-width': 1 },
   });
   addSensorLayers(map);
+  // Severity fog: a soft red or amber glow over each live cut, sized with the zoom so it reads as an area, not a pin.
+  // No cut, no fog. Under the dots and beams, so the radar and the buildings still show through it.
+  map.addLayer({
+    id: 'severity-fog',
+    type: 'circle',
+    source: 'outages',
+    paint: {
+      'circle-radius': [
+        'interpolate', ['exponential', 2], ['zoom'],
+        5, ['*', ['get', 'radius'], 2.5],
+        10, ['*', ['get', 'radius'], 7],
+        15, ['*', ['get', 'radius'], 36],
+      ],
+      'circle-color': ['match', ['get', 'severity'], 'severe', FOG.severe, FOG.moderate],
+      'circle-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.42, 0.3],
+      'circle-blur': 0.9,
+      'circle-pitch-alignment': 'map',
+    },
+  });
   map.addLayer({
     id: 'outage-halo',
     type: 'circle',
@@ -280,12 +304,32 @@ export async function createMap(container: HTMLElement, padding: () => Padding):
   });
   addBeamLayers(map);
 
-  map.on('click', 'outage-dot', (e) => {
-    const id = e.features?.[0]?.properties?.id;
-    if (typeof id === 'number') selectHandler(id);
-  });
-  map.on('mouseenter', 'outage-dot', () => (map.getCanvas().style.cursor = 'pointer'));
-  map.on('mouseleave', 'outage-dot', () => (map.getCanvas().style.cursor = ''));
+  // Hover (or a tap, on a tablet) names the severity in words, so the colour is never the only signal
+  const label = new Popup({ closeButton: false, closeOnClick: false, className: 'fog-label', offset: 12 });
+  for (const layer of ['severity-fog', 'outage-dot']) {
+    map.on('click', layer, (e) => {
+      const id = e.features?.[0]?.properties?.id;
+      if (typeof id === 'number') selectHandler(id);
+    });
+    map.on('mousemove', layer, (e) => {
+      const p = e.features?.[0]?.properties;
+      if (!p) return;
+      map.getCanvas().style.cursor = 'pointer';
+      const sev = p.severity as keyof typeof SEVERITY_WORD;
+      const who = OPERATOR_NAMES[p.source] ?? String(p.source).toUpperCase();
+      const customers = typeof p.customers === 'number' ? ` · ${p.customers.toLocaleString('en-GB')} customers` : '';
+      const node = document.createElement('div');
+      const word = document.createElement('b');
+      word.textContent = SEVERITY_WORD[sev] ?? 'Power cut';
+      word.dataset.severity = sev;
+      node.append(word, ` ${p.scale} cut · ${who}${customers}`);
+      label.setLngLat(e.lngLat).setDOMContent(node).addTo(map);
+    });
+    map.on('mouseleave', layer, () => {
+      map.getCanvas().style.cursor = '';
+      label.remove();
+    });
+  }
 
   const select = (id: number | null) => {
     if (selected !== null) map.setFeatureState({ source: 'outages', id: selected }, { selected: false });
@@ -323,9 +367,9 @@ export async function createMap(container: HTMLElement, padding: () => Padding):
   });
 
   return {
-    setData(outages, cells) {
+    setData(outages, cells, escalated) {
       located = outages.filter(isLocated);
-      (map.getSource('outages') as GeoJSONSource).setData(outagesToGeoJSON(outages));
+      (map.getSource('outages') as GeoJSONSource).setData(outagesToGeoJSON(outages, escalated));
       (map.getSource('beams') as GeoJSONSource).setData(beamsToGeoJSON(outages));
       (map.getSource('cells') as GeoJSONSource).setData(cellsToGeoJSON(cells));
     },

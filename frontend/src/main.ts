@@ -143,17 +143,17 @@ function renderCharts() {
 
 /** The space the toggle row, Predict strip and outage panel cover, so the camera centres on the open part of the map. */
 function chromePadding(): Padding {
-  const top = $('#predict').getBoundingClientRect().bottom + 16;
+  const predict = $('#predict').getBoundingClientRect();
   const panel = $('.panel').getBoundingClientRect();
-  const houses = $('#two-houses').getBoundingClientRect();
+  // Side columns on wide screens: the map's open middle is between them. On a phone the cards stack top and bottom.
   return innerWidth > 720
-    ? { top, bottom: innerHeight - houses.top + 16, left: 40, right: innerWidth - panel.left + 16 }
-    : { top, bottom: innerHeight - panel.top + 16, left: 20, right: 20 };
+    ? { top: 120, bottom: 40, left: predict.right + 16, right: innerWidth - panel.left + 16 }
+    : { top: predict.bottom + 16, bottom: innerHeight - panel.top + 16, left: 20, right: 20 };
 }
 
 function render() {
   visible = filterOutages(active, filters, escalated);
-  map?.setData(visible, cells);
+  map?.setData(visible, cells, escalated);
   count.textContent = String(visible.length);
   const filtered = visible.length < active.length;
   renderOutageList(list, visible, (o) => pick(o.id), filtered ? 'No power cuts match these filters.' : undefined);

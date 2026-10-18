@@ -58,6 +58,9 @@ function house(name: string, item: TriageItem): HTMLElement {
   return box;
 }
 
+// Kept across live re-renders, so a refresh never snaps the card shut while someone is reading it
+let expanded = false;
+
 /** The demo centrepiece: one real fault, two synthetic households, different answers. */
 export function renderTwoHouses(root: HTMLElement, pair: Pair | null, outage: Outage | undefined, onShow: (id: number) => void) {
   const title = el('h2', 'two-houses__title', 'Two houses, one fault');
@@ -81,6 +84,25 @@ export function renderTwoHouses(root: HTMLElement, pair: Pair | null, outage: Ou
   head.append(titles, show);
 
   const houses = el('div', 'two-houses__grid');
+  houses.id = 'two-houses-grid';
   houses.append(house('House A', pair.escalated), house('House B', pair.calm));
-  root.replaceChildren(head, houses);
+  houses.hidden = !expanded;
+
+  // Folded, the card is one line over the map: the verdicts, and a way to open the detail
+  const summary = el('p', 'two-houses__summary', 'House A: Escalate · House B: SMS check');
+  const toggle = el('button', 'l-btn l-btn--ghost two-houses__toggle', expanded ? 'Hide details' : 'Show both houses');
+  toggle.type = 'button';
+  toggle.setAttribute('aria-expanded', String(expanded));
+  toggle.setAttribute('aria-controls', houses.id);
+  toggle.addEventListener('click', () => {
+    expanded = !expanded;
+    houses.hidden = !expanded;
+    toggle.textContent = expanded ? 'Hide details' : 'Show both houses';
+    toggle.setAttribute('aria-expanded', String(expanded));
+    root.dataset.expanded = String(expanded);
+  });
+  root.dataset.expanded = String(expanded);
+  const bar = el('div', 'two-houses__bar');
+  bar.append(summary, toggle);
+  root.replaceChildren(head, bar, houses);
 }

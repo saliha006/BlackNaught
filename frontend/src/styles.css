@@ -21,12 +21,14 @@
   --text-faint: #8a8a91;
   --line: rgb(255 255 255 / 0.09);
   --line-strong: rgb(255 255 255 / 0.18);
-  --glass: rgb(19 19 21 / 0.72);
+  /* 0.9, not 0.72: at 0.72 street names behind a card showed through its text */
+  --glass: rgb(19 19 21 / 0.9);
 
   --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
-  --fs-small: 0.8125rem;
+  /* 14 px floor for anyone reading a tablet at arm's length */
+  --fs-small: 0.875rem;
   --fs-body: 1rem;
   --fs-title: 1.25rem;
   --fs-figure: 2.5rem;
@@ -47,7 +49,8 @@
 
   --topbar-h: 56px;
   --controls-h: 44px;
-  --panel-w: 420px;
+  --panel-w: 380px;
+  --side-w: 260px;
 }
 
 *,
@@ -200,32 +203,28 @@ body {
   transition: opacity var(--dur-fast) var(--ease-out);
 }
 
-/* Predict strip: the three layers, left of the outage panel and level with its top */
+/* Predict: a column down the left edge, like the readouts beside a thermostat dial; the middle stays map */
 .predict {
   position: fixed;
   top: calc(var(--topbar-h) + var(--controls-h) + var(--space-4));
   left: var(--space-6);
-  right: calc(var(--panel-w) + 2 * var(--space-4));
+  width: var(--side-w);
   z-index: 1;
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--space-3);
-  align-items: start;
+  gap: var(--space-2);
+  align-content: start;
 }
 
 .predict__title {
-  margin: var(--space-3) 0 0;
+  margin: 0;
   font-size: var(--fs-small);
   font-weight: 500;
-  color: var(--text-faint);
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
+  color: var(--text-muted);
 }
 
 .predict__tiles {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .predict__loading {
@@ -291,7 +290,7 @@ body {
   z-index: 1;
   display: grid;
   gap: var(--space-3);
-  width: min(640px, calc(100% - var(--panel-w) - 4 * var(--space-6)));
+  width: var(--side-w);
   padding: var(--space-4);
   background: var(--glass);
   backdrop-filter: blur(18px);
@@ -1340,4 +1339,63 @@ body {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);
+}
+
+/* Two houses folded: the verdict pair in one line; opened, it widens over the map to show both cards */
+.two-houses__bar {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.two-houses__summary {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+
+.two-houses__toggle {
+  justify-self: start;
+}
+
+.two-houses[data-expanded='true'] {
+  width: min(640px, calc(100% - var(--panel-w) - 4 * var(--space-6)));
+}
+
+/* Hover / tap label on the severity fog: the word, not only the colour */
+.fog-label .maplibregl-popup-content {
+  padding: var(--space-2) var(--space-3);
+  background: var(--n-1);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-s);
+  font: 400 var(--fs-small) / 1.4 var(--font-sans);
+}
+
+.fog-label .maplibregl-popup-tip {
+  display: none;
+}
+
+.fog-label b[data-severity='severe'] {
+  color: var(--sev-escalate);
+}
+
+.fog-label b[data-severity='moderate'] {
+  color: var(--sev-risk);
+}
+
+@media (max-width: 720px) {
+  /* Phone: Predict becomes a swipeable row on top, the two-houses bar sits just above the bottom sheet */
+  .predict {
+    width: auto;
+  }
+
+  .two-houses {
+    top: auto;
+    bottom: calc(45vh + var(--space-4));
+    max-height: 40vh;
+  }
+
+  .two-houses[data-expanded='true'] {
+    width: auto;
+  }
 }
