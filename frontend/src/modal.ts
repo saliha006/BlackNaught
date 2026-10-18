@@ -6,38 +6,36 @@ export interface Modal {
   close(): void;
 }
 
-/** One dialog at a time: opening another replaces it, so focus and Escape never fight over two layers. */
+/**
+ * A native <dialog> opened with showModal(): the browser gives it the top layer, makes the page behind it inert,
+ * closes it on Escape and returns focus to the opener. One at a time, so two layers never fight over focus.
+ */
 export function openModal(root: HTMLElement, title: string, onClose?: () => void): Modal {
-  const opener = document.activeElement as HTMLElement | null;
-  const overlay = el('div', 'modal');
-  const box = el('section', 'modal__box');
-  box.setAttribute('role', 'dialog');
-  box.setAttribute('aria-modal', 'true');
+  root.querySelector<HTMLDialogElement>('dialog')?.close();
+  const dialog = el('dialog', 'modal');
   const heading = el('h2', 'modal__title', title);
   heading.id = 'modal-title';
-  box.setAttribute('aria-labelledby', heading.id);
+  dialog.setAttribute('aria-labelledby', heading.id);
   const body = el('div', 'modal__body');
+  const closeButton = button('Close', 'l-btn l-btn--ghost modal__close', () => dialog.close());
 
-  const close = () => {
-    overlay.remove();
-    document.removeEventListener('keydown', onKey);
-    opener?.focus();
+  dialog.addEventListener('close', () => {
+    dialog.remove();
     onClose?.();
-  };
-  const onKey = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') close();
-  };
-  document.addEventListener('keydown', onKey);
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) close();
+  });
+  // A click that lands on the dialog itself, not its content, is a click on the backdrop
+  dialog.addEventListener('click', (e) => {
+    if (e.target === dialog) dialog.close();
   });
 
   const head = el('header', 'modal__head');
-  head.append(heading, button('Close', 'l-btn l-btn--ghost modal__close', close));
-  box.append(head, body);
-  overlay.append(box);
-  root.replaceChildren(overlay);
-  return { body, close };
+  head.append(heading, closeButton);
+  dialog.append(head, body);
+  root.replaceChildren(dialog);
+  dialog.showModal();
+  // Focus the way out first; callers with a form move it to the first field
+  closeButton.focus();
+  return { body, close: () => dialog.close() };
 }
 
 const ROLE_TEXT: Record<Role, { hint: string; user: string }> = {
@@ -45,13 +43,11 @@ const ROLE_TEXT: Record<Role, { hint: string; user: string }> = {
   household: { hint: 'Each household sees only its own home. The demo logins are in households.txt on the VM.', user: 'home-1' },
 };
 
-/** Resolves true once the person is signed in with the role the next request needs. */
-export function askLogin(root: HTMLElement, role: Role): Promise<boolean> {
+/** Resolves with the login name once the person signs in with the role the next request needs, or null if they give up. */
+export function askLogin(root: HTMLElement, role: Role): Promise<string | null> {
   return new Promise((resolve) => {
-    let done = false;
-    const modal = openModal(root, role === 'operator' ? 'Operator sign-in' : 'Household sign-in', () => {
-      if (!done) resolve(false);
-    });
+    let signedIn: string | null = null;
+    const modal = openModal(root, role === 'operator' ? 'Operator sign-in' : 'Household sign-in', () => resolve(signedIn));
     const form = el('form', 'login');
     const name = el('input', 'login__input');
     name.name = 'login';
@@ -79,14 +75,14 @@ export function askLogin(root: HTMLElement, role: Role): Promise<boolean> {
       submit.disabled = true;
       error.textContent = '';
       try {
-        const got = await login(name.value.trim(), pass.value);
+        const who = name.value.trim();
+        const got = await login(who, pass.value);
         if (got !== role) {
           error.textContent = `That's a ${got} login; this needs the ${role} one.`;
           return;
         }
-        done = true;
+        signedIn = who;
         modal.close();
-        resolve(true);
       } catch (err) {
         error.textContent = err instanceof AuthError ? 'Wrong login or passphrase.' : `Couldn't sign in: ${(err as Error).message}`;
       } finally {
@@ -94,6 +90,7 @@ export function askLogin(root: HTMLElement, role: Role): Promise<boolean> {
       }
     });
     modal.body.append(form);
-    (role === 'operator' ? pass : name).focus();
+    // The login name is prefilled, so the passphrase is the first thing to type
+    pass.focus();
   });
 }

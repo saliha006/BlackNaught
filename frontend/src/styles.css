@@ -1093,27 +1093,47 @@ body {
   font-weight: 300;
 }
 
-/* Dialogs: SMS / CAP previews, sign-in and my home */
+/* Dialogs: SMS / CAP previews, sign-in and my home (native <dialog>, so the browser handles the top layer) */
 .modal {
-  position: fixed;
-  inset: 0;
-  z-index: 10;
-  display: grid;
-  place-items: center;
-  padding: var(--space-4);
-  background: rgb(0 0 0 / 0.6);
-}
-
-.modal__box {
   display: grid;
   gap: var(--space-4);
-  width: min(460px, 100%);
+  width: min(460px, calc(100% - 2 * var(--space-4)));
   max-height: calc(100vh - 2 * var(--space-4));
   padding: var(--space-6);
   overflow-y: auto;
   background: var(--n-1);
+  color: var(--text);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-m);
+}
+
+.modal:not([open]) {
+  display: none;
+}
+
+.modal::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+/* For the status line: read out by screen readers, never seen */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.topbar__who {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-small);
+  color: var(--text-muted);
 }
 
 .modal__head {
@@ -1193,7 +1213,8 @@ body {
 
 .phone__kind,
 .phone__meta {
-  color: var(--text-faint);
+  /* --text-faint is only 4.17:1 on the bubble; muted reaches 6.04:1 */
+  color: var(--text-muted);
 }
 
 .phone__headline {
