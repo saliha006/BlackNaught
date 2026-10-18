@@ -1,0 +1,31 @@
+=== zDNN precheck (brief task 13), 2026-10-18T07:07:46Z ===
+Nate's m2_hazard.keras (6,444 params: Normalization + 3 Dense), one model.predict of 4,096 fixed-seed rows in bn-app:latest
+(IBM jupyterlab-image-s390x: TF 2.18.1 + ibm-zdnn-plugin 2.3.0), run with ZDNN_ENABLE_PRECHECK=true.
+
+zDNN log lines, NNPA on (default): 69
+zDNN log lines, NNPA_DEVICES=0:    0   <- the off mode really is CPU-only
+
+zDNN calls and formats seen with NNPA on:
+      2 hw_transform_origtensor
+      4 hw_transform_ztensor
+     17 ZDNN_DLFLOAT16
+      9 zdnn_matmul_transpose_op
+
+First matmul as logged (excerpt):
+zdnn_matmul_transpose_op parameters start >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+=========================================
+Contents of zdnn_ztensor: input_a
+Pre-transformed Descriptor:
+			Outermost				Innermost
+	Dimensions:	3215759624		3207189779		4096		9
+	Layout:	ZDNN_2D	Format:	UNDEFINED	Type:	FP32
+Transformed Descriptor:
+			Outermost				Innermost
+	Dimensions:	1		1		4096		9
+	Layout:	ZDNN_NHWC	Format:	ZDNN_FORMAT_4DFEATURE	Type:	ZDNN_DLFLOAT16
+Buffer Addr:	3ff38026000	Size:	524288
+Transformed:	True
+Scale:	 0.000000
+Offset:	 0.000000
+=========================================

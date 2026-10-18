@@ -9,6 +9,8 @@
 DATATHON INFO/
 /data/
 *.csv
+# NNPA on/off timing is evidence, small and ours
+!evidence/nnpa_timing.csv
 *.zip
 *.gguf
 *.img

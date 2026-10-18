@@ -1,0 +1,34 @@
+=== NNPA on/off timing (brief task 18), 2026-10-18 ~07:10Z, LinuxONE VM datathon4musketeers (s390x, z17) ===
+
+Numbers are not for the video until #helpdesk confirms (ToU §5). Never compared against x86.
+
+What was measured
+- Model: Nate's ~/shared/nate-runs/models/m2_hazard.keras (Normalization + 3 Dense, 6,444 params, 9 inputs -> 25 outputs).
+- Image: bn-app:latest, built on IBM's jupyterlab-image-s390x (TF 2.18.1, ibm-zdnn-plugin 2.3.0). Nothing pip-installed.
+- Same model, same VM. Mode "nnpa_on" = default; mode "nnpa_off" = NNPA_DEVICES=0. Each mode in its own fresh
+  process (a separate `docker run`), because the zDNN plugin decides at TensorFlow start-up where ops go.
+- Fixed-seed (7) synthetic float32 inputs shaped from model.input_shape, so both modes score the same rows.
+- Per batch size: one warm-up, then the median of 15 runs of
+  - model.predict(x, batch_size=len(x)), what a scorer would call (includes ~30 ms of Keras per-call setup), and
+  - the bare graph call tf.function(model)(x), which shows the kernels' own cost.
+- The live stack (app, agent, Granite, db) kept running; load average 1.47 before, 1.31 after.
+- Script: scripts/nnpa_timing.py. Raw numbers: evidence/nnpa_timing.csv.
+
+Is the NNPA really used? (evidence/zdnn_precheck.txt)
+- With NNPA on, ZDNN_ENABLE_PRECHECK=true logs zdnn_matmul_transpose_op calls with tensors converted to
+  ZDNN_DLFLOAT16, the NNPA's own format. With NNPA_DEVICES=0 the same run logs no zDNN call at all.
+
+Results (median ms)
+  batch   predict on   predict off   graph on   graph off
+      1       33.85         32.36       0.338       0.346
+    256       33.87         32.38       0.413       0.485
+   4096       35.06         33.71       1.465       1.820
+  65536       67.71         48.45      28.847      13.244
+
+Honest read
+- For this small model the NNPA makes no practical difference to a scoring call: model.predict's fixed setup cost
+  (~33 ms) dwarfs the kernels at every batch up to 4,096.
+- At kernel level the NNPA is ~1.2x faster at 256 and 4,096 rows, and ~2.2x slower at 65,536 rows, where moving
+  the data into and out of the NNPA's DLFLOAT16 format costs more than the tiny matmuls save.
+- The live scorer uses the KM curve (pure Python), not this TensorFlow model, so nothing served changes. On this
+  model the NNPA only pays off at mid-size batches of the bare graph; bigger matrices than these are where it's built to help.

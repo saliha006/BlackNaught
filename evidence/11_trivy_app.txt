@@ -1,0 +1,32 @@
+=== Trivy scan of bn-app:latest (brief task 18), 2026-10-18 ~07:15Z ===
+Image: bn-app:latest on the LinuxONE VM (IBM jupyterlab-image-s390x + the app's requirements), 840 components.
+Trivy v0.76.0 (aquasecurity/trivy release; the s390x tarball and the Windows zip were both checked against
+trivy_0.76.0_checksums.txt). Vulnerability DB updated 2026-10-18T00:43Z. Scanners: vuln only; HIGH and CRITICAL.
+
+How it was run, and a LinuxONE quirk
+- On the VM, `trivy image` fails before scanning: "failed to open db: invalid database". The published DB is a
+  bbolt file written little-endian (its magic is stored as ed da 0c ed), and bbolt on big-endian s390x reads it
+  as the wrong magic. Trivy's s390x binary runs fine; its DB doesn't open there.
+- So the SBOM was built on the VM from the real s390x image (`trivy image --format cyclonedx`, which needs no
+  vulnerability DB), and matched on the laptop with the same Trivy version (`trivy sbom`).
+- Covered: Red Hat 10.2 OS packages (530), Python (222), Java jars (69), Node.js (18).
+
+TOTAL: CRITICAL 0, HIGH 6  (unique CVE ids: 6, packages: 4)
+With a fix available: 6 of 6
+
+By target (CRITICAL, HIGH, type, target):
+     0    6  python-pkg Python
+
+All CRITICAL, then the first HIGH ones (severity, package, installed, fixed in, id, type):
+  HIGH     jaraco.context               5.3.0                  6.1.0                  CVE-2026-23949       python-pkg
+  HIGH     keras                        3.14.0                 3.12.3, 3.15.0         CVE-2026-12481       python-pkg
+  HIGH     keras                        3.14.0                 3.12.3, 3.15.0         CVE-2026-12484       python-pkg
+  HIGH     urllib3                      2.7.0                  2.8.0                  CVE-2026-97687       python-pkg
+  HIGH     urllib3                      2.7.0                  2.8.0                  CVE-2026-97689       python-pkg
+  HIGH     wheel                        0.45.1                 0.46.2                 CVE-2026-24049       python-pkg
+
+Read
+- Nothing CRITICAL. The OS layer, the jars and the Node packages have no HIGH or CRITICAL findings.
+- All six HIGH findings are Python packages that come with the base image (keras, urllib3, jaraco.context, wheel),
+  and every one has a fixed release. The app's Dockerfile pins what IBM's image ships (`-c constraints-image.txt`)
+  so pip can't replace its compiled s390x stack; upgrading them is a call for the image owner, not done here.

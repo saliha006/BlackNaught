@@ -1,0 +1,109 @@
+=== Firewall and exposure, LinuxONE VM datathon4musketeers, 2026-10-18T07:08:37Z ===
+Summary:
+- Public: 22 (SSH, keys only), 8443 (nginx edge, PQ TLS) and 38888 (Jupyter, token-protected; explicit INPUT rule). Everything else is rejected (INPUT ends in REJECT).
+- On 127.0.0.1 only: app 8000 and Postgres 5432 (Docker DNAT matches dst 127.0.0.1 only). The other 127.0.0.1 python3 ports are Jupyter kernels.
+- The signer and Granite publish no port: they sit on internal Docker networks (DOCKER-INTERNAL drops anything leaving 172.19/16 and 172.20/16).
+
+== sudo iptables -L -n
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     6    --  0.0.0.0/0            0.0.0.0/0            tcp dpt:38888
+ACCEPT     0    --  127.0.0.0/8          127.0.0.0/8         
+ACCEPT     6    --  0.0.0.0/0            0.0.0.0/0            ctstate NEW tcp dpt:22
+ACCEPT     1    --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     0    --  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+REJECT     0    --  0.0.0.0/0            0.0.0.0/0            reject-with icmp-host-prohibited
+
+Chain FORWARD (policy DROP)
+target     prot opt source               destination         
+DOCKER-USER  0    --  0.0.0.0/0            0.0.0.0/0           
+DOCKER-FORWARD  0    --  0.0.0.0/0            0.0.0.0/0           
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain DOCKER (2 references)
+target     prot opt source               destination         
+ACCEPT     6    --  0.0.0.0/0            172.18.0.4           tcp dpt:8443
+ACCEPT     6    --  0.0.0.0/0            172.18.0.3           tcp dpt:8000
+ACCEPT     6    --  0.0.0.0/0            172.18.0.2           tcp dpt:5432
+DROP       0    --  0.0.0.0/0            0.0.0.0/0           
+DROP       0    --  0.0.0.0/0            0.0.0.0/0           
+
+Chain DOCKER-BRIDGE (1 references)
+target     prot opt source               destination         
+DOCKER     0    --  0.0.0.0/0            0.0.0.0/0           
+DOCKER     0    --  0.0.0.0/0            0.0.0.0/0           
+
+Chain DOCKER-CT (1 references)
+target     prot opt source               destination         
+ACCEPT     0    --  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+ACCEPT     0    --  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+
+Chain DOCKER-FORWARD (1 references)
+target     prot opt source               destination         
+DOCKER-CT  0    --  0.0.0.0/0            0.0.0.0/0           
+DOCKER-INTERNAL  0    --  0.0.0.0/0            0.0.0.0/0           
+DOCKER-BRIDGE  0    --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     0    --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     0    --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     0    --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     0    --  0.0.0.0/0            0.0.0.0/0           
+
+Chain DOCKER-INTERNAL (1 references)
+target     prot opt source               destination         
+DROP       0    -- !172.20.0.0/16        0.0.0.0/0           
+DROP       0    --  0.0.0.0/0           !172.20.0.0/16       
+DROP       0    -- !172.19.0.0/16        0.0.0.0/0           
+DROP       0    --  0.0.0.0/0           !172.19.0.0/16       
+
+Chain DOCKER-USER (1 references)
+target     prot opt source               destination         
+
+== sudo iptables -t nat -L -n
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+DOCKER     0    --  0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+DOCKER     0    --  0.0.0.0/0           !127.0.0.0/8          ADDRTYPE match dst-type LOCAL
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+MASQUERADE  0    --  172.18.0.0/16        0.0.0.0/0           
+MASQUERADE  0    --  172.17.0.0/16        0.0.0.0/0           
+
+Chain DOCKER (2 references)
+target     prot opt source               destination         
+DNAT       6    --  0.0.0.0/0            127.0.0.1            tcp dpt:5432 to:172.18.0.2:5432
+DNAT       6    --  0.0.0.0/0            127.0.0.1            tcp dpt:8000 to:172.18.0.3:8000
+DNAT       6    --  0.0.0.0/0            0.0.0.0/0            tcp dpt:8443 to:172.18.0.4:8443
+
+== sudo ss -tlnp (state, local address, process)
+LISTEN 127.0.0.1:50755 "python3"
+LISTEN 0.0.0.0:38888 "jupyter-noteboo"
+LISTEN 127.0.0.1:5432 "docker-proxy"
+LISTEN 127.0.0.1:50505 "python3"
+LISTEN 127.0.0.1:33543 "python3"
+LISTEN 0.0.0.0:22 "sshd"
+LISTEN 0.0.0.0:8443 "docker-proxy"
+LISTEN 127.0.0.1:36867 "python3"
+LISTEN 127.0.0.53%lo:53 "systemd-resolve"
+LISTEN 127.0.0.1:49661 "python3"
+LISTEN 127.0.0.1:45413 "python3"
+LISTEN 127.0.0.1:8000 "docker-proxy"
+LISTEN 127.0.0.54:53 "systemd-resolve"
+LISTEN [::]:22 "sshd"
+LISTEN [::]:8443 "docker-proxy"
+
+== docker networks marked internal
+bn-backend_default internal=false 172.18.0.0/16
+bn-backend_signing internal=true 172.19.0.0/16
+bn-backend_writing internal=true 172.20.0.0/16
+bridge internal=false 172.17.0.0/16
+host internal=false 
+none internal=false 
