@@ -10,7 +10,7 @@
 
 ---
 
-## NOW (updated 2026-10-18 07:42)
+## NOW (updated 2026-10-18 08:27)
 
 ### Headline
 **Blacknaught predicts blackouts before they happen and protects the people they'd hurt most.**
@@ -29,6 +29,8 @@ Full records with the rejected options: Sali's vault Log (Sali); the summary is 
 
 | Date | Decision |
 |---|---|
+| 18 Oct | **Control room = map first (Sali, 08:27):** severity fog (red severe / amber moderate, hover label in words) over live cuts; Predict as a left column; two-houses folded to one line; cells off by default; readable cards (90% opaque, 14 px min) |
+| 18 Oct | **Area risk refit on today's ENWL districts (Sali, 08:27)**, option A: Penrith + Workington (2024 split) no longer read ~10× too safe. **Parked:** swap to Nate's M8 (option B) |
 | 18 Oct | **Confirm before approving (Sali, 07:42):** approving or rejecting a 999 escalation, public alert or bulk SMS opens a named confirm step (patient + backup left, or the alert's area), Cancel focused. Nothing goes out on one click |
 | 18 Oct | **Frontend cover (06:39):** Rama's Claude usage ran out; Sali continues Rama's list on `Rama-Frontend`, keeping his design choices. Backend paused but live |
 | 18 Oct | **Live duration curve = `m1-km-ukpn`** (Nate, decision C): M2 stays offline because it loses to Kaplan–Meier on UKPN; the KM curve refitted on UKPN wins (integrated Brier 0.1297 vs 0.1311). Live since 06:39 |
@@ -48,6 +50,7 @@ Full records with the rejected options: Sali's vault Log (Sali); the summary is 
 | 17 Oct | **Build-time choices:** q90 = no second source AND reserve < 2 h; KM fallback until M2; area risk labelled BASELINE until M8; CAP status `Exercise`; signing key never inside the app; IODA ping-slash24 < 0.9 for 2 windows, ignored when ≥3 countries dip together; synthetic patients only on faults < 6 h old |
 
 ### Pending decisions
+- **PARKED: swap area risk to Nate's M8 weather model** (Nate writes the hook). Sali to decide.
 - **New freeze time.** Briefs still say 03:00; the team started later. Deferred: Sali decides later.
 - **M2 live-feature list** (Nate + Sali; `contracts/model.md`). Waiting on Nate.
 - **NNPA on/off timing in the video:** Ahmed is asking #helpdesk (ToU §5 bans benchmarks).

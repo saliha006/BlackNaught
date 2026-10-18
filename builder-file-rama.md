@@ -64,6 +64,12 @@
 ---
 
 ## 3. ▶ Current tasks (2026-10-18 06:05), in order
+**▶ 2026-10-18 08:27 (from Sali): control room made map-first (Sali's brief to make it readable on a tablet, for older users).** Your views and choices are kept; what moved:
+- **Predict** is a narrow column down the left edge (was a strip across the top). **Two houses** folds to one line ("House A: Escalate · House B: SMS check" + "Show both houses"); on a phone it hides until a fault has the pair.
+- **Severity fog** on the map: a red (severe) or amber (moderate) glow over each live cut, with a hover/tap label in words. Severe = someone in it needs escalating, or region/system scale.
+- **Cells** start off (toggle kept); wheel/trackpad zoom a notch quicker; pinch on a tablet only zooms.
+- Cards 90% opaque, small text 14 px, panel 380 px. Radar sweep, beams and 3D buildings unchanged.
+
 **▶ 2026-10-18 06:39 (from Sali): Sali is continuing this list while Rama's Claude usage is out.**
 - Sali works on **`Rama-Frontend`** (synced with `main` at 06:39, 0 behind / 0 ahead) and follows this table. Everything Rama built stays as it is; Sali ticks rows here as they land and logs each in `progress.md` as @sali.
 - Checked at handover: `npm test` 111/111 pass, 89.7% lines covered; `npm run build` passes.
