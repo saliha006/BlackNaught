@@ -893,3 +893,12 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `backend/app/simulator.py`, `backend/tests/test_simulator.py`
 - ⚠️ Conflicts: @nate: done as option B, in my simulator. @sali: option A, a 60 s rolling rate in `runtime.stats`, is still your call; it would also smooth the replay's spikes. No file of yours changed.
 - Conflict status: open
+
+### 2026-10-18 08:32 — fix: approved CAP alerts came back as 502 through the edge — @ahmed
+- Root cause: an approved alert sends its ML-DSA-65 signature in the `X-Signature-ML-DSA-65` response header. That's 3,309 bytes, about 4.4 kB in base64, which overflowed nginx's default one-page (4 kB) header buffer. nginx logged "upstream sent too big header" and returned 502, for the phone relay and the UI's phone preview alike. The relay's retries showed it right after Ahmed approved the TN26, TN30 draft.
+- Fix: `proxy_buffer_size 16k; proxy_buffers 8 16k;` on `/api/` in `infra/edge/nginx.conf`. Checked with `nginx -t` in the live edge before rebuilding it with `up -d --build edge`.
+- Repro: `GET /api/alerts/cap/83736a6b-…` through the edge gave 502 before, and now gives 200 with `application/cap+xml` and the signature header.
+- The relay now fetches the approved alert and its signature verifies. It's waiting only for the phone (unplugged), and pushes within 10 s of the phone being plugged back in.
+- Touched: `infra/edge/nginx.conf` (4 lines in `/api/`)
+- ⚠️ Conflicts: @sali: your gzip and `/assets/` blocks are untouched, and the UI's approved-alert preview works through the edge now.
+- Conflict status: open
