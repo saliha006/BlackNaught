@@ -77,7 +77,7 @@
 | # | Feature | Endpoint(s) | Must show | Status |
 |---|---|---|---|---|
 | 3 | Map | `GET /api/outages`, `GET /api/cells?level=1` (or 2, 3) | Live outages by scale (home / street / area / region / system); fixed k≥11 cells only, never a home | ✅ 06:05 |
-| 4 | **Two-houses card** (demo centrepiece) | `GET /api/triage`; Sali seeds the pair on a fresh real fault with `python -m app.seed --two-houses <outage_id>` | Same fault, different answers: one escalates, one gets an SMS check. Readable in under 10 s | ⬜ |
+| 4 | **Two-houses card** (demo centrepiece) | `GET /api/triage`; Sali seeds the pair on a fresh real fault with `python -m app.seed --two-houses <outage_id>` | Same fault, different answers: one escalates, one gets an SMS check. Readable in under 10 s | ✅ 06:14: card built; live shows "no pair yet" until Sali seeds one (📨 in progress.md) |
 | 5 | Triage list + approvals | `GET /api/triage`; `POST /api/auth/login` (operator); `POST /api/decisions/{id}/approve` | Rank; expected case then range (`remaining_h` q50 / q75 / q90 and `q_used`); harm-hours; the `why` lines; escalate flag; approve button behind the operator login | ⬜ |
 | 6 | Live updates | SSE `GET /stream` (sample: `fixtures/stream_sample.txt`) | New outages and re-ranks appear without a reload, with a small ping | 🟡 06:05: refetch on `/stream` + events/s; ping not yet |
 | 7 | **Predict strip** (top of the control room) | `GET /api/areas/risk`, `GET /api/grids/gb/stress`; home layer from Nate later | The three layers with honest lead times: area tomorrow (label BASELINE), grid now, homes at risk in 30 min ("no data" until Nate's model is served) | ✅ 06:05 |
