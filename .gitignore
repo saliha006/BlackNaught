@@ -7,7 +7,7 @@
 
 # Research bundle, raw data, models
 DATATHON INFO/
-data/
+/data/
 *.csv
 *.zip
 *.gguf

@@ -87,7 +87,12 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - Don't edit code there.
   - After a merge to `main`: `cd ~/BlackNaught && git pull --ff-only && cd backend && sudo docker compose -f compose.backend.yml restart app`.
   - Say so in Discord first.
-- **`~/work/<name>`** is your own clone for testing your branch on real s390x: `cd backend && sudo docker compose -f compose.backend.yml run --rm --no-deps app pytest`.
+- **`~/work/<name>`** is your own clone for testing your branch on real s390x. One-time setup:
+  ```bash
+  git clone https://github.com/saliha006/BlackNaught.git ~/work/<name> && cd ~/work/<name> && git checkout <your-branch>
+  ln -sfn ~/BlackNaught/secrets ~/work/<name>/secrets && ln -sfn ~/data ~/work/data   # compose needs ../secrets and ../../data/raw
+  ```
+  Then test with `cd backend && sudo docker compose -f compose.backend.yml run --rm --no-deps -e BN_WORKERS=0 app pytest -o addopts="" -q`.
   - The test DB is shared and reset per run, so **one person tests at a time**.
 - **Jupyter** is at `http://148.100.78.95:38888` (token from Sali; never in screenshots).
   - Files go in `~/shared`.
