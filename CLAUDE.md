@@ -34,6 +34,19 @@ The shared docs (this file, `BLACKNAUGHT.md`, `DATATHON-CONTEXT.md`, the briefs,
    Tell the user in 1–2 lines what changed **before** doing anything else. If this file (CLAUDE.md) changed, re-read it.
 3. If the sync fails (offline, branch missing), say so in one line and continue on the local copy.
 
+### 📤 Publish every shared-doc edit (same turn, every time)
+**Shared docs:** `CLAUDE.md`, `BLACKNAUGHT.md`, `DATATHON-CONTEXT.md`, `builder-file-*.md`, `CONTEXT-README.md`,
+`DATATHON INFO/research-and-codebase.md`, `.claude/skills/**`.
+- **After ANY edit to one of them**, by you, or noticed as a local change made by the user, run
+  `bash scripts/publish-context.sh "<what changed, in plain words>"` **before ending the turn**. That's how every teammate's
+  agent gets the new version on its next prompt. Several edits in one turn → one publish at the end.
+- If publish **refuses** (someone published a newer version of that file since your last sync): run the sync, merge the two
+  versions by hand, then publish again. Never use `force`.
+- **These docs never go to `main`.** They're git-ignored there on purpose; never `git add -f` them, never copy them into a
+  code commit. **On `main`, the only markdown is:** `progress.md` (team log), `README.md` (submission) and `contracts/*.md`
+  (code contracts).
+- Teammates: you may publish only your own brief's finished-task move (§2a). Everything else goes to Sali.
+
 ### 🔁 Self-filling rule (run on EVERY prompt)
 - **Watch for missing info.** When the user says something that answers a blank slot (a path, a name, a command, a stack choice, a teammate), fill that slot **here** and in any section that quotes it.
 - **Fit, don't grab.** Put information only where it genuinely belongs. A passing mention isn't a fact: "maybe we'll use Postgres" goes to the vault Log as *not finalized*, not into §5 Stack. Don't fill several slots with the first thing you hear.
@@ -162,7 +175,9 @@ their agent will see it**: their brief (`builder-file-<name>.md`, then publish t
 ### 2b. Conflict board: `progress.md` (every builder, every prompt)
 `progress.md` on `main` is where the team learns what landed **and whose work it touches**.
 
-**When you push to `main`**, append an entry in this format:
+**Every time anyone completes a task** (a brief task, a merge to `main`, a VM change, a fix, a decision that changes
+work), append an entry **with the builder's name, date and time**. Commit and push `progress.md` to `main` in the same
+turn, so the log is never behind. Format:
 ```
 ### <YYYY-MM-DD HH:MM> — <feature> — @<builder>
 - Shipped: <one or two lines: what changed, why>
