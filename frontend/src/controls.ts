@@ -1,3 +1,4 @@
+import { badge } from './dom';
 import type { LayerGroup } from './map';
 import { type Filters, OPERATORS } from './state';
 
@@ -79,12 +80,15 @@ export function renderControls(
   escalationCount.className = 'chip__count num';
   escalations.append(escalationCount);
 
-  const mapLayers = LAYERS.map((l) =>
-    chip(l.name, layers[l.id], (pressed) => {
+  const mapLayers = LAYERS.map((l) => {
+    const toggle = chip(l.name, layers[l.id], (pressed) => {
       layers[l.id] = pressed;
       on.layer(l.id, pressed);
-    }),
-  );
+    });
+    // The cells count synthetic patients, so their only on-screen control carries the label
+    if (l.id === 'cells') toggle.append(badge('SIMULATED'));
+    return toggle;
+  });
 
   const live = chip(LIVE_WORDS.live, true, on.live);
   live.classList.add('chip--live');

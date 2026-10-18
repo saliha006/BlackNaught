@@ -1,5 +1,5 @@
 import { deviceName } from './devices';
-import { el } from './dom';
+import { badge, el } from './dom';
 import { formatElapsed } from './format';
 import type { TriageItem } from './types';
 
@@ -42,7 +42,7 @@ export function smsFor(item: TriageItem): string {
   const device = deviceName(item.device).toLowerCase();
   const left = formatElapsed(item.reserve_left_h);
   const ask = item.escalate
-    ? 'A health worker is being sent. If breathing gets worse, call 999 now.'
+    ? "We're arranging a check. If breathing gets worse, call 999 now."
     : 'Reply 1 if you are OK, or 2 if you need help.';
   return `Blacknaught: the power is off at your home. The ${device} backup has about ${left} left. ${ask}`;
 }
@@ -58,7 +58,8 @@ function phone(kind: string, lines: HTMLElement[]) {
 }
 
 export function smsPhone(item: TriageItem) {
-  return phone('Text message · template', [el('p', 'phone__text', smsFor(item))]);
+  // The template is real; the person receiving it is not
+  return phone('Text message · template', [badge('SIMULATED'), el('p', 'phone__text', smsFor(item))]);
 }
 
 export function capPhone(cap: CapFields) {

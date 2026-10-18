@@ -33,6 +33,10 @@ describe('setupTabs', () => {
     expect(changed).toHaveBeenLastCalledWith('b');
     list.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     expect(changed).toHaveBeenCalledTimes(1);
+    list.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+    expect(changed).toHaveBeenLastCalledWith('a');
+    list.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    expect(changed).toHaveBeenLastCalledWith('b');
     tabs.select('a');
     expect(document.getElementById('a')!.hidden).toBe(false);
   });

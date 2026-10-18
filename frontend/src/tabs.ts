@@ -17,10 +17,10 @@ export function setupTabs(list: HTMLElement, onChange: (panelId: string) => void
   list.addEventListener('keydown', (e) => {
     const at = tabs.indexOf(document.activeElement as HTMLButtonElement);
     if (at < 0) return;
-    const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
-    if (step === undefined) return;
+    const next = { ArrowRight: at + 1, ArrowLeft: at - 1, Home: 0, End: tabs.length - 1 }[e.key];
+    if (next === undefined) return;
     e.preventDefault();
-    select(tabs[(at + step + tabs.length) % tabs.length], true);
+    select(tabs[(next + tabs.length) % tabs.length], true);
   });
   return { select: (panelId: string) => select(tabs.find((t) => t.getAttribute('aria-controls') === panelId)!) };
 }

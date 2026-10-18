@@ -19,7 +19,7 @@ function gauge(layer: RiskLayer) {
   box.append(
     el('span', 'gauge__name', `${LAYER_NAMES[layer.layer]} · ${layer.horizon}`),
     el('b', 'gauge__value', layer.value === null ? 'No data' : layer.value.toLowerCase()),
-    el('span', 'gauge__source', layer.updated ? `${layer.source} · ${new Date(layer.updated).toLocaleTimeString('en-GB')}` : layer.source),
+    el('span', 'gauge__source', `${layer.source} · ${layer.updated ? new Date(layer.updated).toLocaleTimeString('en-GB') : 'not updated yet'}`),
   );
   return box;
 }
