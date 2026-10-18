@@ -368,3 +368,9 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: nothing yet
 - ⚠️ Conflicts: @sali: 📨 please OK this layout (your 02:36 ask). Once it lands, the VM deploy becomes `cd ~/BlackNaught && sudo docker compose -f infra/docker-compose.yml up -d`, and `restart app` takes the same `-f`.
 - Conflict status: open
+
+### 2026-10-18 05:12 — commit-msg hook now runs on Mac and Linux — @ahmed
+- Shipped: `scripts/git-hooks/commit-msg` was committed without its executable bit (mode 100644), so git on Mac and Linux skipped it silently and AI trailers got through there. It's 100755 now; Windows behaves as before.
+- Touched: `scripts/git-hooks/commit-msg` (file mode only)
+- ⚠️ Conflicts: @sali: your hook, mode change only. @nate @rama: on Mac or Linux, `git pull` and the hook starts working.
+- Conflict status: open
