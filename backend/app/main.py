@@ -9,10 +9,12 @@ from typing import Any
 
 import uuid
 
+import httpx
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from sse_starlette.sse import EventSourceResponse
 
 from . import arearisk, audit, auth, cells as grid, decisions, home, schemas, sse, stress
+from .weatherrisk import WeatherRisk
 from .grading import summarise
 from .config import read_secret, settings
 from .db import Db
@@ -30,6 +32,10 @@ async def lifespan(app: FastAPI):
     app.state.runtime = None
     app.state.login_limiter = auth.RateLimiter()
     app.state.risk_model = json.loads(settings().risk_model_path.read_text())
+    # Without the M8 artifact the endpoint simply stays on the climatology baseline
+    weather_path = settings().weather_model_path
+    app.state.weather_risk = WeatherRisk(weather_path) if weather_path.exists() else None
+    app.state.http = httpx.AsyncClient()
     app.state.bidx_key = bytes.fromhex(read_secret("bidx_key"))
     if os.environ.get("BN_WORKERS") == "1":
         from .runtime import Runtime
@@ -39,6 +45,7 @@ async def lifespan(app: FastAPI):
     yield
     if app.state.runtime is not None:
         await app.state.runtime.stop()
+    await app.state.http.aclose()
     app.state.api_db.close()
 
 
@@ -151,9 +158,14 @@ async def cells(request: Request, level: int = Query(default=1, ge=1, le=3)):
 
 
 @app.get("/api/areas/risk", response_model=list[schemas.AreaRisk])
-def areas_risk(request: Request, day: date | None = Query(default=None, alias="date")):
-    """Tomorrow (UK) by default. Climatology from ENWL history until Nate's weather model (M8) replaces it."""
+async def areas_risk(request: Request, day: date | None = Query(default=None, alias="date")):
+    """Tomorrow (UK) by default. M8 on the live weather forecast (LIVE); the climatology baseline when it can't run."""
     day = day or (datetime.now(LONDON) + timedelta(days=1)).date()
+    weather = request.app.state.weather_risk
+    if weather is not None:
+        forecast = await weather.area_risk(request.app.state.http, day)
+        if forecast:
+            return [{**r, "label": "LIVE"} for r in forecast]
     return [{**r, "label": "BASELINE"} for r in arearisk.area_risk(request.app.state.risk_model, day)]
 
 

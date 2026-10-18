@@ -55,6 +55,7 @@ def test_winter_is_riskier_than_summer_in_real_history():
 @pytest.mark.anyio
 async def test_areas_risk_api_is_labelled_baseline():
     async with app.router.lifespan_context(app):
+        app.state.weather_risk = None  # no live forecast in tests; the weather path has its own tests
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t") as c:
             tomorrow = (await c.get("/api/areas/risk")).json()
             jan = (await c.get("/api/areas/risk?date=2026-01-15")).json()

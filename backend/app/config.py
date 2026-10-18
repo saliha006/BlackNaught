@@ -23,6 +23,7 @@ class Settings:
     model_path: Path
     signer_url: str | None
     risk_model_path: Path
+    weather_model_path: Path
     cap_sender: str
 
 
@@ -37,5 +38,6 @@ def settings() -> Settings:
         model_path=Path(os.environ.get("BN_MODEL_PATH", "/srv/models/km_enwl.json")),
         signer_url=os.environ.get("BN_SIGNER_URL") or None,
         risk_model_path=Path(os.environ.get("BN_RISK_MODEL_PATH", "/srv/models/climatology_enwl.json")),
+        weather_model_path=Path(os.environ.get("BN_WEATHER_MODEL_PATH", "/srv/models/m8_weather_enwl_v1.json")),
         cap_sender=os.environ.get("BN_CAP_SENDER", "exercise@blacknaught.invalid"),
     )
