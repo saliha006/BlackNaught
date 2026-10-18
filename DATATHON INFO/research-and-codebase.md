@@ -20,6 +20,7 @@ Compiled 2026-10-16, the night before kick-off, from nine passes. Known gap acro
 | §13 Country + dataset pass (2026-10-17) | Free-healthcare outage grids: Ghana / Sri Lanka / South Africa scored against BD/PK; per-grid YAML constants; Eskom, nLine, PUCSL, Kaggle provenance checks; IODA signal for Sri Lanka 2025 | Picking the 2–3 target grids; `grid.yaml` values; judge Q&A on "why these countries" |
 | Backend system-design pass (2026-10-17) | s390x package/image checks (pydantic-core, cryptography, pg8000, sse-starlette, llama_cpp server extras, postgres/nginx/trixie), nginx SSE, LUKS loop, CAP 1.2, pg8000 threading, audit triggers, session auth, cell suppression, censored grading, live-feed field checks | Backend build decisions; full rationale in `../system-design-choices.md` |
 | Home-sensor precursor probe (2026-10-18) | Can a fuse-box/meter sensor predict its own power cut? Real Accra GridWatch week on the VM: modest early warning (ROC AUC 0.67, top-1% alerts 9× chance); low voltage alone ≈ chance | **Pitch wording for layer 2** ("flags homes most likely to lose power", not "predicts") |
+| Frontend accessibility + dialog pass (2026-10-18) | Native `<dialog>` + `showModal()` vs custom overlay + `inert`; focus on open; `aria-live` on refreshing lists; confirm steps for irreversible actions; tabs activation; contrast thresholds | Control-room modal / triage / approval fixes before the 09:30 submission |
 
 ---
 
@@ -2241,3 +2242,33 @@ Timezone and weekend values are IANA conventions and were not web-checked. They 
 - **DO NOT USE: "a voltage dip warns of a blackout".** Low voltage alone scores 0.514 ROC AUC, essentially chance, on this data.
 
 **Final call (pitch wording):** "Home sensors flag the homes most likely to lose power in the next 30 minutes: about 1 in 5 of the top alerts come true, roughly 9× chance." Never "predicts blackouts" for this layer on its own. Community input: none sought (empirical primary data).
+
+
+## Frontend accessibility + dialog pass (2026-10-18)
+**Question:** before the 09:30 submission, which a11y fixes for the new control-room views (triage, approvals, agent feed, audit, SMS/CAP previews, my home) are right, and is there a better option? Every source below was fetched in this pass. Recency: most are 2023–2026; NN/g's confirmation article is 2018 but was re-reviewed Aug 2026. Reddit search returned no relevant threads; community consensus comes from one large HN thread and practitioner comments on CSS-Tricks.
+
+### KEEP
+| Claim | Sources (all fetched) | What it means for us |
+|---|---|---|
+| **Use native `<dialog>` + `showModal()` for modals, not a custom overlay.** It gives top layer, an inert background, Esc to close and focus return for free; Baseline since Mar 2022. | MDN `<dialog>`; W3C WCAG Technique **H102** (sufficient technique for 2.4.3); Scott O'Hara "Use the dialog element (reasonably)" 2023-01-26 ("tipping point of generally being the better option"); CSS-Tricks, Zell Liew 2026-01-26 (no JS focus trap needed with `showModal`; O'Hara and Léonie Watson comments agree) | Rewrite `modal.ts` around `<dialog>`; drop the document `keydown` listener. Better than hand-setting `inert` on siblings |
+| **Initial focus:** default is the first focusable element; with nothing more immediate, focus the Close button. For a destructive/irreversible confirm, focus the least destructive action. | MDN `<dialog>` (recommends `autofocus` on Close); W3C APG Dialog (Modal) pattern; Manuel Matuzo "O dialog focus, where art thou?" (retested Oct 2025: Chrome/Firefox/Safari now consistent except `autofocus` on the dialog itself) | Close button for SMS / CAP / my home; first empty field for sign-in; **Cancel** in any approve-escalation confirm. Call `.focus()` explicitly after `showModal()` so happy-dom tests see it too |
+| **Status messages belong in one small, pre-existing polite region (`role="status"`), not on whole refreshing lists.** Live regions should be in the initial markup; chatty regions are a known failure. | WCAG 2.2 Understanding **4.1.3** (role=status for results of an action; warns of "too chatty"); MDN ARIA live regions guide ("include them in the initial markup"); Sara Soueidan, Accessible notifications with ARIA live regions pt 1, 2024-01-15 ("specific and limited use cases") | Remove `aria-live` from `#outage-list`, `#triage-list`, `#decision-list`; add one visually hidden `role="status"` in `index.html` for "Escalation approved (audit row N)", "Chain intact / tampered", throttled "N new power cuts" |
+| **Tabs: automatic activation is right when panels show without noticeable latency;** Home/End optional. | W3C APG Tabs pattern (single normative source; no second source fetched in this pass, no refutation found) | Keep automatic. Don't fire a server audit verify on every arrow-key pass over the Agent tab |
+| **Confirm only consequential, irreversible actions; label buttons by outcome; no default "Yes".** WCAG's version: review/confirm before finalising high-stakes submissions. | NN/g "Confirmation Dialogs Can Prevent User Errors (If Not Overused)" (2018, reviewed 2026-08-07); WCAG 2.2 Understanding **3.3.4** (reversible / checked / confirmed) | A confirm for `escalate` and `draft_cap_alert` approvals only ("Send 999 context packet" / "Cancel"), restating patient ref + backup left. Not for routine actions |
+| **Contrast 4.5:1 for small text, no rounding.** | WCAG 2.2 Understanding **1.4.3** (single normative source; values computed here with its relative-luminance formula: `#8a8a91` on `#2a2a2e` = 4.17) | `--text-faint` fails on the phone bubble; `--text-muted` (6.04) passes |
+
+### WEAK
+| Claim | Why weak |
+|---|---|
+| `inert` on page siblings as the modal fix | Valid (MDN `inert`, Baseline Apr 2023) but it is the manual half of what `showModal()` already does; only use if `<dialog>` can't land in time |
+| HN consensus (MDN `<dialog>` thread, 329 pts / 153 comments, Dec 2024): use it, but no backdrop-click close by default, top layer hides portalled tooltips, a `<form>` inside closes the dialog unless `preventDefault` / `method="dialog"` | Community, no vote counts visible. Gotchas are real but none blocks us (our login form already calls `preventDefault`; backdrop close = `click` where `e.target === dialog`) |
+| `closedby="any"` for light dismiss | Newer attribute; not Baseline across Safari. Keep the manual backdrop handler |
+| happy-dom 21.0.3 `showModal()` | Read in `node_modules`: it only sets `open`; no Esc, no inert, no focus. Fine for unit tests if they assert `open`, call `close()`, and the code focuses explicitly. Platform behaviour is the browser's, not ours to unit-test |
+
+### DO NOT USE (quarantined)
+| Claim / source | Refuted by |
+|---|---|
+| "Native `<dialog>` has known accessibility issues that won't be resolved soon; use a11y-dialog" (Viget, 2018, updated Mar 2021) | Stale. Superseded by O'Hara 2023, W3C H102, Matuzo's Oct 2025 retest, MDN Baseline status |
+| "Always add a JS focus trap inside a modal" (older APG reading, some design systems) | Zell Liew / CSS-Tricks 2026 + APA WG view cited there: with `showModal()` the page is inert; Tab may reach browser chrome by design |
+
+**Final call:** professional + community agree: switch `modal.ts` to `<dialog>.showModal()`, focus Close (Cancel on confirms), one `role="status"` region instead of live lists, keep automatic tabs, add a confirm only to 999 / public-alert approvals.

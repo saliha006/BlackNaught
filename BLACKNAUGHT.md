@@ -10,7 +10,7 @@
 
 ---
 
-## NOW (updated 2026-10-18 06:39)
+## NOW (updated 2026-10-18 07:25)
 
 ### Headline
 **Blacknaught predicts blackouts before they happen and protects the people they'd hurt most.**
@@ -56,7 +56,7 @@ Full records with the rejected options: Sali's vault Log (Sali); the summary is 
 ### Active tasks (executing now; details in each brief)
 | Who | Now |
 |---|---|
-| **Sali** | Backend live (signing on, `m1-km-ukpn`, option C, sensor table). **From 06:39: covering Rama's frontend list** on `Rama-Frontend` (open: 5, 6, 8, 10, 11, 12, 13, then 14–16). Then video segment, submit 09:30 |
+| **Sali** | Backend live (signing, `m1-km-ukpn`, option C, triage↔decision link). **Frontend (Rama's list):** rows 5–13 ✅ live at https://148-100-78-95.sslip.io:8443; row 14 🟡 (performance pass + real-browser check). Then recordings, video segment, submit 09:30 |
 | **Ahmed** | Edge (nginx, PQ TLS, public `:8443`); signer (`/sign`, `/verify`); agent loop via `decisions.create()`; sensor sim + Accra replay; NNPA serving; **mocked public alert to his phone**; ask #helpdesk about NNPA timing; Drive link + portal password (**urgent: fragments were in a public script, now removed**). Labs 01+02 ✅ |
 | **Nate** | M2 (replaces KM behind `contracts/model.md`); home-sensor early-warning model (from `backend/app/probe_precursor.py`); M8 weather risk; M4 NESO stress |
 | **Rama** | **Claude usage out since ~06:50; Sali continues his list.** Brief reorganised 06:05 by backend coverage (13 features), his design choices kept; **push work to `Rama-Frontend`**. Control-room UI on the live `/api/*` + `/stream`: a "Predict" strip on top, then "Protect" views (triage, two-houses, approvals, CAP preview, my home); recordings; video edit |

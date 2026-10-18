@@ -108,6 +108,10 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
 ---
 
 ## 4. ▶ Current tasks (2026-10-17 v3), in order
+**▶ 2026-10-18 07:25 (from Sali)**
+- ✅ Your agent's decisions now show in the UI: the Agent & audit tab lists them with Approve / Reject (operator sign-in) and previews approved CAP alerts on a phone mock-up. `/api/triage` now links each row to its newest `escalate` decision by `args.patient` + `args.outage_id` (25 of 32 live rows linked at 07:25), so the Triage tab can approve in place. Keep those two arg names stable.
+- ✅ New frontend build is live behind your nginx (`frontend/dist`, copied into the bind-mounted folder in place, since swapping the folder leaves the mount on the old one).
+
 **▶ 2026-10-18 06:39 (from Sali)**
 - ✅ Signing confirmed live from the app side: `/api/audit/verify` → `sig_ok: true`. Sali now deploys with `-f infra/docker-compose.yml` as you asked.
 - ℹ Sali is covering Rama's frontend list while Rama's Claude usage is out; frontend questions (nginx serving `dist/`) go to Sali for now.

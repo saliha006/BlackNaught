@@ -109,7 +109,7 @@
 ---
 
 ## 4. ▶ Current tasks (2026-10-18 04:40), in priority order
-**▶ 2026-10-18 06:39: frontend cover.** Rama's Claude usage is out, so Sali carries on his list in `builder-file-rama.md` §3 on branch `Rama-Frontend`, keeping his choices. Open there: 5 triage + approvals, 6 ping, 8 decision feed, 10 audit view, 11 CAP + SMS preview, 12 my home (option C risk), 13 labels, then 14–16. Frontend skills apply (`design-direction`, `ui-audit`, `motion-review` for any animation). Backend is paused but live.
+**▶ 2026-10-18 06:39: frontend cover.** *(07:25: rows 5, 6, 8, 10, 11, 12, 13 ✅ on `main` and live; row 14 🟡 (frontend-performance + a real-browser check left); triage rows now link Ahmed's escalate decisions)* Rama's Claude usage is out, so Sali carries on his list in `builder-file-rama.md` §3 on branch `Rama-Frontend`, keeping his choices. Open there: 5 triage + approvals, 6 ping, 8 decision feed, 10 audit view, 11 CAP + SMS preview, 12 my home (option C risk), 13 labels, then 14–16. Frontend skills apply (`design-direction`, `ui-audit`, `motion-review` for any animation). Backend is paused but live.
 - ✅ *(06:39)* **Signing live** (Ahmed's infra compose; `sig_ok: true`). ✅ **Live curve = `m1-km-ukpn`** (Nate's decision C). ✅ **Seed fix** + two-houses pair on UKPN 133.
 
 **Headline (18 Oct):** "Blacknaught **predicts blackouts before they happen** and **protects the people they'd hurt most**."
