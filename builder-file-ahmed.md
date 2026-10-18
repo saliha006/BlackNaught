@@ -109,6 +109,14 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
 
 ## 4. ▶ Current tasks (2026-10-17 v3), in order
 **▶ New 2026-10-18 06:05 (from Sali)**
+- ✅ **App side of the signer is wired** (on `main`): `HttpSigner` sends `Authorization: Bearer <signer_token_app>` on `/sign`, nothing on `/verify`, and a `purpose` per call (`audit_checkpoint`, `cap_alert`). Tested end to end against your signer image on the VM with a throwaway key: sign OK, verify OK, tampered → false, wrong token → 401.
+- ⬜ **What your `infra/docker-compose.yml` must give the `app` service** to switch signing on (nothing changes until you do):
+  - env `BN_SIGNER_URL=http://signer:8100`;
+  - the compose secret `signer_token_app` (file `secrets/signer_token_app` from your `make-signer-secrets.sh`), mounted at `/run/secrets/signer_token_app`. The app reads it at startup **only** when `BN_SIGNER_URL` is set, and fails loudly if it's missing;
+  - the private network shared with `signer`.
+  - Then `/api/audit/verify` should show `last_checkpoint.sig_ok: true` after the next checkpoint (every 500 rows or 5 min). Log it in `progress.md`.
+
+**▶ 2026-10-18 06:05 (from Sali)**
 - ⬜ **Public alert broadcast, mocked (your 05:15 + 05:31 decisions, approved by Sali).** An operator-approved CAP alert (`GET /api/alerts/cap/{id}` after `POST /api/decisions/{id}/approve`) is pushed to your Android phone over ADB from your laptop, behind a channel interface a government alerting service can replace later. Pitch line: "Blacknaught drafts standard CAP 1.2 alerts that a government alerting service can broadcast; in the demo a phone stands in for that channel." Never "we send alerts to the public". Log it in `progress.md` when done; Rama may film the phone.
 - ✅ **Compose layout OK'd by Sali (task 7):** go ahead with `infra/docker-compose.yml` `include:`-ing `backend/compose.backend.yml`. Update "Start here" + the README run commands when it lands.
 - ✅ **`sensor` table shipped** (migration `0010_sensor.sql`, applied on the VM). Named `sensor` (singular, like `patient` and `freq_reading`): `sensor_id` PK, `type` in home / anchor / control, `household_id` (required for home, null otherwise, enforced by a CHECK), `cell_l1`. `bn_ingest` reads + writes, `bn_agent` reads.
@@ -168,7 +176,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
    - `mem_limit` on each service, plus restart policies
    - *Done when:* `docker compose up -d` is green on the VM. `[⚠ @sali: app runs Sali's FastAPI; agree the entrypoint]`
 8. ⬜ **LUKS2 volume for Postgres data** (HANDOFF §7.7, §9.5). Screenshot `cryptsetup luksDump`. `[⚠ @sali: DB data path]`
-9. 🟡 **Signer** *(signer built 2026-10-18 05:56: on `main`, not wired yet; the data-key wrap is still to do)*
+9. 🟡 **Signer** *(signer built 2026-10-18 05:56: on `main`, not wired yet; the data-key wrap is still to do)* *(Sali 06:05: app client done; compose wiring is yours, see the block at the top)*
    - ML-DSA-65 keygen; sign and verify (test `-rawin`).
    - Wrap the data key for the AES-GCM columns. `[⚠ @sali uses it for encrypted columns + audit checkpoints]`
 10. ⬜ **🎯 Walking skeleton by 00:30** `[⚠ shared with ALL]`: ingest → DB → API → map, running on the VM.

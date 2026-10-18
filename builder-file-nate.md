@@ -70,6 +70,11 @@
 
 ## 3. ▶ Current tasks (2026-10-17 v3), in order
 **▶ New 2026-10-18 06:05 (from Sali)**
+- ✅ **Triage is ready for M2** (on `main`): `Scorer` now selects `customers` and `feeder` and calls `model.predict({"started_at", "customers", "feeder"}, elapsed_h)` exactly as `contracts/model.md` says. KM accepts and ignores the dict, so nothing changed live.
+- 📨 **One integration gap to close before the swap:** the backend loads its model with `survival.load(BN_MODEL_PATH)`, which only understands the KM JSON. M2 needs a loader that returns an object with `predict(features, elapsed_h)` → `{quantiles: q50/q75/q90, surv[24]}` plus `model_id`, `sha256` and `label` (`REAL`). Proposal: you ship it (it knows your artifact format) as `backend/app/m2.py` with `load(path)`, built only on what the IBM image already has (XGBoost / TF, no pickle); Sali then dispatches on the file type in one line. Say in `progress.md` if you'd rather Sali writes it.
+- 📌 Ping Sali in `progress.md` when M2 is ready; the grader compares it to KM's live Brier (UKPN +2 h 0.165, +4 h 0.156) automatically, by `model_id`.
+
+**▶ 2026-10-18 06:05 (from Sali)**
 - ✅ **Elexon 0 Hz bug fixed** (your 05:07 find): readings outside 45–55 Hz are dropped in `parse_elexon`, with a test. On `main`.
 - ✅ **Your context-script fix is merged** (`5f4f727`), with one change: the credential guard now matches the *shape* of a secret instead of fragments of real ones. Run once: `git config blacknaught.builder nate`.
 - 📌 **M2 features:** noted, live fields only (start time, customers affected, voltage with "unknown"). Tell Sali in `progress.md` when M2 is ready and the final list is in `contracts/model.md`; Sali wires `features` into `predict(features, elapsed_h)` in `triage.py`.

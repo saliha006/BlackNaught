@@ -133,8 +133,8 @@
 - ✅ *(06:00)* **Ahmed's asks:** `sensor` table shipped (0010, applied on the VM); compose layout OK'd; public-alert task added to his brief.
 - ✅ *(06:00)* **Elexon 0 Hz bug:** readings outside 45–55 Hz dropped.
 - ✅ *(06:00)* **Context publish clobber:** took Nate's fix; the credential guard now matches shapes, not fragments.
-- ⬜ **Signer wiring** (unblocked 06:10: `contracts/signer.md` + `signer/` are on main): bearer token from `signer_token_app` + `BN_SIGNER_URL=http://signer:8100`.
-- ⬜ **M2 wiring:** pass `{started_at, customers, feeder}` into `predict()` from `Scorer`. Contract final; Nate trained M2 and is fixing the rest. Wait for his ping before swapping the model.
+- ✅ *(06:05, app side; tested against the real signer on the VM)* **Signer wiring** (unblocked 06:10: `contracts/signer.md` + `signer/` are on main): bearer token from `signer_token_app` + `BN_SIGNER_URL=http://signer:8100`.
+- ✅ *(06:05: features passed; M2 swap waits for Nate + a loader, see Nate's brief)* **M2 wiring:** pass `{started_at, customers, feeder}` into `predict()` from `Scorer`. Contract final; Nate trained M2 and is fixing the rest. Wait for his ping before swapping the model.
 - ⬜ **Re-seed** patients + the two-houses pair on a fresh fault right before recording (reserves drain over time).
 9. ✅ *(06:00, live on the VM)* add a `risk` block to `/api/me/home` (level + the three layer gauges with source and horizon) and tests. Ship it.
 10. ⬜ **Integration support:**

@@ -193,7 +193,10 @@ turn, so the log is never behind. Format:
 **Every logged task is also marked done in its brief.** The builder's agent marks its own finished task ✅ (or moves it to the
 Done log) in `builder-file-<name>.md` and publishes it, in the same turn as the `progress.md` entry. **Sali's agent sweeps on every
 prompt:** for each new `progress.md` entry that finishes a brief task still shown as ⬜ / 🟡, it marks it ✅ with the time, then
-publishes. Annotate only: never reword or delete another builder's lines. That way everyone sees everyone's progress in the briefs.
+publishes. Annotate only: never reword or delete another builder's lines. **A builder's own additions stay:** features they added, options
+they picked, choices they recorded. New context from Sali goes in a new dated block or as an annotation next to their line, so a brief
+always holds their choices *and* the tasks the whole system needs. When a change touches the seam between two builders, both briefs
+get the same interface note, so the briefs fit together. That way everyone sees everyone's progress in the briefs.
 
 Fill `⚠️ Conflicts` honestly. Check each touched file/contract against every teammate's **owns** list in their brief.
 A *possible* collision counts ("I changed `User.email` to nullable; @Ana's signup form assumes it's set").
