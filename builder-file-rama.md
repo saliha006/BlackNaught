@@ -96,6 +96,7 @@
 
 **Finish**
 14. 🟡 `ui-audit` + `frontend-performance`; build statically and hand `dist/` to Ahmed's nginx (`:8443`). *(Sali 07:25: ui-audit done (static, no browser here; independent review + research ledger in the research doc), fixes applied; `dist/` built on the laptop and live behind Ahmed's nginx. Still open: `frontend-performance` (Vite warns the main chunk is over 500 kB, mostly MapLibre) and a look in a real browser at 375 / 768 / 1280 px)*
+    - *(Sali 07:42, measured in headless Chromium against the live site)* Desktop 1280 px: LCP 1.1 s, all views render and work, confirm step verified. Tablet 768 px: LCP 1.1 s. **Phone 375 px (4× CPU, slow 4G): LCP 3.4 s (needs ≤ 2.5 s), CLS 0.13; the two-houses card and Predict strip cover the panel tabs, and My home is pushed off the top bar.** CLS 0.16–0.30 on every width, from the two-houses card growing when triage arrives (under the landing overlay). nginx serves the 1.09 MB JS uncompressed (gzip ≈ 302 kB). Proposals waiting on Sali: nginx gzip + cache headers (Ahmed), lazy-load the map library, reserve the card's height, a phone layout.
 15. ⬜ **Recordings** at 1080p in a browser showing the VM IP: map, two-houses, triage + approve, Predict strip, my home, audit tamper, CAP preview.
 16. ⬜ **Video edit lead:** captions burned in, ≤3:00, everyone on screen. Ready by 09:15 (Sali submits at 09:30).
 17. ⬜ *(P2, cut first)* Globe intro, 30 min max.

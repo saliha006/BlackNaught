@@ -10,7 +10,7 @@
 
 ---
 
-## NOW (updated 2026-10-18 07:25)
+## NOW (updated 2026-10-18 07:42)
 
 ### Headline
 **Blacknaught predicts blackouts before they happen and protects the people they'd hurt most.**
@@ -29,6 +29,7 @@ Full records with the rejected options: Sali's vault Log (Sali); the summary is 
 
 | Date | Decision |
 |---|---|
+| 18 Oct | **Confirm before approving (Sali, 07:42):** approving or rejecting a 999 escalation, public alert or bulk SMS opens a named confirm step (patient + backup left, or the alert's area), Cancel focused. Nothing goes out on one click |
 | 18 Oct | **Frontend cover (06:39):** Rama's Claude usage ran out; Sali continues Rama's list on `Rama-Frontend`, keeping his design choices. Backend paused but live |
 | 18 Oct | **Live duration curve = `m1-km-ukpn`** (Nate, decision C): M2 stays offline because it loses to Kaplan–Meier on UKPN; the KM curve refitted on UKPN wins (integrated Brier 0.1297 vs 0.1311). Live since 06:39 |
 | 18 Oct | **Home dashboard = option C:** one headline risk level (Low / Elevated / High) from simple worst-signal rules, with the three layer gauges (home 30 min, area tomorrow, grid now) underneath, each with source + horizon. No blended probability. Rules (Sali, 06:00): **High** = home flagged OR grid EMERGENCY; **Elevated** = area in the top third OR grid STRESSED; **Low** only when all three layers report and none flags; otherwise **unknown**. Live in `/api/me/home` → `risk` |

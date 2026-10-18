@@ -108,6 +108,10 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
 ---
 
 ## 4. ▶ Current tasks (2026-10-17 v3), in order
+**▶ 2026-10-18 07:42 (from Sali)**
+- 📨 **Measured from outside:** nginx sends `assets/index-*.js` (1,090,986 bytes) with no `Content-Encoding` and no cache header, so a phone downloads 1,066 KiB of JS instead of ~302 kB. Not changed yet; Sali is deciding. If approved: `gzip on; gzip_types application/javascript text/css application/json image/svg+xml;` and `location /assets/ { add_header Cache-Control "public, max-age=31536000, immutable"; }` (Vite hashes those file names).
+- ℹ Approvals now go through a confirm step in the UI (Sali's decision, 07:42); your decisions' `args.patient`, `args.outage_id` and `args.area` appear in its wording.
+
 **▶ 2026-10-18 07:25 (from Sali)**
 - ✅ Your agent's decisions now show in the UI: the Agent & audit tab lists them with Approve / Reject (operator sign-in) and previews approved CAP alerts on a phone mock-up. `/api/triage` now links each row to its newest `escalate` decision by `args.patient` + `args.outage_id` (25 of 32 live rows linked at 07:25), so the Triage tab can approve in place. Keep those two arg names stable.
 - ✅ New frontend build is live behind your nginx (`frontend/dist`, copied into the bind-mounted folder in place, since swapping the folder leaves the mount on the old one).
