@@ -55,9 +55,10 @@ def fetch(url: str, lat: float, lon: float, **extra) -> pd.DataFrame:
             with urllib.request.urlopen(f"{url}?{urllib.parse.urlencode(query)}", timeout=120) as response:
                 daily = json.load(response)["daily"]
             break
-        except urllib.error.HTTPError as e:
-            # 429 = the free tier's per-minute budget; it resets within a minute
-            if e.code != 429 or attempt == 3:
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as e:
+            # 429 is the free tier's per-minute budget (resets within a minute); empty bodies and timeouts also pass
+            transient = not isinstance(e, urllib.error.HTTPError) or e.code in (429, 500, 502, 503, 504)
+            if not transient or attempt == 3:
                 raise
             time.sleep(65)
     return pd.DataFrame(daily).rename(columns={"time": "day"}).assign(day=lambda f: pd.to_datetime(f["day"]))
