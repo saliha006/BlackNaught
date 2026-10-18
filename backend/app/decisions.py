@@ -58,7 +58,7 @@ async def export_cap(db: Db, decision_id: str, approver: str, signer: audit.Http
                     severe=bool(severity and severity[0]["severe"]), confirmed=outage["source"] in ("ukpn", "npg", "ssen"),
                     headline=args.get("headline"), description=args.get("description"),
                     instruction=args.get("instruction"))
-    sig = (await signer.sign(xml.encode()))["sig_b64"] if signer is not None else None
+    sig = (await signer.sign(xml.encode(), "cap_alert"))["sig_b64"] if signer is not None else None
     identifier = f"blacknaught-{decision_id}"
     await db.run("SELECT cap_store(CAST(:id AS uuid), :ident, :xml, :sig)", id=decision_id, ident=identifier,
                  xml=xml, sig=sig)
