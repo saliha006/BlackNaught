@@ -1,0 +1,57 @@
+# Backend dev/test stack (Sali). The production stack is Ahmed's /infra/docker-compose.yml.
+name: bn-backend
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_super_pw
+    secrets: [pg_super_pw, db_migrator_pw, db_ingest_pw, db_api_pw, db_agent_pw]
+    volumes:
+      - ../db/init:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
+    ports: ["127.0.0.1:5432:5432"]
+    command: ["postgres", "-c", "shared_buffers=192MB", "-c", "timezone=UTC"]
+    mem_limit: 768m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 20
+
+  app:
+    build: .
+    image: bn-app:latest
+    working_dir: /srv
+    volumes:
+      - .:/srv
+      - ../db:/db:ro
+      - ../fixtures:/fixtures:ro
+      - ../contracts:/contracts
+      - ../../data/raw:/data/raw:ro
+    environment:
+      BN_DB_HOST: db
+      BN_DB_NAME: blacknaught
+      BN_SECRETS_DIR: /run/secrets
+      BN_MIGRATIONS_DIR: /db/migrations
+      BN_FIXTURES_DIR: /fixtures
+      BN_WORKERS: "${BN_WORKERS:-1}"
+    secrets: [pg_super_pw, db_migrator_pw, db_ingest_pw, db_api_pw, db_agent_pw, bidx_key, dek, operator_pw]
+    ports: ["127.0.0.1:8000:8000"]
+    mem_limit: 3g
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+secrets:
+  pg_super_pw: {file: ../secrets/pg_super_pw}
+  db_migrator_pw: {file: ../secrets/db_migrator_pw}
+  db_ingest_pw: {file: ../secrets/db_ingest_pw}
+  db_api_pw: {file: ../secrets/db_api_pw}
+  db_agent_pw: {file: ../secrets/db_agent_pw}
+  bidx_key: {file: ../secrets/bidx_key}
+  dek: {file: ../secrets/dek}
+  operator_pw: {file: ../secrets/operator_pw}
+
+volumes:
+  pgdata:

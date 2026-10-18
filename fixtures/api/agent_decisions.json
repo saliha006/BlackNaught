@@ -1,0 +1,24 @@
+[
+  {
+    "id": "6f1c2d3e-0000-4000-8000-000000000001",
+    "tool": "escalate",
+    "state": "awaiting_approval",
+    "created_at": "2026-10-17T22:00:31+00:00",
+    "args_summary": "P-3F2A1C → 999 context packet",
+    "rationale": [
+      "q90 7.9 h > reserve 4.0 h",
+      "no backup"
+    ]
+  },
+  {
+    "id": "6f1c2d3e-0000-4000-8000-000000000002",
+    "tool": "assign_visit",
+    "state": "auto_done",
+    "created_at": "2026-10-17T22:00:31+00:00",
+    "args_summary": "5 workers → 9 of 12 patients; 3 waiting",
+    "rationale": [
+      "greedy knapsack on harm-hours avoided",
+      "waiting: lowest harm, all have ≥ 10 h reserve"
+    ]
+  }
+]

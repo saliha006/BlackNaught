@@ -1,0 +1,11 @@
+# Pure-Python extras on top of IBM's lab image (installed with -c constraints-image.txt).
+# httpx, anyio, argon2-cffi, PyYAML are already in the image.
+fastapi==0.143.3
+starlette==1.8.0
+pydantic==2.14.1
+pydantic-core==2.50.1
+uvicorn==0.54.0
+sse-starlette==3.5.0
+pg8000==1.31.5
+scramp==1.4.17
+asn1crypto==1.5.1

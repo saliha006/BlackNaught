@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Ignore all Markdown files...
 *.md
 /.claude/skills/
@@ -5,3 +6,52 @@
 
 # ...except Progress.md and anything under .claude
 !Progress.md
+=======
+# Docs stay local. Only progress.md (conflict board) and README.md (submission) go to GitHub.
+*.md
+!progress.md
+!README.md
+# shared contracts are meant to be on GitHub
+!contracts/*.md
+
+# Research bundle, raw data, models
+DATATHON INFO/
+data/
+*.csv
+*.zip
+*.gguf
+*.img
+*.npz
+*.keras
+*.h5
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_*
+
+# Tooling
+.claude/
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+dist/
+.ipynb_checkpoints/
+
+# Local secrets and test artefacts
+secrets/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# API keys and other secret text files
+*apikey*
+*.key.txt
+
+# docs bundles for teammates (sent on Discord/Drive, never committed)
+share/
+>>>>>>> origin/main

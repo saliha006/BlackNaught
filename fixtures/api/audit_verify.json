@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "rows": 1834,
+  "first_bad_seq": null,
+  "reason": null,
+  "last_checkpoint": {
+    "seq": 1500,
+    "sig_ok": true,
+    "head_matches": true
+  },
+  "took_ms": 41
+}

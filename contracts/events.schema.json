@@ -1,0 +1,339 @@
+{
+  "$defs": {
+    "DnoFault": {
+      "properties": {
+        "kind": {
+          "const": "dno_fault",
+          "default": "dno_fault",
+          "title": "Kind",
+          "type": "string"
+        },
+        "outage_id": {
+          "title": "Outage Id",
+          "type": "integer"
+        },
+        "source_ref": {
+          "title": "Source Ref",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "restored",
+            "vanished",
+            "planned"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "postcodes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Postcodes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "outage_id",
+        "source_ref",
+        "status",
+        "postcodes"
+      ],
+      "title": "DnoFault",
+      "type": "object"
+    },
+    "FreqReading": {
+      "properties": {
+        "kind": {
+          "const": "freq_reading",
+          "default": "freq_reading",
+          "title": "Kind",
+          "type": "string"
+        },
+        "grid": {
+          "default": "gb",
+          "title": "Grid",
+          "type": "string"
+        },
+        "hz": {
+          "title": "Hz",
+          "type": "number"
+        }
+      },
+      "required": [
+        "hz"
+      ],
+      "title": "FreqReading",
+      "type": "object"
+    },
+    "Heartbeat": {
+      "properties": {
+        "kind": {
+          "const": "heartbeat",
+          "default": "heartbeat",
+          "title": "Kind",
+          "type": "string"
+        },
+        "sensor_id": {
+          "title": "Sensor Id",
+          "type": "string"
+        },
+        "cell_l1": {
+          "title": "Cell L1",
+          "type": "string"
+        },
+        "v_pu": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "V Pu"
+        }
+      },
+      "required": [
+        "sensor_id",
+        "cell_l1"
+      ],
+      "title": "Heartbeat",
+      "type": "object"
+    },
+    "IodaSignal": {
+      "properties": {
+        "kind": {
+          "const": "ioda_signal",
+          "default": "ioda_signal",
+          "title": "Kind",
+          "type": "string"
+        },
+        "region": {
+          "title": "Region",
+          "type": "string"
+        },
+        "datasource": {
+          "title": "Datasource",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "region",
+        "datasource",
+        "value"
+      ],
+      "title": "IodaSignal",
+      "type": "object"
+    },
+    "LastGasp": {
+      "properties": {
+        "kind": {
+          "const": "last_gasp",
+          "default": "last_gasp",
+          "title": "Kind",
+          "type": "string"
+        },
+        "sensor_id": {
+          "title": "Sensor Id",
+          "type": "string"
+        },
+        "cell_l1": {
+          "title": "Cell L1",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sensor_id",
+        "cell_l1"
+      ],
+      "title": "LastGasp",
+      "type": "object"
+    },
+    "SheddingStage": {
+      "properties": {
+        "kind": {
+          "const": "shedding_stage",
+          "default": "shedding_stage",
+          "title": "Kind",
+          "type": "string"
+        },
+        "grid": {
+          "title": "Grid",
+          "type": "string"
+        },
+        "stage": {
+          "maximum": 16,
+          "minimum": 0,
+          "title": "Stage",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "grid",
+        "stage"
+      ],
+      "title": "SheddingStage",
+      "type": "object"
+    },
+    "SmsReply": {
+      "properties": {
+        "kind": {
+          "const": "sms_reply",
+          "default": "sms_reply",
+          "title": "Kind",
+          "type": "string"
+        },
+        "patient_ref": {
+          "title": "Patient Ref",
+          "type": "string"
+        },
+        "code": {
+          "enum": [
+            "1",
+            "2"
+          ],
+          "title": "Code",
+          "type": "string"
+        }
+      },
+      "required": [
+        "patient_ref",
+        "code"
+      ],
+      "title": "SmsReply",
+      "type": "object"
+    },
+    "SourceStateChange": {
+      "properties": {
+        "kind": {
+          "const": "source_state",
+          "default": "source_state",
+          "title": "Kind",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "stale",
+            "down",
+            "degraded"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "status"
+      ],
+      "title": "SourceStateChange",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "event_id": {
+      "pattern": "^[0-9a-f]{32}$",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "source": {
+      "enum": [
+        "ukpn",
+        "npg",
+        "ssen",
+        "elexon",
+        "ioda",
+        "sim",
+        "accra_replay",
+        "neso_replay",
+        "agent"
+      ],
+      "title": "Source",
+      "type": "string"
+    },
+    "observed_at": {
+      "format": "date-time",
+      "title": "Observed At",
+      "type": "string"
+    },
+    "received_at": {
+      "format": "date-time",
+      "title": "Received At",
+      "type": "string"
+    },
+    "label": {
+      "enum": [
+        "LIVE",
+        "SIMULATED",
+        "REPLAY",
+        "TRANSFERRED",
+        "BASELINE"
+      ],
+      "title": "Label",
+      "type": "string"
+    },
+    "payload": {
+      "discriminator": {
+        "mapping": {
+          "dno_fault": "#/$defs/DnoFault",
+          "freq_reading": "#/$defs/FreqReading",
+          "heartbeat": "#/$defs/Heartbeat",
+          "ioda_signal": "#/$defs/IodaSignal",
+          "last_gasp": "#/$defs/LastGasp",
+          "shedding_stage": "#/$defs/SheddingStage",
+          "sms_reply": "#/$defs/SmsReply",
+          "source_state": "#/$defs/SourceStateChange"
+        },
+        "propertyName": "kind"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Heartbeat"
+        },
+        {
+          "$ref": "#/$defs/LastGasp"
+        },
+        {
+          "$ref": "#/$defs/DnoFault"
+        },
+        {
+          "$ref": "#/$defs/FreqReading"
+        },
+        {
+          "$ref": "#/$defs/SmsReply"
+        },
+        {
+          "$ref": "#/$defs/IodaSignal"
+        },
+        {
+          "$ref": "#/$defs/SheddingStage"
+        },
+        {
+          "$ref": "#/$defs/SourceStateChange"
+        }
+      ],
+      "title": "Payload"
+    }
+  },
+  "required": [
+    "event_id",
+    "source",
+    "observed_at",
+    "received_at",
+    "label",
+    "payload"
+  ],
+  "title": "Event",
+  "type": "object"
+}
