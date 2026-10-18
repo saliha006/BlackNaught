@@ -18,6 +18,8 @@ checks = {
     "app has its token": any(s["source"] == "signer_token_app" for s in app["secrets"]),
     "app waits for a healthy signer": app["depends_on"]["signer"]["condition"] == "service_healthy",
     "db keeps its data volume": any(v.get("source") == "pgdata" for v in services["db"]["volumes"]),
+    "edge publishes only 8443": [str(p["published"]) for p in services["edge"]["ports"]] == ["8443"],
+    "app is still reachable only from the VM itself": all(p.get("host_ip") == "127.0.0.1" for p in app["ports"]),
 }
 for name, ok in checks.items():
     print(("PASS  " if ok else "FAIL  ") + name)

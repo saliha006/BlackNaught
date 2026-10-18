@@ -9,3 +9,24 @@ include:
   - path:
       - ../backend/compose.backend.yml
       - signer.yml
+
+services:
+  edge:
+    build: edge
+    image: bn-edge:latest
+    ports: ["8443:8443"]
+    secrets: [edge_cert, edge_key]
+    volumes: ["../frontend/dist:/srv/www:ro"]
+    read_only: true
+    tmpfs: [/tmp, /var/lib/nginx, /var/log/nginx]
+    mem_limit: 64m
+    restart: unless-stopped
+    depends_on: [app]
+    healthcheck:
+      test: ["CMD", "curl", "-kfs", "-o", "/dev/null", "https://127.0.0.1:8443/"]
+      interval: 15s
+      retries: 4
+
+secrets:
+  edge_cert: {file: ../secrets/edge_cert.pem}
+  edge_key: {file: ../secrets/edge_key.pem}
