@@ -762,3 +762,35 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts: @ahmed: nginx gzip + cache headers proposed (your brief), not applied. @rama: phone layout issues are in your views (two-houses card, Predict strip); proposals pending with Sali.
 - Conflict status: open
 
+
+### 2026-10-18 07:52 — public alert relay to a phone, a mocked broadcast (Sali's 06:05 item) — @ahmed
+- Shipped: `alerting/relay.py`, which runs on Ahmed's laptop and needs only the Python standard library.
+  - It polls `/api/agent/decisions` for approved `draft_cap_alert`s and fetches each from `GET /api/alerts/cap/{id}`.
+  - It checks the ML-DSA-65 signature (`X-Signature-ML-DSA-65`) against the pinned signer key. Only then does it post the alert to the Android phone over ADB, as an "EXERCISE: ..." notification. An unsigned or tampered alert is refused and never shown.
+  - Each alert goes out once (`alerting/.sent`). If the phone or the network drops, the next poll retries it.
+  - The phone sits behind a `Channel` interface, so a government alerting service can take its place.
+- The signer's public key is published now: `contracts/signer_pub.pem` (key_id `bda7ac1f8fd6c9d2`). Anyone with OpenSSL 3.5 can check our signatures.
+- Tested: 6 tests on the laptop. They cover accepting and rejecting with a real ML-DSA key, hostile text staying one shell argument, and once-only across restarts. A real notification also reached the phone (Samsung, Android 13). Still to do: the end-to-end run with an operator's approval, to be filmed.
+- Pitch line (Sali's): "Blacknaught drafts standard CAP 1.2 alerts that a government alerting service can broadcast; in the demo a phone stands in for that channel." Never "we send alerts to the public".
+- Touched: `alerting/relay.py`, `alerting/tests/test_relay.py`, `contracts/signer_pub.pem` (all new), `contracts/signer.md`, `.gitignore`. Also the README run commands, and its diagram (edge and agent no longer "(in progress)").
+- ⚠️ Conflicts: @sali @rama, to film it: run the relay on Ahmed's laptop with the phone plugged in, then approve a CAP draft in Agent & audit. The phone buzzes within about 10 s, showing the same alert as the UI's phone mock-up.
+- Conflict status: open
+
+### 2026-10-18 07:52 — Granite is live: it words the agent's text, never its choices (task 15, F8) — @ahmed
+- Decision (Ahmed): Granite 3.3 2B Instruct BE, **Q4_K_M**, in its own container.
+- Shipped: `backend/app/granite.py` and `infra/granite.yml`.
+  - One process holds the model, and it won't load unless the GGUF's SHA-256 matches the pinned one (checked against Hugging Face's: `1f91f281...`).
+  - It sits on an internal `writing` network only the agent joins: no published port and no route out.
+  - It uses `llama_cpp` 0.3.36 from the lab image, with 2 threads, at most 200 tokens, temperature 0, and a cache.
+- How the agent uses it:
+  - Every decision is made first. Then Granite words the CAP description, the sitrep and new field briefings (`field_briefing` is a new auto tool).
+  - A number check rejects text carrying any number, in digits or words, that isn't in the decision's facts; the template is kept instead. A test shows the decisions are identical with and without Granite.
+  - One fresh text takes about 80 s on the z17's CPU, so the agent asks for one per tick. The rest keep their template, and repeats come from the cache. The first live sitrep wording had all 5 numbers grounded.
+- Memory: Granite was at 330 MiB right after loading (weights are mapped lazily), and the VM had 5.9 GB available after the deploy.
+- Tests: 19 agent and Granite tests, full suite 234 on s390x, 17 compose checks. The agent was restarted live and resumed from its memory (67 keys, after tick 35).
+- Not yet: the welfare-call script, and Q8_0 with zDNN (2.7 GB) for NNPA.
+- Touched: `backend/app/granite.py`, `backend/tests/test_granite.py`, `infra/granite.yml` (all new); `backend/app/agent.py`, `backend/tests/test_agent.py`, `infra/agent.yml`, `infra/docker-compose.yml`, `infra/test-compose.sh`; VM `~/models/` (the GGUF, read-only).
+- ⚠️ Conflicts:
+  - @sali: text decisions now carry `writer` (`granite` or `template`), and `draft_cap_alert` carries `description`, which `cap.build` already reads. There's a new tool name, `field_briefing`, in the feed.
+  - @nate: Granite holds up to about 2 GB once warm. Please keep the Jupyter kernels stopped around the demo, as the brief's guardrail says.
+- Conflict status: open
