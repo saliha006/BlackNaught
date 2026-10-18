@@ -3,6 +3,8 @@
 **Spec:** `BLACKNAUGHT.md` (NOW at the top, then Part A spec, Part B backend design); the § numbers below refer to it.
 
 ## 0. How the agent reads this brief (every task)
+0. **First, every prompt: `bash scripts/sync-context.sh`** (CLAUDE.md). If it says UPDATED, read `BLACKNAUGHT.md` → NOW and
+   this brief again, and tell the user what changed before working.
 1. Read the project `CLAUDE.md` in full, then this brief. Follow both.
 2. **Only action `▶ Current tasks`**, top to bottom.
 3. Before starting: `git fetch`, then read the new `progress.md` entries. Handle any open `⚠️ Conflicts: @nate` first.
@@ -13,6 +15,10 @@
    4. `git merge origin/main` into the branch and re-test
    5. merge to `main`
    6. add a `progress.md` entry
+   - **Every completed task, not just features:** add a `progress.md` entry with your name, date and time, and push it
+     to `main` straight away.
+   - **Doc edits:** you may only move your own finished task into Archived. Publish it with
+     `bash scripts/publish-context.sh "what changed"`. Never commit shared docs to `main`.
 
    Use the `debug` skill on every issue.
 

@@ -3,6 +3,8 @@
 **Spec:** `BLACKNAUGHT.md` (NOW at the top, then Part A spec, Part B backend design); the § numbers below refer to it. **How to build each piece:** Part B (§B1–§B21). Each section ends with a **Spec**; build from that.
 
 ## 0. How the agent reads this brief (every task)
+0. **First, every prompt: `bash scripts/sync-context.sh`** (CLAUDE.md). If it says UPDATED, read `BLACKNAUGHT.md` → NOW and
+   this brief again, and tell the user what changed before working.
 1. Read the project `CLAUDE.md` in full, then this brief. Follow both. Verbosity is **Level 0**.
 2. **Only action `▶ Current tasks`**, top to bottom.
 3. **Every prompt:** `git fetch`, then read the new `progress.md` entries with `git diff HEAD..origin/main -- progress.md`. If an open `⚠️ Conflicts` line names @sali:
@@ -15,6 +17,10 @@
    4. `git merge origin/main` into `sali-backend`, then re-test, fixing any conflict on the branch
    5. merge to `main` and push
    6. append a `progress.md` entry (CLAUDE.md §2b)
+   - **Every completed task, not just features:** add a `progress.md` entry with your name, date and time, and push it
+     to `main` straight away.
+   - **Doc edits:** you may only move your own finished task into Archived. Publish it with
+     `bash scripts/publish-context.sh "what changed"`. Never commit shared docs to `main`.
 
    Use the `debug` skill on every issue. Commit as `saliha006`, with **no AI co-author trailer**.
 5. **Off-plan request** → ⛔ stop and ask which teammates agreed (CLAUDE.md §2). Anything marked 🟠 is a decision for Sali.
@@ -102,7 +108,53 @@
 
 ---
 
-## 4. ▶ Current tasks (2026-10-17 v3), in order
+## 4. ▶ Current tasks (2026-10-18 04:40), in priority order
+**Headline (18 Oct):** "Blacknaught **predicts blackouts before they happen** and **protects the people they'd hurt most**."
+- **Backend build tasks 1–20 are done and live** (list below, kept for reference).
+- What's left is unblocking the team, submission blockers, one small feature, then evidence and the pitch.
+- Deadline: **submit 09:30** (hard stop 10:00).
+
+**A. Unblock the team (do first, ~15 min)**
+1. ⬜ **GitHub → Settings → Collaborators:** `meep-boop`, `aldrichbanas07`, `rama0623` must have **Write**. Without it they can't push.
+2. ⬜ **Set and announce the freeze time** on Discord (proposal: features 06:30, video 07:00–09:00, submit 09:30). Then update `BLACKNAUGHT.md` → NOW and the briefs.
+3. ⬜ **🟠 Decide the home-dashboard risk display** (A three gauges / B stacked model / C risk level + gauges; recommended C). This unblocks Rama's "Predict" strip and task 9.
+4. ⬜ **🟠 Agree the M2 live-feature list with Nate** (`contracts/model.md`). This unblocks Nate's main model.
+5. ⬜ **Pings:**
+   - Rama: test the VM login.
+   - Ahmed: turn off the Drive link + change the portal password.
+   - Everyone: `git pull` on `main`, then `bash scripts/sync-context.sh`.
+
+**B. Submission blockers (by ~06:00)**
+6. ⬜ **Team name + Hack2Skill team number** for the title, and **who is the registered team leader**: only they can submit.
+7. ⬜ **IBM labs 01 + 02** run and screenshotted (mandatory). Check Ahmed's status (his task 5), or split it.
+8. ⬜ **#helpdesk question:** can the video show NNPA on/off timing of our own model (ToU §5)?
+
+**C. Build (05:00–06:30)**
+9. ⬜ **If C is chosen:** add a `risk` block to `/api/me/home` (level + the three layer gauges with source and horizon) and tests. Ship it.
+10. ⬜ **Integration support:**
+    - Ahmed: nginx `:8443` → `/api`, `/stream` (no buffering), `BN_SIGNER_URL`.
+    - Nate: swap `KmModel` for M2; serve the home-sensor model.
+
+**D. Freeze + evidence (06:30–07:00)**
+11. ⬜ **Backend freeze.**
+    - Check the overnight grades (`/api/agent/grades`).
+    - Re-run `bash ~/BlackNaught/scripts/proof.sh`.
+    - Screenshots: the Jupyter training notebook with the IP visible, the terminal proof, and `/api/docs` once the edge is up.
+12. ⬜ **README for judges** (main, public):
+    - problem; data + licences; architecture;
+    - how to run on LinuxONE; results (grades, probe);
+    - choices + failures; who did what; next steps;
+    - open-source list.
+
+**E. Pitch + submit (07:00–09:30)**
+13. ⬜ **Your video segment + one line;** deck PDF with a "proof it runs on LinuxONE" slide; the open-source list.
+14. ⬜ **Delete the `context` branch** right before submitting: `git push origin --delete context` (the repo is public).
+15. ⬜ **Submit by 09:30** (team leader), then screenshot the confirmation.
+16. ⬜ **Keep the VM + app running until 28 Oct** (judges may ask for proof).
+
+---
+### Build tasks 1–20 (done; reference)
+#### Original list: (2026-10-17 v3), in order
 *Status: ⬜ not started · 🟡 in progress · ⏸ blocked · ✅ done*
 
 1. ✅ **Register on ENWL + UKPN and download both.** Done 22:16 via API keys **straight onto the VM**: `~/data/raw/enwl_unplanned-outages.csv` (312,936 rows) and `ukpn_ukpn-iis.csv` (316,435), plus `SHA256SUMS`. The keys are in `~/.ssh/*_apikey` (laptop) and `secrets/*_apikey` (VM).
