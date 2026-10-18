@@ -31,18 +31,26 @@ PARAMS = {"objective": "binary:logistic", "eval_metric": "aucpr", "max_depth": 5
 class HomeSensorModel:
     def __init__(self, booster: xgb.Booster, calib_x: list[float], calib_y: list[float], threshold: float,
                  model_id: str, sha256: str = ""):
+        # threshold is on the raw score: calibrated probabilities come in isotonic steps, and a cutoff on a step
+        # would flag every window sharing it (2.1% instead of 1% on the Accra calibration day)
         self.booster, self.threshold, self.model_id, self.sha256 = booster, threshold, model_id, sha256
         self.calib_x, self.calib_y = np.asarray(calib_x), np.asarray(calib_y)
 
+    def raw(self, x: pd.DataFrame) -> np.ndarray:
+        return self.booster.predict(xgb.DMatrix(x[FEATURES]))
+
     def probability(self, x: pd.DataFrame) -> np.ndarray:
-        raw = self.booster.predict(xgb.DMatrix(x[FEATURES]))
         # isotonic calibration stored as its breakpoints, so serving needs no sklearn
-        return np.interp(raw, self.calib_x, self.calib_y)
+        return np.interp(self.raw(x), self.calib_x, self.calib_y)
+
+    def flagged(self, x: pd.DataFrame) -> np.ndarray:
+        return self.raw(x) >= self.threshold
 
     def score(self, window: dict) -> dict:
         """One home's latest feature values (the probe's names) -> what the home layer shows."""
-        p = float(self.probability(pd.DataFrame([window]))[0])
-        return {"p_off_30min": round(p, 4), "value": "elevated" if p >= self.threshold else "normal"}
+        row = pd.DataFrame([window])
+        return {"p_off_30min": round(float(self.probability(row)[0]), 4),
+                "value": "elevated" if self.flagged(row)[0] else "normal"}
 
     def save(self, path: Path) -> None:
         path.write_text(json.dumps({
@@ -64,8 +72,7 @@ def fit(train: pd.DataFrame, calib: pd.DataFrame, model_id: str) -> HomeSensorMo
     booster = xgb.train(PARAMS, xgb.DMatrix(train[FEATURES], label=train["label"]), num_boost_round=300)
     raw = booster.predict(xgb.DMatrix(calib[FEATURES]))
     iso = IsotonicRegression(out_of_bounds="clip").fit(raw, calib["label"])
-    calibrated = np.interp(raw, iso.X_thresholds_, iso.y_thresholds_)
-    threshold = float(np.quantile(calibrated, 1 - FLAG_SHARE))
+    threshold = float(np.quantile(raw, 1 - FLAG_SHARE))
     return HomeSensorModel(booster, iso.X_thresholds_.tolist(), iso.y_thresholds_.tolist(), threshold, model_id)
 
 
@@ -78,15 +85,16 @@ def metrics(y: np.ndarray, p: np.ndarray, flagged: np.ndarray) -> dict:
 
 def evaluate(model: HomeSensorModel, test: pd.DataFrame) -> dict:
     y = test["label"].to_numpy()
-    p = model.probability(test)
-    point = metrics(y, p, p >= model.threshold)
+    p, flags = model.probability(test), model.flagged(test)
+    point = metrics(y, p, flags)
     # resample whole sensors: rows from one home aren't independent, so a row bootstrap would be too narrow
     rng = np.random.default_rng(SEED)
     sites = test["site_id"].unique()
     runs = []
     for _ in range(BOOTSTRAP_RUNS):
         pick = test["site_id"].isin(rng.choice(sites, size=len(sites), replace=True))
-        runs.append(metrics(y[pick.to_numpy()], p[pick.to_numpy()], (p >= model.threshold)[pick.to_numpy()]))
+        rows = pick.to_numpy()
+        runs.append(metrics(y[rows], p[rows], flags[rows]))
     return {k: {"value": round(v, 4), "sd": round(float(np.std([r[k] for r in runs])), 4)} for k, v in point.items()}
 
 
@@ -98,7 +106,7 @@ def build(accra: Path, out: Path) -> dict:
     model = fit(train, calib, "home-sensor-accra-v1")
     model.save(out)
     result = {"rows": {"train": len(train), "calibrate": len(calib), "test": len(test)},
-              "sites": int(table["site_id"].nunique()), "threshold_p": round(model.threshold, 4),
+              "sites": int(table["site_id"].nunique()), "threshold_raw_score": round(model.threshold, 4),
               "test_days": [str(days[5])[:10], str(days[-1])[:10]], "test": evaluate(model, test)}
     return result
 
