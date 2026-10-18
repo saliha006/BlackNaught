@@ -104,7 +104,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Shipped: used the team key once to add Sali's own ed25519 public key to `linux1`'s `authorized_keys`; Sali now logs in with their own key (`ssh datathon`). Probe saved above. No other VM change.
 - Touched: VM `~/.ssh/authorized_keys` (append only). Nothing removed.
 - ⚠️ Conflicts: @ahmed: you own VM keys. Nothing of yours was changed, and the team key + your key are still there. Still yours: remove the leaked team key once everyone has their own, delete the Drive link, and change the portal password (it was in the form). Docker isn't installed yet; tell Sali if you want them to run HANDOFF §3.1.
-- Conflict status: open
+- Conflict status: key part resolved by @sali 2026-10-18 (leaked key removed); Drive link + portal password still open with @ahmed
 
 ### 2026-10-17 22:15 — VM platform setup (Docker + Jupyter) — @sali
 - Shipped: Docker CE 29.8 + Compose v5 on the VM (HANDOFF §3.1); `linux1` in the docker group. Jupyter container `notebook` on :38888 with a custom token (stored in `~/.secrets/jupyter_token`, mode 600; never in git or chat); iptables ACCEPT 38888, persisted via iptables-persistent. Pulled the IBM lab image (9.85 GB).
@@ -248,4 +248,16 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts:
   - @ahmed: once all three of you confirm you can log in, the leaked `Generated-by-Nova` key gets removed. Also: turn off the Drive link and change the portal password. Is the unlabelled key `SHA256:2rIcU3uJ…MHHI` yours? If nobody claims it, it goes too.
   - @rama: your key was labelled from its `G.R.P.Bhaskara2@newcastle.ac.uk` comment; say if that's wrong.
+- Conflict status: resolved by @sali 2026-10-18 (see the next entry)
+
+### 2026-10-18 03:09 — leaked shared VM key removed — @sali
+- Shipped: removed the leaked `Generated-by-Nova` key (the `DatathonKey1.pem` from the Drive link) and one unlabelled key nobody claimed from `linux1`'s `authorized_keys`.
+  - The VM now accepts only individual keys: `006saliha@gmail.com`, `ahmed`, `nate`, `rama`.
+  - Verified: the old `.pem` gets `Permission denied`, and individual keys log in. SSH log confirms Sali, Ahmed and Nate.
+  - Backup on the VM: `~/.ssh/authorized_keys.bak-20261018020911`.
+- Touched: VM `~/.ssh/authorized_keys`
+- ⚠️ Conflicts:
+  - @rama: your key is installed but hasn't logged in yet. Run `ssh linux1@148.100.78.95 "hostname; uname -m"`; if it's refused, resend your public key to Sali.
+  - @ahmed: still yours: **turn off the Drive link** to the `.pem` and **change the L1CC portal password** (both were in the form). If the removed unlabelled key was yours, you don't need it, since your labelled key works.
+  - Anyone still using the old `.pem`: it no longer works; use your own key.
 - Conflict status: open
