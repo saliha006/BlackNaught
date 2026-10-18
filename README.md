@@ -210,9 +210,10 @@ for s in pg_super_pw db_migrator_pw db_ingest_pw db_api_pw db_agent_pw bidx_key 
   openssl rand -hex 32 > secrets/$s
 done
 
-# the full stack: the backend plus the ML-DSA signer
+# the full stack: the backend, the ML-DSA signer, the post-quantum TLS edge and the agent loop
 sudo docker compose -f infra/docker-compose.yml build signer
 bash scripts/make-signer-secrets.sh   # once, as a docker-group user (not sudo), so the signer can read its key
+bash scripts/make-edge-cert.sh        # once: a self-signed edge certificate until a trusted one replaces it
 sudo docker compose -f infra/docker-compose.yml up -d --build
 sudo docker compose -f infra/docker-compose.yml exec app python -m app.migrate
 sudo docker compose -f infra/docker-compose.yml exec app python -m app.auth bootstrap   # operator login
