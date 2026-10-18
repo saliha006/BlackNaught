@@ -82,6 +82,23 @@ async def test_power_comes_back_with_the_real_restoration(ingest, monkeypatch):
 
 
 @pytest.mark.anyio
+async def test_each_sensor_reports_once_a_minute_in_its_own_slot_not_all_at_once(ingest, monkeypatch):
+    monkeypatch.setattr("app.simulator.DROP_P", 0.0)
+    bus = Bus()
+    sim = Simulator(ingest, bus, random.Random(1))
+    await sim.tick(NOW)
+    reporting = {s.sensor_id for s in sim.sensors.values() if not s.affected or s.behind_backup}
+    bus.take()
+    per_slot = []
+    for slot in range(simulator.SLOTS):
+        await sim.tick(NOW + timedelta(seconds=5 * slot), slot)
+        per_slot.append([e["payload"]["sensor_id"] for e in bus.take() if e["payload"]["kind"] == "heartbeat"])
+    beats = [b for slot in per_slot for b in slot]
+    assert sorted(beats) == sorted(reporting)  # each powered sensor once in the minute
+    assert max(len(slot) for slot in per_slot) < len(reporting)  # spread out, not one burst
+
+
+@pytest.mark.anyio
 async def test_comms_noise_keeps_about_three_quarters_of_heartbeats(ingest):
     bus = Bus()
     sim = Simulator(ingest, bus, random.Random(7))
