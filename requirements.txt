@@ -1,0 +1,22 @@
+# Python packages Blacknaught installs ON TOP of IBM's LinuxONE image
+#   registry.linuxone.cloud.marist.edu/l1cc/jupyterlab-image-s390x
+#
+# The image already ships the compiled s390x stack: NumPy, pandas, TensorFlow (+ ibm-zdnn-plugin), XGBoost,
+# scikit-learn, httpx, anyio, argon2-cffi and PyYAML. Don't reinstall those: pip would replace IBM's builds.
+# backend/Dockerfile installs this list with `-c backend/constraints-image.txt`, which pins every package the image
+# ships, so nothing here can upgrade them. This file mirrors backend/requirements-app.txt (the one the build uses).
+#
+#   pip install -r requirements.txt -c backend/constraints-image.txt
+
+fastapi==0.143.3
+starlette==1.8.0
+pydantic==2.14.1
+pydantic-core==2.50.1
+uvicorn==0.54.0
+sse-starlette==3.5.0
+pg8000==1.31.5
+scramp==1.4.17
+asn1crypto==1.5.1
+
+# Tests only (backend/requirements-test.txt):
+#   pytest==9.1.1  pytest-cov==7.1.0  coverage==7.16.2  xmlschema==4.3.2
