@@ -53,7 +53,9 @@ cells = [
          "ax.plot(storm['day'], area.expected(storm), 'o-', color='#c0392b', label='M8 expected (weather)')\n"
          "ax.plot(storm['day'], area.base(storm), '--', color='#2c3e50', label='climatology expected (live today)')\n"
          "ax.set_yscale('symlog'); ax.set_ylabel('faults per day'); ax.legend()\n"
-         "ax.set_title('Storm Éowyn, Cumbria, 24 Jan 2025: M8 saw it coming, climatology could not')\n"
+         "ax.set_title('Storm Éowyn, Cumbria, 24 Jan 2025: M8 raised its forecast 3.5x, climatology stayed flat')\n"
+         "import matplotlib.dates as mdates\n"
+         "ax.xaxis.set_major_formatter(mdates.DateFormatter('%d %b')); ax.xaxis.set_major_locator(mdates.DayLocator(interval=2))\n"
          "plt.show()\n"
          "storm.assign(m8=area.expected(storm).round(1), climatology=area.base(storm).round(1))"
          "[['day', 'faults', 'wind_gusts_10m_max', 'm8', 'climatology']].sort_values('faults').tail(3)"),
@@ -102,7 +104,7 @@ cells = [
          "    ax.axhline(hz, ls=':', color='#888'); ax.text(view.index[0], hz + 0.02, name, color='#555', fontsize=9)\n"
          "ax.axvspan(warn.tz_convert('Europe/London'), hit.tz_convert('Europe/London'), color='#c0392b', alpha=0.15,\n"
          "           label=f\"warning: {lead['m4_warning']['lead_s']} s before demand disconnection\")\n"
-         "ax.set_ylabel('Hz'); ax.legend(loc='upper right'); ax.set_title('9 August 2019, 16:52-16:55 BST')\n"
+         "ax.set_ylabel('Hz'); ax.legend(loc='upper right'); ax.set_title('9 August 2019, GB frequency (BST)')\n"
          "plt.show()"),
     code("normal = sorted((DATA / 'neso').glob('fnew-*.csv'))\n"
          "alarms = m4.false_alarms(m4.load(p) for p in normal)\n"
