@@ -1,0 +1,11 @@
+#!/bin/sh
+# The repo is public, so a secret has to be stopped before the commit: once pushed it's readable and copied at once.
+# gitleaks is installed per person; without it the commit only gets a warning, so nobody is blocked mid-event.
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks isn't installed, so this commit wasn't scanned for secrets (winget install Gitleaks.Gitleaks / brew install gitleaks)." >&2
+  exit 0
+fi
+gitleaks git --pre-commit --staged --redact --no-banner --verbose || {
+  echo "pre-commit: commit blocked by gitleaks (see above). A real secret: take it out. A false positive: add its Fingerprint line to .gitleaksignore." >&2
+  exit 1
+}

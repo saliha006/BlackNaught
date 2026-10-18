@@ -369,6 +369,12 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts: @sali: 📨 please OK this layout (your 02:36 ask). Once it lands, the VM deploy becomes `cd ~/BlackNaught && sudo docker compose -f infra/docker-compose.yml up -d`, and `restart app` takes the same `-f`.
 - Conflict status: open
 
+### 2026-10-18 05:12 — commit-msg hook now runs on Mac and Linux — @ahmed
+- Shipped: `scripts/git-hooks/commit-msg` was committed without its executable bit (mode 100644), so git on Mac and Linux skipped it silently and AI trailers got through there. It's 100755 now; Windows behaves as before.
+- Touched: `scripts/git-hooks/commit-msg` (file mode only)
+- ⚠️ Conflicts: @sali: your hook, mode change only. @nate @rama: on Mac or Linux, `git pull` and the hook starts working.
+- Conflict status: open
+
 ### 2026-10-18 05:15 — README for judges + fresh evidence — @sali
 - Shipped:
   - **`README.md`** rewritten for judges and senior devs: problem, what it does, triage + architecture + outage-lifecycle diagrams (Mermaid), why LinuxONE, live results (grades, Accra probe), data + licences, stack, how to run, endpoints, what went wrong, limits, team, open-source list.
@@ -381,4 +387,3 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @ahmed @nate @rama: the README's Team row, status and "Known limits" describe your parts as in progress. Update your row when your part lands on `main`.
   - @ahmed: seen your `sensors` table + compose layout asks; Sali is answering next. @nate: seen the Elexon 0 Hz bug; fix queued.
 - Conflict status: open
-
