@@ -187,12 +187,12 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
    - `granite`
    - `mem_limit` on each service, plus restart policies
    - *Done when:* `docker compose up -d` is green on the VM. `[⚠ @sali: app runs Sali's FastAPI; agree the entrypoint]`
-8. ⬜ **LUKS2 volume for Postgres data** (HANDOFF §7.7, §9.5). Screenshot `cryptsetup luksDump`. `[⚠ @sali: DB data path]`
-9. 🟡 **Signer** *(signer built 2026-10-18 05:56: on `main`, not wired yet; the data-key wrap is still to do)* *(Sali 06:05: app client done; compose wiring is yours, see the block at the top)* *(Ahmed 2026-10-18 06:22: wired and live, checkpoints signed)*
+8. ⬜ *(Ahmed 2026-10-18 08:20: not done, too risky to move the live database this close to submission; it's in the README's limits)* **LUKS2 volume for Postgres data** (HANDOFF §7.7, §9.5). Screenshot `cryptsetup luksDump`. `[⚠ @sali: DB data path]`
+9. 🟡 *(Ahmed 2026-10-18 08:20: the data-key wrap is not done; it's in the README's limits)* **Signer** *(signer built 2026-10-18 05:56: on `main`, not wired yet; the data-key wrap is still to do)* *(Sali 06:05: app client done; compose wiring is yours, see the block at the top)* *(Ahmed 2026-10-18 06:22: wired and live, checkpoints signed)*
    - ML-DSA-65 keygen; sign and verify (test `-rawin`).
    - Wrap the data key for the AES-GCM columns. `[⚠ @sali uses it for encrypted columns + audit checkpoints]`
-10. ⬜ **🎯 Walking skeleton by 00:30** `[⚠ shared with ALL]`: ingest → DB → API → map, running on the VM.
-11. 🟡 *(Ahmed 2026-10-18 07:34: GB simulator live on the real footprints, 2.2k sensors, with the brief's noise. The Accra replay and the link to enrolled households are still to do)* **F2: sensor simulator driven by real faults**
+10. ✅ *(Ahmed 2026-10-18 08:20: the stack runs end to end, ingest → DB → API → map, live behind the edge)* **🎯 Walking skeleton by 00:30** `[⚠ shared with ALL]`: ingest → DB → API → map, running on the VM.
+11. ✅ *(Ahmed 2026-10-18 08:20: the Accra replay of 429 real GridWatch sensors is live too, at 10x, labelled REPLAY)* *(Ahmed 2026-10-18 07:34: GB simulator live on the real footprints, 2.2k sensors, with the brief's noise. The Accra replay and the link to enrolled households are still to do)* **F2: sensor simulator driven by real faults**
     - For each live or historic fault, put fuse-box sensors at synthetic enrolled homes in its affected unit postcodes (UKPN `fullpostcodedata`, NPg `postcode[]`). Add 2–3 anchor sensors per street, plus control sensors in neighbouring postcodes.
     - Affected sensors go silent at the real start and return at the real restoration. Heartbeat every 60 s; a last gasp on loss.
     - **Noise:** ~74% uptime, comms dropouts, some sensors behind backup, partial outages ("1 in 3 homes").
@@ -205,25 +205,26 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
     - A DNO fault declared in the postcode → P ≈ 1.0.
     - Stale source → LR = 1. Silence ≠ no outage.
     - Score: postcode precision/recall against the real DNO footprints → `evidence/localiser.json`.
-13. ⬜ **NNPA serving.** Load Nate's **signed** `.keras` model and score every at-risk household × outage per tick as one batch via `model.predict` (graph mode). Refuse unsigned or tampered models. Run `ZDNN_ENABLE_PRECHECK=true` once and save the log. `[⚠ @nate hands over the model]`
-14. 🟡 *(Ahmed 2026-10-18 07:17: v1 live as the `agent` service: the tools, the knapsack, signed tool calls, memory and the restart test. `field_briefing` waits on Granite (task 15), `recalibrate` on task 16)* **F6: agent loop v1** (§9), a 60 s asyncio loop of perceive → assess → plan → act → observe → learn.
+13. ⬜ *(Ahmed 2026-10-18 08:20: not served. The live model is Nate's KM curve, which beat M2 on UKPN, so the NNPA is timed instead (task 18); the zDNN precheck log is in `evidence/zdnn_precheck.txt`)* **NNPA serving.** Load Nate's **signed** `.keras` model and score every at-risk household × outage per tick as one batch via `model.predict` (graph mode). Refuse unsigned or tampered models. Run `ZDNN_ENABLE_PRECHECK=true` once and save the log. `[⚠ @nate hands over the model]`
+14. ✅ *(Ahmed 2026-10-18 08:20: all nine tools are live, `field_briefing` and `recalibrate` included)* *(Ahmed 2026-10-18 07:17: v1 live as the `agent` service: the tools, the knapsack, signed tool calls, memory and the restart test. `field_briefing` waits on Granite (task 15), `recalibrate` on task 16)* **F6: agent loop v1** (§9), a 60 s asyncio loop of perceive → assess → plan → act → observe → learn.
     - **Tools:** `notify_carer`, `assign_visit`, `request_supplier`, `escalate` (approval), `draft_cap_alert` (approval), `write_sitrep`, `field_briefing`, `mark_source_stale`, `recalibrate`.
     - **Capacity:** a greedy knapsack on harm-hours avoided (e.g. 5 workers and 12 patients; log who waits and why).
     - Every tool call is logged and signed. Memory in Postgres, with a restart test.
     - `[⚠ uses @nate's predict() + @sali's triage/decisions/grades tables]`
-15. 🟡 *(Ahmed 2026-10-18 07:52: live, Q4_K_M in its own container, pinned by SHA-256, on an internal network only the agent joins. It words the sitrep, the field briefings and the CAP text, all number-checked, one fresh text a tick at ~80 s each. The welfare-call script is still to do)* **F8: Granite.** Granite 3.3 2B Instruct **BE** GGUF through the lab image's `llama_cpp_python` (server mode, threads 2, `max_tokens` ≤ 200, results cached).
+15. 🟡 *(Ahmed 2026-10-18 08:20: every carer notification now carries a welfare-call script, as a template, since Granite's one text a tick goes to the CAP text, sitrep and briefings first)* *(Ahmed 2026-10-18 07:52: live, Q4_K_M in its own container, pinned by SHA-256, on an internal network only the agent joins. It words the sitrep, the field briefings and the CAP text, all number-checked, one fresh text a tick at ~80 s each. The welfare-call script is still to do)* **F8: Granite.** Granite 3.3 2B Instruct **BE** GGUF through the lab image's `llama_cpp_python` (server mode, threads 2, `max_tokens` ≤ 200, results cached).
     - Writes the field briefing, welfare-call script, situation report and CAP alert text.
     - A **number validator** rejects any number that isn't in the decision record.
     - Test: delete Granite, and the decisions stay the same.
-16. ⬜ **Self-correction:** read the overnight grades; if Brier drifts, apply an isotonic correction per horizon (GB only) and log it before and after. `[⚠ @sali grades table]`
+16. 🟡 *(Ahmed 2026-10-18 08:20: live. Every hour it fits on the older GB grades and judges on the newer ones, each check a signed `recalibrate` decision. On the overnight grades: +2 h 0.1215 → 0.1198, +4 h 0.1374 → 0.1630, so no correction was kept. The triage scorer doesn't apply a kept correction yet)* **Self-correction:** read the overnight grades; if Brier drifts, apply an isotonic correction per horizon (GB only) and log it before and after. `[⚠ @sali grades table]`
 17. ✅ *(Ahmed 2026-10-18 06:49: live at https://148-100-78-95.sslip.io:8443 with a Let's Encrypt certificate; X25519MLKEM768 + verified certificate proven from outside, evidence/09)* **Edge PQ TLS.** nginx on OpenSSL 3.5; prove it with `openssl s_client -groups X25519MLKEM768`. Serves Rama's static build and proxies `/api` and `/stream` (SSE buffering off).
-18. ⬜ **NNPA on/off timing → `evidence/nnpa_timing.csv`** (guardrail above), plus a Trivy scan of the app image and `iptables -L`.
-19. ⬜ **Publish audit checkpoints off-box** (a git commit every N minutes). `[⚠ @sali audit chain]`
+18. ✅ *(Ahmed 2026-10-18 08:20: `evidence/nnpa_timing.csv` (NNPA about 1.2× faster at batches of 256 and 4,096 on Nate's M2), `10_firewall.txt` (Jupyter 38888 is public too), `11_trivy_app.txt` (0 critical, 6 high). The numbers aren't for the video until #helpdesk confirms)* **NNPA on/off timing → `evidence/nnpa_timing.csv`** (guardrail above), plus a Trivy scan of the app image and `iptables -L`.
+19. ✅ *(Ahmed 2026-10-18 08:20: `offbox/publish.py` on the laptop verifies each signed checkpoint and pushes it to the `audit-checkpoints` branch every 10 min; 109 to 302 published)* **Publish audit checkpoints off-box** (a git commit every N minutes). `[⚠ @sali audit chain]`
 20. ⬜ **03:00 freeze.** Make sure the agent and grading are **running overnight**. Stay reachable for VM restarts.
 21. ⬜ **06:00–07:00: record the uncut terminal take** (§13).
-22. ⬜ **Video:** your line, plus the README section on the platform and proof.
+22. 🟡 *(Ahmed 2026-10-18 08:20: the README's "Platform, agent and proof" section is done and the video line is drafted; the recording is Ahmed's)* **Video:** your line, plus the README section on the platform and proof.
 
 ## 5. Done log (newest first)
+- 2026-10-18 08:20: **Off-box checkpoints (task 19)** ✅, **NNPA timing + firewall + Trivy (task 18)** ✅, **agent loop, all nine tools (task 14)** ✅, **walking skeleton (task 10)** ✅.
 - 2026-10-18 07:52: **Compose skeleton (task 7)** ✅. db, app, signer, edge, agent and Granite in one `infra/docker-compose.yml`, with 17 boundary checks in `infra/test-compose.sh`.
 - 2026-10-18 06:49: **Edge PQ TLS (task 17)** ✅. nginx on OpenSSL 3.5, X25519MLKEM768, trusted certificate, UI + /api + /stream; demo URL https://148-100-78-95.sslip.io:8443.
 - 2026-10-18 05:07: **Contract freeze (task 6)** ✅. Events frozen as they are; the `sensors` table is asked of Sali in `progress.md`.
