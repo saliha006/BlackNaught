@@ -56,10 +56,9 @@
    ```
    Then use `http://localhost:8000/api/docs` and `http://localhost:8000/stream`.
    - Without VM access, mock from `fixtures/api/*.json`. These are validated against the live response models; they include `cap_alert_sample.xml` and `stream_sample.txt`.
-6. **Ahmed, one stack only:** the backend already runs `postgres:17` + `app` from `backend/compose.backend.yml` (project `bn-backend`).
-   - **Don't start a second Postgres.** Add edge, signer and granite as services to that stack, or `include:` it from `/infra`.
-   - Reuse the `secrets/` names.
-   - Agree it with Sali first.
+6. **One stack:** `infra/docker-compose.yml` runs Sali's `backend/compose.backend.yml` (project `bn-backend`: `postgres:17` + `app`) plus Ahmed's signer; edge and Granite join it next.
+   - Deploy and restart with that file only. An `up` from `backend/` takes the signer settings back off `app`.
+   - In a `~/work/<name>` clone, use only `run --rm` (below): the project name is the live stack's, so an `up` there would swap your clone's code into the live app.
 7. **Nate:** the model interface the backend calls is `contracts/model.md`. ⚠ The feature list for M2 is an open item to agree with Sali.
 
 ## Who owns what
@@ -93,7 +92,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - **Never log into GitHub on the VM.** It's one shared `linux1` user. The VM only **pulls**.
 - **`~/BlackNaught`** is the **deploy copy**, always on `main`, and it runs the live app.
   - Don't edit code there.
-  - After a merge to `main`: `cd ~/BlackNaught && git pull --ff-only && cd backend && sudo docker compose -f compose.backend.yml restart app`.
+  - After a merge to `main`: `cd ~/BlackNaught && git pull --ff-only && sudo docker compose -f infra/docker-compose.yml restart app`. When a compose file changed, use `up -d` with the same `-f`.
   - Say so in Discord first.
 - **`~/work/<name>`** is your own clone for testing your branch on real s390x. One-time setup:
   ```bash
