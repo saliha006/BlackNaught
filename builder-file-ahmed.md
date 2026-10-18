@@ -168,7 +168,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
    - `mem_limit` on each service, plus restart policies
    - *Done when:* `docker compose up -d` is green on the VM. `[⚠ @sali: app runs Sali's FastAPI; agree the entrypoint]`
 8. ⬜ **LUKS2 volume for Postgres data** (HANDOFF §7.7, §9.5). Screenshot `cryptsetup luksDump`. `[⚠ @sali: DB data path]`
-9. ⬜ **Signer**
+9. 🟡 **Signer** *(signer built 2026-10-18 05:56: on `main`, not wired yet; the data-key wrap is still to do)*
    - ML-DSA-65 keygen; sign and verify (test `-rawin`).
    - Wrap the data key for the AES-GCM columns. `[⚠ @sali uses it for encrypted columns + audit checkpoints]`
 10. ⬜ **🎯 Walking skeleton by 00:30** `[⚠ shared with ALL]`: ingest → DB → API → map, running on the VM.
