@@ -104,7 +104,8 @@ $('#sign-out').addEventListener('click', async () => {
 });
 
 const filters: Filters = { operators: allOperators(), escalationsOnly: false };
-const layers: Record<LayerGroup, boolean> = { beams: true, sweep: true, cells: true };
+// Cells start off: the severity fog now shows where cuts are, and the fixed patient-count squares read as noise
+const layers: Record<LayerGroup, boolean> = { beams: true, sweep: true, cells: false };
 
 const controls = renderControls($('#controls'), filters, layers, {
   filters: render,
@@ -396,6 +397,7 @@ async function start() {
     getTriage(TRIAGE_LIMIT).catch(() => null),
   ]);
   map = m;
+  for (const [group, on] of Object.entries(layers) as [LayerGroup, boolean][]) if (!on) map.setLayerVisible(group, false);
   active = outages.filter((o) => o.status === 'active');
   cells = cellData;
   outagesLoaded = true;

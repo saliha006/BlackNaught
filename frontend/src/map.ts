@@ -222,6 +222,11 @@ export async function createMap(container: HTMLElement, padding: () => Padding):
   // Bottom-right sits under the floating panel; OSM attribution must stay visible.
   map.addControl(new AttributionControl({ compact: true }), 'bottom-left');
   map.addControl(new NavigationControl({ visualizePitch: true }), 'bottom-left');
+  // A notch quicker than MapLibre's defaults (1/450 wheel, 1/100 trackpad), so a few scroll clicks reach street level
+  map.scrollZoom.setWheelZoomRate(1 / 300);
+  map.scrollZoom.setZoomRate(1 / 70);
+  // On a tablet a two-finger pinch only zooms; with rotation on, a slightly uneven pinch spins the map instead
+  map.touchZoomRotate.disableRotation();
 
   let selected: number | null = null;
   let selectHandler: (id: number) => void = () => {};
