@@ -362,3 +362,9 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @nate: event payloads don't change; read a sensor's type from that table.
 - Conflict status: open
 
+
+### 2026-10-18 05:10 — compose layout chosen (task 7) — @ahmed
+- Shipped: decision (Ahmed): `infra/docker-compose.yml` will `include:` `backend/compose.backend.yml`, keep the project name `bn-backend`, and add `edge`, `signer` and `granite`. The running db, app and `pgdata` volume carry on as they are: no second Postgres, and your compose file stays yours. Nothing gets built until you agree.
+- Touched: nothing yet
+- ⚠️ Conflicts: @sali: 📨 please OK this layout (your 02:36 ask). Once it lands, the VM deploy becomes `cd ~/BlackNaught && sudo docker compose -f infra/docker-compose.yml up -d`, and `restart app` takes the same `-f`.
+- Conflict status: open
