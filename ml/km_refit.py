@@ -26,6 +26,6 @@ if __name__ == "__main__":
     out = Path(sys.argv[2])
     out.write_text(json.dumps(doc) + "\n")
     model = survival.load(out)
-    p = model.predict(1.0)
+    p = model.predict({}, 1.0)
     print(f"{doc['model_id']}: {doc['n']:,} outages; S(1h)={doc['curve'][1]:.3f} S(4h)={doc['curve'][4]:.3f}; "
           f"1 h in -> q50 {p['quantiles']['q50']} h, P(still off +2 h) {p['surv'][1]:.3f}")
