@@ -388,6 +388,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @sali: 📨 please add this to Ahmed's brief and NOW. It reuses your CAP 1.2 export and the operator approval (CAP alerts already need a human OK).
   - @rama: the phone receiving the alert could be a shot in the video.
   - Pitch wording: "Blacknaught drafts standard CAP 1.2 alerts that a government alerting service can broadcast; in the demo a phone stands in for that channel." Not "we send alerts to the public".
+- Conflict status: open
 
 ### 2026-10-18 05:15 — README for judges + fresh evidence — @sali
 - Shipped:
@@ -400,4 +401,49 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @rama: option C changes the "my home" view (badge + three gauges); spec in your brief. The `risk` field lands in `/api/me/home` after the rules are confirmed.
   - @ahmed @nate @rama: the README's Team row, status and "Known limits" describe your parts as in progress. Update your row when your part lands on `main`.
   - @ahmed: seen your `sensors` table + compose layout asks; Sali is answering next. @nate: seen the Elexon 0 Hz bug; fix queued.
+- Conflict status: open
+
+### 2026-10-18 05:31 — publish-context.sh can undo other people's edits — @ahmed
+- Shipped: nothing; this is a bug report. Ahmed's 05:08 publish put back an old copy of Nate's brief and wiped Nate's 05:07 Done-log move. Sorry, Nate, and thanks for restoring it at 05:28.
+  - Why: the script publishes every shared doc from your local copies, and it only refuses when a file changed both on `context` and locally. A file someone else changed since your last sync, that you didn't touch, silently goes back to your stale copy. A doc someone added that you haven't synced yet gets dropped the same way.
+  - Fix: start from the current `context` tree and replace only the files you changed locally, keeping the both-changed refusal.
+- Touched: nothing
+- ⚠️ Conflicts:
+  - @sali: 📨 it's your script. OK for Ahmed to make that fix, or would you rather? Until then Ahmed syncs right before each publish and checks the published commit against its parent.
+  - @nate @rama: same risk on your publishes until it's fixed; sync just before you publish.
+- Conflict status: open
+
+### 2026-10-18 05:31 — signer design chosen (task 9) — @ahmed
+- Shipped: decisions (Ahmed), now being built on `ahmed-platform`:
+  - The ML-DSA-65 key is a file in `secrets/`, like the stack's other secrets, made once by a script that never overwrites it. It never goes in git, an image or an env var.
+  - `/sign` needs a per-caller token, and the signer sits on a private network shared only with `app` and the agent. `/verify` stays open, since checking a signature can't forge one.
+- Touched: nothing yet
+- ⚠️ Conflicts: @sali: 📨 `HttpSigner` will need to send `Authorization: Bearer <token>`, read from a new secret `signer_token_app`, and `app` needs `BN_SIGNER_URL=http://signer:8100`. Nothing changes before then: `BN_SIGNER_URL` is unset, so checkpoints stay unsigned as today. The exact contract lands in `contracts/signer.md` with the signer.
+- Conflict status: open
+
+### 2026-10-18 05:31 — mock alert channel chosen — @ahmed
+- Shipped: decision (Ahmed): the mock public alert reaches Ahmed's phone over ADB from his laptop (USB debugging on), not by SMS. No third-party app, no texts from a SIM, no real phone numbers.
+- Touched: nothing yet
+- ⚠️ Conflicts: @sali: 📨 for Ahmed's brief, with the alert task (05:15 entry).
+- Conflict status: open
+
+### 2026-10-18 05:34 — context publish can no longer undo teammates' edits (fix on `nate-ml`) — @nate
+- Shipped:
+  - **Found:** Ahmed's 05:08 publish (`683d4e9`) silently restored an old copy of Nate's brief, undoing Nate's 05:06 Done-log move.
+    - Not Ahmed's fault. `publish-context.sh` uploads **every** shared doc from the publisher's local copy, and only refuses when both sides edited the same file. So any stale copy overwrites newer work.
+    - Nate's move is re-applied and republished (`65983dd`, Nate's brief only).
+  - **Fix on `nate-ml` (`5f4f727`), for @sali to review and merge:**
+    - Publish starts from what's on `context` and sends only the files you changed since your last sync. Stale copies can't overwrite anything, and docs added after your sync are kept.
+    - Unless `git config blacknaught.builder` is `sali`, publish refuses any change except your own `builder-file-<name>.md`.
+    - Sync copies an unpublished local edit to `.git/context-backup/` before replacing it, instead of silently overwriting it.
+    - Both scripts set `MSYS_NO_PATHCONV=1`, because Git Bash on Windows mangles `rev:.claude/...` arguments.
+    - `scripts/test-context-scripts.sh` replays tonight's clobber on a throwaway remote: the current scripts **fail** it, the fixed ones **pass**.
+  - **Proposed CLAUDE.md rule (§2a).** CLAUDE.md is Sali's, so please publish it if you agree:
+    > **Only Sali edits more than one brief, and nobody wipes another builder's entries.** `scripts/publish-context.sh` enforces the first part: unless `git config blacknaught.builder` is `sali`, it refuses any change except your own `builder-file-<name>.md`. For the second part, anyone tidying a brief for consistency (Sali included) syncs first, then only adds, annotates or moves items. Never delete or reword another builder's task, Done-log line or status note; superseded items go to Archived with the reason. If publish refuses because a file changed on both sides, re-sync (your copy is saved in `.git/context-backup/`), re-apply your edit on top and publish again, keeping every line from the other side.
+- Touched: `scripts/publish-context.sh`, `scripts/sync-context.sh`, `scripts/test-context-scripts.sh` (on `nate-ml`); `builder-file-nate.md` on `context`
+- ⚠️ Conflicts:
+  - @sali:
+    - **Your scripts:** please review and merge `5f4f727`. After the merge, everyone runs `git config blacknaught.builder <name>` once (publish refuses until it's set); please add that line to "Start here" step 1.
+    - **Security:** the credential guard in `publish-context.sh` (unchanged by me) seems to contain fragments of real credentials, in a public repo. Rotate those or match on shape instead.
+  - @ahmed: your 05:08 publish restored an old copy of Nate's brief. That's the script bug, not you. Until the fix lands, sync right before you publish.
 - Conflict status: open
