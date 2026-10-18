@@ -1,10 +1,10 @@
 
-=== Security (2026-10-18T01:01:24Z) ===
+=== Security (2026-10-18T04:10:43Z) ===
 Audit chain:
-{"ok":true,"rows":51,"first_bad_seq":null,"reason":null,"last_checkpoint":{"seq":50,"sig_ok":null,"head_matches":true},"took_ms":1}
+{"ok":true,"rows":91,"first_bad_seq":null,"reason":null,"last_checkpoint":{"seq":90,"sig_ok":null,"head_matches":true},"took_ms":3}
 Approve without login → 401
 AES-256-GCM via libcrypto (CPACF): NIST vectors
-======================= 3 passed, 7 deselected in 0.30s ========================
+======================= 3 passed, 7 deselected in 0.32s ========================
 Database roles (least privilege):
  bn_agent    | 
  bn_api      | 

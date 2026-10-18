@@ -91,6 +91,11 @@ def test_elexon_parse():
     assert readings and all(t.tzinfo == UTC and 45 < hz < 55 for t, hz in readings)
 
 
+def test_elexon_drops_impossible_frequencies():
+    doc = {"data": [{"measurementTime": "2026-08-06T11:13:00Z", "frequency": f} for f in (0, 44.9, 49.98, 55.1)]}
+    assert [hz for _, hz in feeds.parse_elexon(doc)] == [49.98]
+
+
 def test_content_hash_tracks_meaningful_changes():
     o = feeds.Outage("ukpn", "I", "active", NOW, postcodes=["N1 3LD"], customers=4)
     same = feeds.Outage("ukpn", "I", "active", NOW, postcodes=["N1 3LD"], customers=4, lat=1.0)
