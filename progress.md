@@ -459,7 +459,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Shipped: migration `0010_sensor.sql`, applied on the VM. `sensor_id` PK, `type` (home / anchor / control), `household_id` (required for home sensors only, CHECK), `cell_l1`. Named `sensor` to match `patient`, `freq_reading`. `bn_ingest` reads + writes, `bn_agent` reads.
 - Touched: `db/migrations/0010_sensor.sql`
 - ⚠️ Conflicts: @ahmed: this is the table you asked for (05:07), singular name. @nate: read a sensor's type from it.
-- Conflict status: open
+- Conflict status: resolved by @ahmed 2026-10-18
 
 ### 2026-10-18 05:42 — home risk level in `/api/me/home` (option C) — @sali
 - Shipped: a `risk` block: `level` (low / elevated / high / unknown), `reason`, and three `layers` (home 30 min, area tomorrow, grid now) with source, horizon and updated time. Rules: High = home flagged or grid EMERGENCY; Elevated = area in the top third or grid STRESSED; Low only when all three layers report; otherwise unknown. Grid older than 5 min counts as no data. Live on the VM; reads "unknown" until the home model is served. 208 tests green on s390x.
