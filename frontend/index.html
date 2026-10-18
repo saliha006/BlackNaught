@@ -261,6 +261,7 @@
       </a>
       <span class="topbar__grid">Great Britain</span>
       <span class="topbar__mode" id="data-mode"></span>
+      <button class="l-btn l-btn--ghost topbar__home" id="open-my-home" type="button">My home</button>
     </header>
 
     <div class="controls" id="controls" aria-label="Filter the map and panels"></div>
@@ -280,7 +281,13 @@
     <main class="stage">
       <div id="map" class="map" role="region" aria-label="Map of active power cuts"></div>
 
-      <aside class="panel" aria-labelledby="outages-title">
+      <aside class="panel" aria-label="Control room">
+        <div class="tabs" role="tablist" aria-label="Control room views">
+          <button class="tabs__tab" type="button" role="tab" id="tab-btn-outages" aria-controls="tab-outages" aria-selected="true">Power cuts</button>
+          <button class="tabs__tab" type="button" role="tab" id="tab-btn-triage" aria-controls="tab-triage" aria-selected="false" tabindex="-1">Triage <span class="tabs__count num" id="triage-count"></span></button>
+          <button class="tabs__tab" type="button" role="tab" id="tab-btn-agent" aria-controls="tab-agent" aria-selected="false" tabindex="-1">Agent &amp; audit</button>
+        </div>
+        <div class="tabs__panel" role="tabpanel" id="tab-outages" aria-labelledby="tab-btn-outages">
         <header class="panel__head">
           <h2 id="outages-title">Active power cuts</h2>
           <span class="panel__count num" id="outage-count">–</span>
@@ -290,9 +297,32 @@
           <li class="panel__loading">Loading power cuts…</li>
         </ul>
         <div class="analysis" id="analysis" aria-label="Analysis"></div>
+        </div>
+        <div class="tabs__panel" role="tabpanel" id="tab-triage" aria-labelledby="tab-btn-triage" hidden>
+          <header class="panel__head">
+            <h2>Who to reach first</h2>
+            <span class="badge" data-label="SIMULATED">SIMULATED</span>
+          </header>
+          <p class="panel__note">Ranked by expected harm-hours. Patients are synthetic, placed on real live faults. Escalations wait for an operator.</p>
+          <ul class="panel__list panel__list--tall" id="triage-list" aria-live="polite">
+            <li class="panel__loading">Loading triage…</li>
+          </ul>
+        </div>
+        <div class="tabs__panel" role="tabpanel" id="tab-agent" aria-labelledby="tab-btn-agent" hidden>
+          <section class="audit" id="audit" aria-label="Audit chain"></section>
+          <header class="panel__head">
+            <h2>Agent decisions</h2>
+            <span class="badge" data-label="LIVE">LIVE</span>
+          </header>
+          <p class="panel__note">Every tool call the agent makes, newest first. Anything sent to more than one person, or escalated, waits for a person.</p>
+          <ul class="panel__list panel__list--tall" id="decision-list" aria-live="polite">
+            <li class="panel__loading">Loading decisions…</li>
+          </ul>
+        </div>
       </aside>
     </main>
 
+    <div id="modal-root"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

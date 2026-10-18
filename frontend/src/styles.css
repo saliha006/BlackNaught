@@ -901,3 +901,411 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Panel tabs: the map stays put while the rail switches between power cuts, triage and the agent */
+.tabs {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font: 500 var(--fs-small) / 1 var(--font-sans);
+  cursor: pointer;
+}
+
+.tabs__tab[aria-selected='true'] {
+  border-bottom-color: var(--n-9);
+  color: var(--text);
+}
+
+.tabs__count:not(:empty) {
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--sev-escalate);
+  color: var(--n-0);
+}
+
+.panel__list--tall {
+  max-height: none;
+}
+
+/* A fault the feeds just reported: a brief outline pulse, and a word for anyone who can't see motion */
+.outage.is-new {
+  border-color: var(--sev-risk);
+  animation: new-outage 1.2s var(--ease-out) 3;
+}
+
+.outage.is-new .outage__source::after {
+  content: ' · new';
+  color: var(--sev-risk);
+}
+
+@keyframes new-outage {
+  from {
+    box-shadow: 0 0 0 0 var(--sev-risk);
+  }
+  to {
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+/* Triage and decision rows share the outage card's frame so the three tabs read as one system */
+.triage,
+.decision {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+}
+
+.triage[data-escalate='true'],
+.decision[data-state='awaiting_approval'] {
+  border-color: var(--sev-escalate);
+}
+
+.triage__head,
+.decision__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.triage__head .sev {
+  margin-left: auto;
+}
+
+.triage__rank,
+.decision__time {
+  color: var(--text-faint);
+}
+
+.decision__state {
+  margin-left: auto;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+
+.triage__ref,
+.decision__args {
+  margin: 0;
+  font: 400 var(--fs-small) / 1.4 var(--font-mono);
+  color: var(--text-faint);
+  overflow-wrap: anywhere;
+}
+
+.triage__facts,
+.audit__facts,
+.home__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  font-size: var(--fs-small);
+}
+
+.triage__facts dt,
+.audit__facts dt,
+.home__facts dt {
+  color: var(--text-faint);
+}
+
+.triage__facts dd,
+.audit__facts dd,
+.home__facts dd {
+  margin: 0;
+}
+
+.triage__why,
+.decision__why {
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+
+.triage__why summary {
+  cursor: pointer;
+}
+
+.triage__why ul,
+.decision__why {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-4);
+}
+
+.triage__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chip--approve {
+  background: var(--n-9);
+  border-color: var(--n-9);
+  color: var(--n-0);
+}
+
+.chip--approve:hover:not(:disabled) {
+  background: var(--n-7);
+}
+
+/* Audit: the verdict is the figure; red only when the chain is broken */
+.audit {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+}
+
+.audit[data-ok='false'] {
+  border-color: var(--sev-escalate);
+  background: color-mix(in oklch, var(--sev-escalate) 14%, transparent);
+}
+
+.audit__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.audit__head h3 {
+  margin: 0 auto 0 0;
+  font-size: var(--fs-body);
+  font-weight: 500;
+}
+
+.audit__verdict {
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 300;
+}
+
+/* Dialogs: SMS / CAP previews, sign-in and my home */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: rgb(0 0 0 / 0.6);
+}
+
+.modal__box {
+  display: grid;
+  gap: var(--space-4);
+  width: min(460px, 100%);
+  max-height: calc(100vh - 2 * var(--space-4));
+  padding: var(--space-6);
+  overflow-y: auto;
+  background: var(--n-1);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-m);
+}
+
+.modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.modal__title {
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 400;
+}
+
+.login {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.login__hint,
+.login__error {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+
+.login__error:not(:empty) {
+  color: var(--sev-risk);
+}
+
+.login__field {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+
+.login__input {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-s);
+  background: var(--n-0);
+  color: var(--text);
+  font: inherit;
+}
+
+/* A phone, so judges see the message as the person would */
+.phone {
+  justify-self: center;
+  width: 260px;
+  padding: 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 32px;
+  background: var(--n-0);
+}
+
+.phone__screen {
+  min-height: 300px;
+  padding: var(--space-6) var(--space-3);
+  border-radius: 24px;
+  background: var(--n-2);
+}
+
+.phone__msg {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-m);
+  background: var(--n-3);
+  font-size: var(--fs-small);
+}
+
+.phone__msg p {
+  margin: 0;
+}
+
+.phone__kind,
+.phone__meta {
+  color: var(--text-faint);
+}
+
+.phone__headline {
+  font-weight: 500;
+}
+
+/* My home: one headline level, then the three layers it came from */
+.home__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.home__risk {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-s);
+}
+
+.home__risk[data-level='high'] {
+  border-color: var(--sev-escalate);
+}
+
+.home__risk[data-level='elevated'] {
+  border-color: var(--sev-risk);
+}
+
+.home__risk[data-level='unknown'] {
+  border-style: dashed;
+}
+
+.home__risk-label,
+.home__reason,
+.home__grid {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+
+.home__level {
+  font-size: var(--fs-figure);
+  font-weight: 300;
+  line-height: 1.1;
+}
+
+.home__gauges {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.gauge {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  font-size: var(--fs-small);
+}
+
+.gauge[data-value='none'] {
+  border-style: dashed;
+  color: var(--text-faint);
+}
+
+.gauge[data-value='elevated'],
+.gauge[data-value='high'],
+.gauge[data-value='emergency'] {
+  border-color: var(--sev-escalate);
+}
+
+.gauge[data-value='stressed'] {
+  border-color: var(--sev-risk);
+}
+
+.gauge__name,
+.gauge__source {
+  color: var(--text-faint);
+}
+
+.gauge__value {
+  font-size: var(--fs-title);
+  font-weight: 400;
+  text-transform: capitalize;
+}
+
+.home__power {
+  margin: 0;
+  font-size: var(--fs-title);
+}
+
+.home__action {
+  margin: 0;
+  padding: var(--space-3);
+  border-left: 2px solid var(--n-9);
+  background: rgb(255 255 255 / 0.04);
+}
+
+.topbar__home {
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .outage.is-new {
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .home__gauges {
+    grid-template-columns: 1fr;
+  }
+}

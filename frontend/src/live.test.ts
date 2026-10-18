@@ -37,6 +37,15 @@ describe('connectLive', () => {
     expect(FakeSource.last.url).toBe('/stream');
   });
 
+  it('pings newly active faults only, and works without a ping handler', () => {
+    FakeSource.last.emit('outage', { id: 7, status: 'active' });
+    const ping = vi.fn();
+    connectLive({ ...on, ping } as unknown as LiveHandlers, '/stream', FakeSource as unknown as typeof EventSource);
+    FakeSource.last.emit('outage', { id: 8, status: 'restored' });
+    FakeSource.last.emit('outage', { id: 9, status: 'active' });
+    expect(ping.mock.calls).toEqual([[9]]);
+  });
+
   it('coalesces a burst of events into one refetch per kind', () => {
     for (let i = 0; i < 5; i++) FakeSource.last.emit('outage', { id: i });
     FakeSource.last.emit('triage');
