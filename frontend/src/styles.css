@@ -403,7 +403,8 @@ body {
 .sev--escalate {
   border-color: var(--sev-escalate);
   background: var(--sev-escalate);
-  color: #fff;
+  /* Near-black reaches 5.3:1 on this red; white only managed 3.7:1 */
+  color: var(--n-0);
 }
 
 .topbar__grid {
