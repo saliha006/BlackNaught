@@ -115,19 +115,19 @@
 - Deadline: **submit 09:30** (hard stop 10:00).
 
 **A. Unblock the team (do first, ~15 min)**
-1. ⬜ **GitHub → Settings → Collaborators:** `meep-boop`, `aldrichbanas07`, `rama0623` must have **Write**. Without it they can't push.
-2. ⬜ **Set and announce the freeze time** on Discord (proposal: features 06:30, video 07:00–09:00, submit 09:30). Then update `BLACKNAUGHT.md` → NOW and the briefs.
+1. ✅ *(done 04:55: all three have Write)* **GitHub → Settings → Collaborators:** `meep-boop`, `aldrichbanas07`, `rama0623` must have **Write**. Without it they can't push.
+2. ⏸ *(deferred 04:55: Sali decides later)* **Set and announce the freeze time** on Discord (proposal: features 06:30, video 07:00–09:00, submit 09:30). Then update `BLACKNAUGHT.md` → NOW and the briefs.
 3. ⬜ **🟠 Decide the home-dashboard risk display** (A three gauges / B stacked model / C risk level + gauges; recommended C). This unblocks Rama's "Predict" strip and task 9.
-4. ⬜ **🟠 Agree the M2 live-feature list with Nate** (`contracts/model.md`). This unblocks Nate's main model.
+4. ⬜ **🟠 Agree the M2 live-feature list with Nate** (`contracts/model.md`). This unblocks Nate's main model. *Waiting on Nate: Sali passes it on when he's done.*
 5. ⬜ **Pings:**
    - Rama: test the VM login.
    - Ahmed: turn off the Drive link + change the portal password.
    - Everyone: `git pull` on `main`, then `bash scripts/sync-context.sh`.
 
 **B. Submission blockers (by ~06:00)**
-6. ⬜ **Team name + Hack2Skill team number** for the title, and **who is the registered team leader**: only they can submit.
-7. ⬜ **IBM labs 01 + 02** run and screenshotted (mandatory). Check Ahmed's status (his task 5), or split it.
-8. ⬜ **#helpdesk question:** can the video show NNPA on/off timing of our own model (ToU §5)?
+6. ✅ *(04:55)* **Team name chosen; Sali is the registered team leader** (so Sali submits). Still needed in the README title: the name + Hack2Skill number.
+7. ✅ *(done by Ahmed)* **IBM labs 01 + 02** run and screenshotted.
+8. ➡ *(moved to Ahmed 04:55)* **#helpdesk question:** can the video show NNPA on/off timing of our own model (ToU §5)?
 
 **C. Build (05:00–06:30)**
 9. ⬜ **If C is chosen:** add a `risk` block to `/api/me/home` (level + the three layer gauges with source and horizon) and tests. Ship it.

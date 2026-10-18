@@ -108,6 +108,10 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
 ---
 
 ## 4. ▶ Current tasks (2026-10-17 v3), in order
+**▶ New 2026-10-18 04:55 (from Sali)**
+- ⬜ **Ask #helpdesk:** can our video show NNPA on vs off timing of *our own* model on the same VM (ToU §5 bans benchmarks)? Post the answer in `progress.md` so Sali and Rama know whether it goes in the video.
+- ✅ Labs 01 + 02 (task 5) marked done.
+
 **Status update 2026-10-18 02:40 (from Sali)**
 **🔄 Headline changed 2026-10-18 (ADR):** "Blacknaught **predicts blackouts before they happen** and **protects the people they'd hurt most**."
 - **Prediction layers:**
@@ -146,7 +150,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
 4. ✅ **Hour-1 probe** (HANDOFF §2.5). *Done by Sali: `evidence/01_platform.txt` (NNPA present, z17 9175).*
    - s390x, Big Endian, 9175, the `nnpa` flag, 3 vCPU, `free -h`, `openssl version` (trixie).
    - Post a NNPA go/no-go in `progress.md`. `[⚠ @nate needs the image]`
-5. ⬜ **Labs 01 + 02 run and screenshotted** (they're mandatory). Split with the team if needed.
+5. ✅ **Labs 01 + 02 run and screenshotted** (they're mandatory). Split with the team if needed.
 6. 🟡 **Contract freeze** (Sali drafted it; please ✅ in `progress.md` or add kinds): co-author `contracts/events.schema.json` with Sali. Events: heartbeat, last-gasp, DNO fault, frequency reading, SMS reply, IODA event, shedding stage. `[⚠ shared with ALL]`
 7. 🟡 **Compose skeleton** (the backend stack already runs; extend it, see the status update)
    - `app` (FROM the IBM image + `pip install fastapi uvicorn pg8000 httpx`)

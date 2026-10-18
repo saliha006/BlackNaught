@@ -43,9 +43,10 @@ Full records with the rejected options: Sali's vault Log (Sali); the summary is 
 | 17 Oct | **Build-time choices:** q90 = no second source AND reserve < 2 h; KM fallback until M2; area risk labelled BASELINE until M8; CAP status `Exercise`; signing key never inside the app; IODA ping-slash24 < 0.9 for 2 windows, ignored when ≥3 countries dip together; synthetic patients only on faults < 6 h old |
 
 ### Pending decisions
-- **New freeze time.** Briefs still say 03:00; the team started later. Sali confirms on Discord.
-- **M2 live-feature list** (Nate + Sali; `contracts/model.md`).
-- **NNPA on/off timing in the video:** ask #helpdesk (ToU §5 bans benchmarks).
+- **New freeze time.** Briefs still say 03:00; the team started later. Deferred: Sali decides later.
+- **M2 live-feature list** (Nate + Sali; `contracts/model.md`). Waiting on Nate.
+- **Home-dashboard risk display** (Sali): A three gauges / B stacked model / C risk level + gauges.
+- **NNPA on/off timing in the video:** Ahmed is asking #helpdesk (ToU §5 bans benchmarks).
 - **Off-box audit-checkpoint publishing** (Ahmed).
 - **Vercel mirror of the UI:** optional; the demo stays on the VM IP.
 
@@ -53,15 +54,15 @@ Full records with the rejected options: Sali's vault Log (Sali); the summary is 
 | Who | Now |
 |---|---|
 | **Sali** | Brief tasks 1–20 **done and live**. Remaining: freeze; morning evidence (`scripts/proof.sh`); video segment; README; submit 09:30 |
-| **Ahmed** | Edge (nginx, PQ TLS, public `:8443`); signer (`/sign`, `/verify`); agent loop via `decisions.create()`; sensor sim + Accra replay; NNPA serving; labs 01+02 screenshots; Drive link + portal password |
+| **Ahmed** | Edge (nginx, PQ TLS, public `:8443`); signer (`/sign`, `/verify`); agent loop via `decisions.create()`; sensor sim + Accra replay; NNPA serving; ask #helpdesk about NNPA timing; Drive link + portal password. Labs 01+02 ✅ |
 | **Nate** | M2 (replaces KM behind `contracts/model.md`); home-sensor early-warning model (from `backend/app/probe_precursor.py`); M8 weather risk; M4 NESO stress |
 | **Rama** | Control-room UI on the live `/api/*` + `/stream`: a "Predict" strip on top, then "Protect" views (triage, two-houses, approvals, CAP preview, my home); recordings; video edit |
 
 ### Blockers only humans can clear
-- Team name + Hack2Skill team number (submission title).
-- IBM labs 01 + 02 (mandatory).
+- ~~Team name; team leader~~ ✅ chosen; **Sali is team leader** and submits. README title still needs the name + Hack2Skill number.
+- ~~IBM labs 01 + 02~~ ✅ done by Ahmed.
 - README for judges (currently one line).
-- GitHub collaborators with Write: `meep-boop`, `aldrichbanas07`, `rama0623`.
+- ~~GitHub collaborators with Write~~ ✅ all three.
 - Rama to test VM login.
 
 ---
