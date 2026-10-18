@@ -19,6 +19,7 @@
             <li><a href="#l-features">How it works</a></li>
             <li><a href="#l-control">Control room</a></li>
             <li><a href="#l-feeds">Live feeds</a></li>
+            <li><a href="#dashboard" data-dashboard>Dashboard</a></li>
             <li><a href="#l-faq">FAQ</a></li>
           </ul>
           <button class="l-btn l-btn--ghost" type="button" data-enter>
@@ -262,11 +263,25 @@
       <span class="topbar__grid">Great Britain</span>
       <span class="topbar__mode" id="data-mode"></span>
       <span class="topbar__who" id="signed-in" hidden>Signed in: <b id="signed-in-name"></b><button class="chip" id="sign-out" type="button">Sign out</button></span>
+      <button class="l-btn l-btn--ghost topbar__home" id="open-dashboard" type="button">Dashboard</button>
       <button class="l-btn l-btn--ghost topbar__home" id="open-my-home" type="button">My home</button>
     </header>
 
     <div class="controls" id="controls" aria-label="Filter the map and panels"></div>
 
+    <!-- Map view: the forecast folds into one button under the filters, so the map stays clear -->
+    <details class="forecast" id="forecast">
+      <summary class="chip">Forecast</summary>
+      <div class="forecast__tiles" id="forecast-tiles"></div>
+    </details>
+    <!-- Operator dashboard: the forecast, two houses, triage, agent, audit and charts move in here at start-up -->
+    <section class="dash" id="dashboard" aria-labelledby="dash-title" hidden>
+      <header class="dash__head">
+        <h1 class="dash__title" id="dash-title">Operator dashboard</h1>
+        <button class="l-btn l-btn--ghost" id="dash-to-map" type="button">Back to the map</button>
+      </header>
+      <div class="dash__grid" id="dash-grid"></div>
+    </section>
     <section class="predict" id="predict" aria-labelledby="predict-title">
       <h2 class="predict__title" id="predict-title">Predict</h2>
       <div class="predict__tiles" id="predict-tiles">
@@ -281,6 +296,13 @@
 
     <main class="stage">
       <div id="map" class="map" role="region" aria-label="Map of active power cuts"></div>
+      <aside class="nearby" id="nearby" aria-labelledby="nearby-title">
+        <header class="nearby__head">
+          <h2 id="nearby-title">Power cuts</h2>
+          <button class="chip" id="use-location" type="button">Near me</button>
+        </header>
+        <ul class="nearby__list" id="nearby-list"><li class="near__empty">Loading power cuts…</li></ul>
+      </aside>
 
       <aside class="panel" aria-label="Control room">
         <div class="tabs" role="tablist" aria-label="Control room views">

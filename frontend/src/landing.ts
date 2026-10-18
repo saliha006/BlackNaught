@@ -134,8 +134,10 @@ async function fillLiveBits(root: HTMLElement) {
       : '<tr><td colspan="4" class="l-muted">Feed health is unavailable right now.</td></tr>';
 }
 
-/** Wires the landing overlay. `onEnter` runs once the overlay has faded out over the map. */
-export function setupLanding(root: HTMLElement, app: HTMLElement[], onEnter: () => void) {
+export type Destination = 'map' | 'dashboard';
+
+/** Wires the landing overlay. `onEnter` runs once the overlay has faded out, with where the visitor asked to go. */
+export function setupLanding(root: HTMLElement, app: HTMLElement[], onEnter: (to: Destination) => void) {
   let stopBolt = mountAsciiBolt(root.querySelector('#l-bolt')!);
   fillCurves(root);
   setupFaq(root);
@@ -155,8 +157,10 @@ export function setupLanding(root: HTMLElement, app: HTMLElement[], onEnter: () 
   // Set while the fade-out runs, so a quick browser Back can cancel it.
   let leaving: ((e: TransitionEvent) => void) | null = null;
 
-  const close = () => {
+  let destination: Destination = 'map';
+  const close = (to: Destination = 'map') => {
     if (root.hidden || leaving) return;
+    destination = to;
     root.classList.add('is-leaving');
     showApp(true);
     stopBolt();
@@ -164,7 +168,7 @@ export function setupLanding(root: HTMLElement, app: HTMLElement[], onEnter: () 
       leaving = null;
       root.classList.remove('is-leaving');
       setOpen(false);
-      onEnter();
+      onEnter(destination);
     };
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return done();
     // transitionend bubbles from children (button hovers), so wait for the overlay's own fade.
@@ -189,7 +193,13 @@ export function setupLanding(root: HTMLElement, app: HTMLElement[], onEnter: () 
     stopBolt = mountAsciiBolt(root.querySelector('#l-bolt')!);
   };
 
-  for (const btn of root.querySelectorAll<HTMLElement>('[data-enter]')) btn.addEventListener('click', close);
+  for (const btn of root.querySelectorAll<HTMLElement>('[data-enter]')) btn.addEventListener('click', () => close('map'));
+  for (const link of root.querySelectorAll<HTMLElement>('[data-dashboard]')) {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      close('dashboard');
+    });
+  }
 
   setOpen(true);
   return { open, close };

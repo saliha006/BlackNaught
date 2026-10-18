@@ -51,6 +51,14 @@ const CITY = {
 // Sensor sweeps only read once streets are visible; below this they are a few pixels wide.
 const SWEEP_MINZOOM = 11;
 const BEAM_GLOW_OPACITY = 0.14;
+// Dots are sized in screen pixels, so zoomed out to all of GB a street cut drew as big as a town; shrink them with the zoom.
+// MapLibre only allows zoom at the top of an interpolate, so the per-scale radius is multiplied inside each stop.
+const dotRadius = (factor: number) =>
+  ['interpolate', ['linear'], ['zoom'],
+    5, ['*', ['get', 'radius'], 0.35 * factor],
+    9, ['*', ['get', 'radius'], 0.6 * factor],
+    13, ['*', ['get', 'radius'], factor],
+  ] as unknown as number;
 // The two severity hues from styles.css (--sev-escalate, --sev-risk) as sRGB, since MapLibre doesn't parse oklch()
 const FOG = { severe: '#e5484d', moderate: '#f0b13e' };
 const SEVERITY_WORD = { severe: 'Severe', moderate: 'Moderate' } as const;
@@ -289,7 +297,7 @@ export async function createMap(container: HTMLElement, padding: () => Padding):
     type: 'circle',
     source: 'outages',
     paint: {
-      'circle-radius': ['*', ['get', 'radius'], 2.2],
+      'circle-radius': dotRadius(2.2),
       'circle-color': '#ffffff',
       'circle-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.18, 0.07],
       'circle-pitch-alignment': 'map',
@@ -300,7 +308,7 @@ export async function createMap(container: HTMLElement, padding: () => Padding):
     type: 'circle',
     source: 'outages',
     paint: {
-      'circle-radius': ['get', 'radius'],
+      'circle-radius': dotRadius(1),
       'circle-color': '#07090c',
       'circle-stroke-color': '#ffffff',
       'circle-stroke-width': ['case', ['boolean', ['feature-state', 'selected'], false], 2.5, 1.5],

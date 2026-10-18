@@ -32,11 +32,12 @@ import { renderRisk } from './charts/risk';
 import { renderControls } from './controls';
 import { formatElapsed } from './format';
 import { isLocated } from './geo';
-import { setupLanding } from './landing';
+import { type Destination, setupLanding } from './landing';
 import { connectLive, formatRate, type Refetch } from './live';
 import type { LayerGroup, OutageMap, Padding } from './map';
 import { askLogin, confirm, openModal } from './modal';
 import { renderMyHome } from './myHome';
+import { renderNearby } from './nearby';
 import { markSelected, renderOutageList, sortOutages } from './outageList';
 import { renderPredict } from './predict';
 import { capPhone, parseCap, smsPhone } from './preview';
@@ -44,7 +45,7 @@ import { allOperators, escalatedOutages, type Filters, filterOutages, showsSourc
 import { setupTabs } from './tabs';
 import { renderTriage } from './triage';
 import { findPair, renderTwoHouses } from './twoHouses';
-import type { AgentDecision, AreaRisk, Cell, Grades, GridStress, Outage, SourceHealth, Triage, TriageItem } from './types';
+import type { AgentDecision, AreaRisk, Cell, Grades, GridStress, LatLon, Outage, SourceHealth, Triage, TriageItem } from './types';
 
 // The opening dive is slower than a click-to-fly so the city has time to build up around the beam.
 const DIVE_MS = 5200;
@@ -58,6 +59,9 @@ const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)
 const list = $<HTMLUListElement>('#outage-list');
 const count = $('#outage-count');
 const status = $('#data-mode');
+const dashboard = $('#dashboard');
+$('#dash-grid').append($('#predict'), $('#two-houses'), $('.panel'));
+let here: LatLon | null = null;
 
 status.textContent = isLive ? 'Live API' : 'Fixture data';
 status.dataset.mode = isLive ? 'live' : 'fixture';
@@ -144,12 +148,11 @@ function renderCharts() {
 
 /** The space the toggle row, Predict strip and outage panel cover, so the camera centres on the open part of the map. */
 function chromePadding(): Padding {
-  const predict = $('#predict').getBoundingClientRect();
-  const panel = $('.panel').getBoundingClientRect();
-  // Side columns on wide screens: the map's open middle is between them. On a phone the cards stack top and bottom.
+  const nearby = $('#nearby').getBoundingClientRect();
+  // The nearby list is the only thing over the map: a right column on wide screens, a bottom strip on a phone
   return innerWidth > 720
-    ? { top: 120, bottom: 40, left: predict.right + 16, right: innerWidth - panel.left + 16 }
-    : { top: predict.bottom + 16, bottom: innerHeight - panel.top + 16, left: 20, right: 20 };
+    ? { top: 120, bottom: 40, left: 40, right: innerWidth - nearby.left + 16 }
+    : { top: 120, bottom: innerHeight - nearby.top + 16, left: 20, right: 20 };
 }
 
 function render() {
@@ -164,6 +167,7 @@ function render() {
   // The demo pair ignores the filters: it's the centrepiece, and hiding it behind a chip would lose it mid-recording.
   const pair = findPair(triageItems);
   renderTwoHouses($('#two-houses'), pair, active.find((o) => o.id === pair?.outageId), (id) => pick(id, undefined, active));
+  renderNearby($('#nearby-list'), visible, escalated, here, (id) => pick(id, undefined, active));
   renderTriageTab();
 }
 
@@ -305,6 +309,7 @@ async function reload(what: Refetch) {
     if (all) {
       [risk, stress, feeds] = await Promise.all([getAreaRisk(), getStress(), getSourcesHealth().then((h) => h.sources)]);
       renderPredict($('#predict-tiles'), risk, stress);
+      renderPredict($('#forecast-tiles'), risk, stress);
     }
     render();
   } catch {
@@ -357,11 +362,44 @@ function dive() {
   else map.overview();
 }
 
-const landing = setupLanding($('#landing'), [$('.topbar'), $('#controls'), $('#predict'), $('#two-houses'), $('.stage')], () => {
+/** The operator dashboard sits over the map, so going back to the map is instant and keeps the camera where it was. */
+function showDashboard(on: boolean) {
+  dashboard.hidden = !on;
+  if (on) {
+    renderTriageTab();
+    renderAgentTab();
+    // Its cards measured zero while hidden, so the charts redraw at their real width
+    renderCharts();
+  }
+}
+
+const landing = setupLanding($('#landing'), [$('.topbar'), $('#controls'), $('#forecast'), $('.stage')], (to: Destination) => {
   onMap = true;
-  // One history entry per visit to the map, so the browser's own Back button also returns to the landing page.
-  if (history.state?.view !== 'map') history.pushState({ view: 'map' }, '');
+  // One history entry per visit, so the browser's own Back button also returns to the landing page.
+  if (history.state?.view !== to) history.pushState({ view: to }, '');
+  showDashboard(to === 'dashboard');
   dive();
+});
+
+$('#open-dashboard').addEventListener('click', () => {
+  history.pushState({ view: 'dashboard' }, '');
+  showDashboard(true);
+});
+$('#dash-to-map').addEventListener('click', () => {
+  history.pushState({ view: 'map' }, '');
+  showDashboard(false);
+});
+$('#use-location').addEventListener('click', () => {
+  // Only on request: the page never asks for a location by itself
+  navigator.geolocation?.getCurrentPosition(
+    (pos) => {
+      here = [pos.coords.latitude, pos.coords.longitude];
+      $('#use-location').textContent = 'Nearest first';
+      render();
+    },
+    () => announce("Couldn't get your location; showing the most serious cuts first"),
+    { timeout: 8000 },
+  );
 });
 
 function showLanding() {
@@ -372,7 +410,7 @@ function showLanding() {
   markSelected(list, -1);
 }
 
-const goHome = () => (history.state?.view === 'map' ? history.back() : showLanding());
+const goHome = () => (history.state?.view ? history.back() : showLanding());
 $('#back-to-landing').addEventListener('click', goHome);
 $('#topbar-logo').addEventListener('click', (e) => {
   e.preventDefault();
@@ -380,12 +418,18 @@ $('#topbar-logo').addEventListener('click', (e) => {
 });
 
 addEventListener('popstate', () => {
-  if (history.state?.view === 'map') landing.close();
-  else if (onMap) showLanding();
+  const view = history.state?.view;
+  if (view === 'map' || view === 'dashboard') {
+    showDashboard(view === 'dashboard');
+    landing.close(view);
+  } else if (onMap) {
+    showDashboard(false);
+    showLanding();
+  }
 });
 
 // A reload keeps the last history entry's state, but the page always starts on the landing page.
-if (history.state?.view === 'map') history.replaceState(null, '');
+if (history.state?.view) history.replaceState(null, '');
 
 async function start() {
   const [m, outages, cellData, triage] = await Promise.all([
@@ -425,6 +469,7 @@ Promise.all([
   feeds = health?.sources ?? null;
   panelsLoaded = true;
   renderPredict($('#predict-tiles'), risk, stress);
+  renderPredict($('#forecast-tiles'), risk, stress);
   renderCharts();
 });
 

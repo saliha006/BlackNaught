@@ -1418,3 +1418,225 @@ body {
   }
 }
 
+
+/* Map view: one forecast button under the filters; the three readouts open beneath it */
+.forecast {
+  position: fixed;
+  top: calc(var(--topbar-h) + var(--controls-h) + var(--space-3));
+  left: var(--space-6);
+  z-index: 2;
+  width: var(--side-w);
+}
+
+.forecast > summary {
+  width: fit-content;
+  background: var(--glass);
+  list-style: none;
+}
+
+.forecast > summary::-webkit-details-marker {
+  display: none;
+}
+
+.forecast > summary::after {
+  content: '▾';
+}
+
+.forecast[open] > summary::after {
+  content: '▴';
+}
+
+.forecast__tiles {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* Map view's only panel: live cuts as large plain cards, scrollable, down the right edge */
+.nearby {
+  position: absolute;
+  top: calc(var(--topbar-h) + var(--controls-h) + var(--space-4));
+  right: var(--space-4);
+  bottom: var(--space-4);
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+}
+
+.nearby__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-4) var(--space-2);
+}
+
+.nearby__head h2 {
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 400;
+}
+
+.nearby__list {
+  flex: 1;
+  margin: 0;
+  padding: 0 var(--space-3) var(--space-3);
+  list-style: none;
+  overflow-y: auto;
+}
+
+.near {
+  display: grid;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+}
+
+/* Severity reads as a word with a dot beside it, never as a coloured stripe alone */
+.near__sev::before {
+  content: '';
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin-right: 0.4em;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.near p {
+  margin: 0;
+}
+
+.near__head {
+  font-size: var(--fs-title);
+  text-transform: capitalize;
+}
+
+.near[data-severity='severe'] .near__sev {
+  color: var(--sev-escalate);
+}
+
+.near[data-severity='moderate'] .near__sev {
+  color: var(--sev-risk);
+}
+
+.near__who,
+.near__facts,
+.near__dist {
+  color: var(--text-muted);
+}
+
+.near .chip {
+  justify-self: start;
+  margin-top: var(--space-1);
+}
+
+.near__empty {
+  padding: var(--space-3);
+  color: var(--text-muted);
+}
+
+/* Operator dashboard: a full page over the map with the forecast, two houses, triage, agent, audit and charts */
+.dash {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  overflow-y: auto;
+  padding: var(--space-6);
+  background: var(--bg);
+}
+
+.dash__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.dash__title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 300;
+}
+
+.dash__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.dash .predict,
+.dash .two-houses,
+.dash .panel {
+  position: static;
+  inset: auto;
+  width: auto;
+  max-height: none;
+}
+
+.dash .predict {
+  grid-column: 1;
+}
+
+.dash .two-houses {
+  grid-column: 1;
+}
+
+.dash .panel {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  overflow: visible;
+}
+
+.dash .two-houses[data-expanded='true'] {
+  width: auto;
+}
+
+@media (max-width: 720px) {
+  .forecast {
+    left: var(--space-2);
+    width: calc(100% - 2 * var(--space-2));
+  }
+
+  /* Phone: the nearby list is a short strip at the very bottom, so the map keeps most of the screen */
+  .nearby {
+    top: auto;
+    left: var(--space-2);
+    right: var(--space-2);
+    bottom: var(--space-2);
+    width: auto;
+    max-height: 32vh;
+  }
+
+  .dash {
+    padding: var(--space-3);
+  }
+
+  .dash__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dash .predict,
+  .dash .two-houses,
+  .dash .panel {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .dash .two-houses:not([data-expanded]) {
+    display: grid;
+  }
+}
+
+@media (max-width: 720px) {
+  /* The dashboard is an operator's laptop/tablet view, still in the landing menu; on a phone, My home gets the room */
+  #open-dashboard {
+    display: none;
+  }
+}
