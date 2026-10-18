@@ -1,10 +1,9 @@
-# Edge post-quantum TLS, checked from outside the VM, 2026-10-18 05:43 UTC, client OpenSSL 3.5.3
-$ openssl s_client -connect 148.100.78.95:8443 -groups X25519MLKEM768   (the client offers only the hybrid post-quantum group)
-Cipher    : TLS_AES_256_GCM_SHA384
+# Edge post-quantum TLS with a trusted certificate, checked from outside the VM, 2026-10-18 05:49 UTC, client OpenSSL 3.5.3
+$ openssl s_client -connect 148-100-78-95.sslip.io:8443 -servername 148-100-78-95.sslip.io -groups X25519MLKEM768 -verify_return_error   (the client offers only the hybrid post-quantum group)
+    Verify return code: 0 (ok)
 Negotiated TLS1.3 group: X25519MLKEM768
 New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
-Protocol  : TLSv1.3
-Protocol: TLSv1.3
-$ curl -sk https://148.100.78.95:8443/api/health
-{"ok":true,"db":true,"writer_lag":0,"model":"m1-km-ukpn","uptime_s":773}
-(certificate: self-signed for now; a Let's Encrypt one for 148-100-78-95.sslip.io is the planned upgrade)
+Verify return code: 0 (ok)
+issuer=C=US, O=Let's Encrypt, CN=YE2
+$ curl -s https://148-100-78-95.sslip.io:8443/api/health   (no -k: the certificate is trusted)
+{"ok":true,"db":true,"writer_lag":0,"model":"m1-km-ukpn","uptime_s":1086}
