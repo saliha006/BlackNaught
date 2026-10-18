@@ -16,6 +16,7 @@ from .ingest.poller import Poller, new_client
 from .ingest import ioda
 from .ingest.sources import DNO, dno_poll, elexon_poll, ioda_poll
 from .sensors import SensorTracker
+from .simulator import Simulator
 from .sse import Broadcaster
 from .survival import load
 from .triage import Scorer
@@ -38,6 +39,7 @@ class Runtime:
         self.health = {s: SourceHealth(s, i) for s, i in INTERVALS.items()}
         self.ingest_db = Db("bn_ingest")
         self.writer = Writer(Db("bn_ingest"))
+        self.simulator = Simulator(Db("bn_ingest"), self.bus)
         self.client = new_client()
         self.geocoder = Geocoder(self.ingest_db, self.client)
         self.scorer = Scorer(Db("bn_agent"), load(settings().model_path), bytes.fromhex(read_secret("bidx_key")))
@@ -132,6 +134,7 @@ class Runtime:
         self.tasks.append(asyncio.create_task(self.grader.run(), name="grader"))
         self.tasks.append(asyncio.create_task(self.stats(), name="stats"))
         self.tasks.append(asyncio.create_task(cellpub.run(self.grader.db), name="cells"))
+        self.tasks.append(asyncio.create_task(self.simulator.run(), name="sim"))
         self.tasks += [asyncio.create_task(p.run(), name=f"poll:{p.health.source}") for p in self.pollers()]
 
     async def stop(self) -> None:
@@ -143,5 +146,6 @@ class Runtime:
         await self.client.aclose()
         self.ingest_db.close()
         self.writer.db.close()
+        self.simulator.db.close()
         self.scorer.db.close()
         self.grader.db.close()
