@@ -117,7 +117,7 @@ async def test_one_tick_plans_acts_and_leaves_reach_to_people_for_a_human(agent_
     cap_args = made["draft_cap_alert"][0][1]
     assert cap_args["outage_id"] == 1 and cap_args["area"] == "N1" and cap_args["writer"] == "template"
     assert cap_args["description"].startswith("There is a power cut in N1. It started at 21:00 UTC")
-    assert "Waiting: 1. Awaiting an operator: 2." in made["write_sitrep"][0][1]["text"]
+    assert "Waiting: 1. Decisions awaiting an operator: 2." in made["write_sitrep"][0][1]["text"]
     assert made["field_briefing"][0][1]["text"].startswith("Responder W1. Stop 1: P-")
     assert signer.calls == 6
 
@@ -176,7 +176,8 @@ def decided(superuser) -> list[tuple[str, dict]]:
 
 
 @pytest.mark.anyio
-async def test_granite_only_changes_the_wording_never_the_decisions(agent_db, superuser):
+async def test_granite_only_changes_the_wording_never_the_decisions(agent_db, superuser, monkeypatch):
+    monkeypatch.setattr("app.agent.GRANITE_PER_TICK", 3)
     await (await started(agent_db, FakeSigner())).tick(NOW)
     without = decided(superuser)
     superuser.run("TRUNCATE decision, agent_memory CASCADE")
@@ -188,6 +189,16 @@ async def test_granite_only_changes_the_wording_never_the_decisions(agent_db, su
                if "writer" in args}
     assert {args["writer"] for args in written.values()} == {"granite"}
     assert written["write_sitrep"]["text"].startswith("In plain words: Patients in active outages: 4.")
+
+
+@pytest.mark.anyio
+async def test_granite_words_one_text_a_tick_so_the_loop_keeps_up(agent_db, superuser):
+    granite = FakeGranite()
+    await (await started(agent_db, FakeSigner(), granite=granite)).tick(NOW)
+    writers = {tool: args["writer"] for tool, _, args in superuser.run("SELECT tool, state, args FROM decision")
+               if "writer" in args}
+    assert granite.asked == 1
+    assert writers == {"draft_cap_alert": "granite", "write_sitrep": "template", "field_briefing": "template"}
 
 
 @pytest.mark.anyio

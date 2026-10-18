@@ -40,6 +40,9 @@ BULK_SMS_OVER = 10                 # carers texted in one round above this go to
 SITREP_EVERY = timedelta(minutes=15)
 SITREP_MAX_WAITING = 20            # rationale lines naming who waits; the rest are counted
 SUPPLY = {"o2_concentrator": "oxygen cylinder", "o2_cylinder": "oxygen cylinder"}  # anything else: a backup battery
+# a fresh Granite text takes ~80 s on the VM's CPU, so one a tick keeps the loop's next look at triage close;
+# anything past that keeps its template (repeats come from Granite's cache)
+GRANITE_PER_TICK = 1
 SITREP_STYLE = ("Rewrite this situation report for a control-room operator in two or three short sentences of plain "
                 "English. Keep every number exactly as given and add no new facts or numbers.")
 BRIEFING_STYLE = ("Write a short field briefing for a community responder from this task list: one line per stop, in "
@@ -126,6 +129,7 @@ class Agent:
         self.signer = signer
         self.workers = workers
         self.granite = granite
+        self.granite_left = GRANITE_PER_TICK
         self.memory: dict[str, Any] = {}
 
     async def load_memory(self) -> None:
@@ -155,7 +159,10 @@ class Agent:
 
     async def words(self, style: str, facts: str) -> tuple[str, str]:
         """(text, writer): Granite's wording when it's up and its numbers check out, otherwise the facts as written."""
-        text = await self.granite.write(style, facts) if self.granite is not None else None
+        text = None
+        if self.granite is not None and self.granite_left > 0:
+            self.granite_left -= 1
+            text = await self.granite.write(style, facts)
         return (text, "granite") if text else (facts, "template")
 
     async def call_once(self, memo: str, tool: str, args: dict[str, Any], rationale: list[str], now: datetime) -> int:
@@ -277,7 +284,7 @@ class Agent:
         waiting = schedule.waiting
         text = (f"Patients in active outages: {len(patients)}. Visits planned: "
                 f"{sum(len(stops) for stops in schedule.visits.values())} (responders: {self.workers})."
-                f" Waiting: {len(waiting)}. Awaiting an operator: {awaiting}."
+                f" Waiting: {len(waiting)}. Decisions awaiting an operator: {awaiting}."
                 + (f" Stale feeds: {', '.join(sorted(stale))}." if stale else ""))
         rationale = [f"{p.ref} waits: harm {p.harm:.1f} over {p.visit_min} min" for p in waiting[:SITREP_MAX_WAITING]]
         if len(waiting) > SITREP_MAX_WAITING:
@@ -291,6 +298,7 @@ class Agent:
         """One pass of the loop; returns the number of tool calls made."""
         rows = await self.db.rows(TRIAGE)
         stale = await self.stale_sources(now)
+        self.granite_left = GRANITE_PER_TICK
         if rows and now - rows[0]["tick_at"] > TRIAGE_MAX_AGE:
             log.warning("triage is from %s; not planning on it", rows[0]["tick_at"])
             rows = []
