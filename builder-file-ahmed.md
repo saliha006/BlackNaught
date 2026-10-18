@@ -198,7 +198,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
     - Stale source → LR = 1. Silence ≠ no outage.
     - Score: postcode precision/recall against the real DNO footprints → `evidence/localiser.json`.
 13. ⬜ **NNPA serving.** Load Nate's **signed** `.keras` model and score every at-risk household × outage per tick as one batch via `model.predict` (graph mode). Refuse unsigned or tampered models. Run `ZDNN_ENABLE_PRECHECK=true` once and save the log. `[⚠ @nate hands over the model]`
-14. ⬜ **F6: agent loop v1** (§9), a 60 s asyncio loop of perceive → assess → plan → act → observe → learn.
+14. 🟡 *(Ahmed 2026-10-18 07:17: v1 live as the `agent` service: the tools, the knapsack, signed tool calls, memory and the restart test. `field_briefing` waits on Granite (task 15), `recalibrate` on task 16)* **F6: agent loop v1** (§9), a 60 s asyncio loop of perceive → assess → plan → act → observe → learn.
     - **Tools:** `notify_carer`, `assign_visit`, `request_supplier`, `escalate` (approval), `draft_cap_alert` (approval), `write_sitrep`, `field_briefing`, `mark_source_stale`, `recalibrate`.
     - **Capacity:** a greedy knapsack on harm-hours avoided (e.g. 5 workers and 12 patients; log who waits and why).
     - Every tool call is logged and signed. Memory in Postgres, with a restart test.
