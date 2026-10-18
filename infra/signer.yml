@@ -1,0 +1,34 @@
+# Layered over backend/compose.backend.yml (see infra/docker-compose.yml), so relative paths start from backend/.
+services:
+  signer:
+    build: {context: ../signer, target: signer}
+    image: bn-signer:latest
+    secrets: [signer_key, signer_token_app, signer_token_agent]
+    networks: [signing]
+    read_only: true  # nothing in the image should change at runtime; the signer only writes temp files
+    tmpfs: [/tmp]
+    mem_limit: 128m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8100/health', timeout=2)"]
+      interval: 10s
+      retries: 6
+
+  app:
+    environment:
+      BN_SIGNER_URL: http://signer:8100
+    secrets: [signer_token_app]
+    networks: [default, signing]
+    depends_on:
+      # Python takes a moment to listen after the container starts, and a checkpoint signed before then would fail.
+      signer:
+        condition: service_healthy
+
+networks:
+  signing:
+    internal: true  # the signer needs nothing outside the stack, and nothing outside should reach it
+
+secrets:
+  signer_key: {file: ../secrets/signer_key}
+  signer_token_app: {file: ../secrets/signer_token_app}
+  signer_token_agent: {file: ../secrets/signer_token_agent}
