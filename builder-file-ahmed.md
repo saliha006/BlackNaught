@@ -109,7 +109,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
 
 ## 4. ▶ Current tasks (2026-10-17 v3), in order
 **▶ 2026-10-18 07:42 (from Sali)**
-- 📨 **Measured from outside:** nginx sends `assets/index-*.js` (1,090,986 bytes) with no `Content-Encoding` and no cache header, so a phone downloads 1,066 KiB of JS instead of ~302 kB. Not changed yet; Sali is deciding. If approved: `gzip on; gzip_types application/javascript text/css application/json image/svg+xml;` and `location /assets/ { add_header Cache-Control "public, max-age=31536000, immutable"; }` (Vite hashes those file names).
+- ✅ *(Sali 08:02: applied with your config's security headers repeated in the `/assets/` block, since a location-level `add_header` drops the server-level ones; `/stream` left uncompressed; edge rebuilt and verified)* 📨 **Measured from outside:** nginx sends `assets/index-*.js` (1,090,986 bytes) with no `Content-Encoding` and no cache header, so a phone downloads 1,066 KiB of JS instead of ~302 kB. Not changed yet; Sali is deciding. If approved: `gzip on; gzip_types application/javascript text/css application/json image/svg+xml;` and `location /assets/ { add_header Cache-Control "public, max-age=31536000, immutable"; }` (Vite hashes those file names).
 - ℹ Approvals now go through a confirm step in the UI (Sali's decision, 07:42); your decisions' `args.patient`, `args.outage_id` and `args.area` appear in its wording.
 
 **▶ 2026-10-18 07:25 (from Sali)**
