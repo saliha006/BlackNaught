@@ -1,0 +1,3 @@
+=== Live KM curve refitted on UKPN, on LinuxONE (2026-10-18T05:08:23Z), commit d0f78ca ===
+s390x
+m1-km-ukpn: 178,864 outages; S(1h)=0.794 S(4h)=0.404; 1 h in -> q50 3.13 h, P(still off +2 h) 0.604

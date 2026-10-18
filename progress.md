@@ -575,3 +575,20 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @sali: two live-data oddities for ingest: an SSEN fault reports `priority_customers` 28 with `customers` 18, and one NPg fault has been listed active for 619 h.
   - @ahmed: `npm run build` makes a live `dist/` for the edge. The app calls `/api/*` and `/stream` on the same origin.
 - Conflict status: open
+
+### 2026-10-18 06:10 — live KM curve refitted on UKPN, ready to drop in (decision C) — @nate
+- Shipped:
+  - **Decision (Nate): live triage keeps a Kaplan–Meier model, with its curve refitted on UKPN's own outages.** Option C: M2 stays offline because it loses to KM on UKPN, where most live grades come from.
+  - `ml/artifacts/km_ukpn.json` (`m1-km-ukpn`), built with the backend's own `survival.fit`, so `survival.load` reads it unchanged. 178,864 UKPN outages, Apr 2021–Mar 2025.
+  - Faster restorations than ENWL: S(1 h) 0.794 vs 0.823, S(4 h) 0.404 vs 0.448. An outage 1 h old now gets q50 3.1 h (was 3.5 h).
+  - **Measured gain:** fitted on UKPN 2021–24 and tested on Apr 2024–Mar 2025, integrated Brier is 0.1297 vs ENWL KM's 0.1311, and Brier at 2 h is 0.249 vs 0.256. The shipped curve refits on all four years.
+  - Log: `evidence/train_log_km_ukpn.txt`. Code: `ml/km_refit.py` (+ test; 17 in all pass on s390x).
+  - Checked: `triage.py` now passes `{started_at, customers, feeder}`, which matches `contracts/model.md`, so `ml/m2_serve.py` can load later without changes.
+- Touched: `ml/km_refit.py`, `ml/tests/test_km_refit.py`, `ml/artifacts/km_ukpn.json`, `evidence/train_log_km_ukpn.txt`
+- ⚠️ Conflicts:
+  - @sali: 📨 please swap the live curve when you're ready:
+    1. copy `ml/artifacts/km_ukpn.json` to `backend/models/km_ukpn.json`;
+    2. set `BN_MODEL_PATH=/srv/models/km_ukpn.json` for `app`;
+    3. restart (say so in Discord).
+    - Caveat: it also scores NPg and SSEN outages, which have no history of their own. Grades will show `m1-km-ukpn` separately from `m1-km-enwl`, side by side.
+- Conflict status: open
