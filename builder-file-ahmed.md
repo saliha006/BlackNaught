@@ -151,7 +151,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
    - s390x, Big Endian, 9175, the `nnpa` flag, 3 vCPU, `free -h`, `openssl version` (trixie).
    - Post a NNPA go/no-go in `progress.md`. `[⚠ @nate needs the image]`
 5. ✅ **Labs 01 + 02 run and screenshotted** (they're mandatory). Split with the team if needed.
-6. 🟡 **Contract freeze** (Sali drafted it; please ✅ in `progress.md` or add kinds): co-author `contracts/events.schema.json` with Sali. Events: heartbeat, last-gasp, DNO fault, frequency reading, SMS reply, IODA event, shedding stage. `[⚠ shared with ALL]`
+6. ✅ **Contract freeze:** *Done 2026-10-18 05:07 by Ahmed: events frozen as they are; a sensor's type and its home link go in a new `sensors` table, asked of Sali in `progress.md`.* Originally: (Sali drafted it; please ✅ in `progress.md` or add kinds) co-author `contracts/events.schema.json` with Sali. Events: heartbeat, last-gasp, DNO fault, frequency reading, SMS reply, IODA event, shedding stage. `[⚠ shared with ALL]`
 7. 🟡 **Compose skeleton** (the backend stack already runs; extend it, see the status update)
    - `app` (FROM the IBM image + `pip install fastapi uvicorn pg8000 httpx`)
    - `postgres:17` on `127.0.0.1`
@@ -196,7 +196,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
 22. ⬜ **Video:** your line, plus the README section on the platform and proof.
 
 ## 5. Done log (newest first)
-- (empty)
+- 2026-10-18 05:07: **Contract freeze (task 6)** ✅. Events frozen as they are; the `sensors` table is asked of Sali in `progress.md`.
 
 ## 6. Waiting on / owed to others
 - 📤 **Owed to ALL:** keys on the VM (first), the Compose skeleton by about 00:00.
