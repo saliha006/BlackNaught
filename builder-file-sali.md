@@ -118,7 +118,7 @@
 1. ✅ *(done 04:55: all three have Write)* **GitHub → Settings → Collaborators:** `meep-boop`, `aldrichbanas07`, `rama0623` must have **Write**. Without it they can't push.
 2. ⏸ *(deferred 04:55: Sali decides later)* **Set and announce the freeze time** on Discord (proposal: features 06:30, video 07:00–09:00, submit 09:30). Then update `BLACKNAUGHT.md` → NOW and the briefs.
 3. ✅ *(05:40: Sali chose **C**; rules = draft A, confirmed 06:00)* **🟠 Decide the home-dashboard risk display** (A three gauges / B stacked model / C risk level + gauges; recommended C). This unblocks Rama's "Predict" strip and task 9.
-4. ⬜ **🟠 Agree the M2 live-feature list with Nate** (`contracts/model.md`). This unblocks Nate's main model. *Waiting on Nate: Sali passes it on when he's done.*
+4. ✅ *(05:46: Nate settled it in `contracts/model.md`: started_at, customers, feeder)* **🟠 Agree the M2 live-feature list with Nate** (`contracts/model.md`). This unblocks Nate's main model. *Waiting on Nate: Sali passes it on when he's done.*
 5. ⬜ **Pings:**
    - Rama: test the VM login.
    - Ahmed: turn off the Drive link + change the portal password.
@@ -133,8 +133,8 @@
 - ✅ *(06:00)* **Ahmed's asks:** `sensor` table shipped (0010, applied on the VM); compose layout OK'd; public-alert task added to his brief.
 - ✅ *(06:00)* **Elexon 0 Hz bug:** readings outside 45–55 Hz dropped.
 - ✅ *(06:00)* **Context publish clobber:** took Nate's fix; the credential guard now matches shapes, not fragments.
-- ⬜ **Signer wiring** when Ahmed's `contracts/signer.md` lands: bearer token from `signer_token_app` + `BN_SIGNER_URL=http://signer:8100`.
-- ⬜ **M2 wiring** when Nate says it's ready: pass `features` into `predict()` in `triage.py`.
+- ⬜ **Signer wiring** (unblocked 06:10: `contracts/signer.md` + `signer/` are on main): bearer token from `signer_token_app` + `BN_SIGNER_URL=http://signer:8100`.
+- ⬜ **M2 wiring:** pass `{started_at, customers, feeder}` into `predict()` from `Scorer`. Contract final; Nate trained M2 and is fixing the rest. Wait for his ping before swapping the model.
 - ⬜ **Re-seed** patients + the two-houses pair on a fresh fault right before recording (reserves drain over time).
 9. ✅ *(06:00, live on the VM)* add a `risk` block to `/api/me/home` (level + the three layer gauges with source and horizon) and tests. Ship it.
 10. ⬜ **Integration support:**
