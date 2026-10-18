@@ -99,14 +99,7 @@
 - **Live grading is already scoring the KM model** (150+ real UKPN predictions, Brier ≈ 0.19 at 2 h). Your M2 gets graded the same way, side by side.
 - **Training notebook pattern:** `notebooks/train_on_linuxone.ipynb` (executed in Jupyter on the VM, which is the evidence).
 
-1. ⬜ **Send your public SSH key to Sali** (or Ahmed). `ssh-keygen -t ed25519` if you need one.
 2. 🟡 **Contract freeze:** `contracts/model.md` is drafted by Sali from the backend side; amend it and settle the M2 feature list. No stub is needed (KM is live). Originally: write `contracts/model.md` and ship a **stub `predict()` and `area_risk()`** returning fixture-shaped output, so Sali and Ahmed can integrate right away. `[⚠ shared with ALL]`
-3. ⬜ **VM ML checks** (in Ahmed's notebook container):
-   - `xgboost survival:aft` and `count:poisson` run;
-   - the TF zDNN device is listed;
-   - pandas 3.0 works with your code.
-
-   Post a go/no-go. `[⚠ @ahmed owns the VM]`
 4. ⬜ **ENWL + UKPN prep** (the data is on the VM in `~/data/raw/`). Harmonise to the 5-min threshold; whitelist; split. `[⚠ waiting on @sali]`
 5. ⬜ **M1 baselines on the VM:** Kaplan–Meier per cause, plus log-linear. Brier at 2/4/8 h and C-index logged.
 6. ⬜ **M2 XGBoost AFT on the VM.** Beats or matches the baselines on the 2024–26 test, with the margin reported. UKPN cross-check.
@@ -136,7 +129,8 @@
 17. ⬜ **Video:** your segment (model + risk map) and one line.
 
 ## 4. Done log (newest first)
-- (empty)
+- ✅ **3. VM ML checks** (done 2026-10-18 05:07): all GO in the `notebook` container. XGBoost `survival:aft` + `count:poisson` train; JSON and `.keras` round-trips are exact on s390x; pandas 3.0.6 works. The zDNN plugin adds **no TF device**: it loads NNPA kernels from `tensorflow/core/kernels/_z_ops.so`, which is the check. Evidence: `evidence/08_ml_stack_checks.txt` (`nate-ml`); go/no-go posted in `progress.md`.
+- ✅ **1. SSH key** (done 2026-10-18 03:01): Sali installed the `nate` key on `linux1`; login confirmed.
 
 ## 5. Waiting on / owed to others
 - 📥 **Waiting on @sali:** ENWL + UKPN downloads.
