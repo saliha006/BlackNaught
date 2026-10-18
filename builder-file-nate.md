@@ -134,6 +134,7 @@
 17. ⬜ **Video:** your segment (model + risk map) and one line.
 
 ## 4. Done log (newest first)
+- ✅ **Layer 2, home-sensor early warning (served)** (done 2026-10-18 06:32): `ml/home_sensor.py` on the Accra week (train days 1–4, calibrate day 5, test 6–7, 5-run bootstrap). Flags 0.96% of windows; 18.8% ± 1.1% come true, 8.9× the 2.1% base; AUC 0.666 ± 0.005. Artifact `~/shared/nate-runs/models/home_sensor_accra_v1.json`. Not yet: more Accra days, 15/60-min horizons, scoring the live Accra replay (F13). Task 9 deferred (time).
 - ✅ **8. The real `predict()`** (done 2026-10-18 06:00): `ml/m2_serve.py`, closed-form conditional survival + quantiles from the AFT log-normal, recalibrated on UKPN 2021–24. Artifact `~/shared/nate-runs/models/m2_aft_ukpncal_v1.json`. Still worse than KM on UKPN 2024–25 (IBS 0.143 vs 0.131; C 0.50), so **not live**. Harm-hours stay in Sali's `harm.py`, which integrates `surv`.
 - ✅ **7. Keras hazard MLP** (done 2026-10-18 05:58): 24 bins, trained on the VM; `~/shared/nate-runs/models/m2_hazard.keras` offered to Ahmed for signing/NNPA (not to be served yet).
 - ✅ **6. XGBoost AFT** (done 2026-10-18 05:58): ENWL 2024–26 IBS 0.114 vs KM 0.121 (−5.5%, C 0.60); UKPN cross-check 0.149 vs 0.138 (worse). Notebook `ml/notebooks/m2_duration.ipynb`.
