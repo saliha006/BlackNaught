@@ -1,15 +1,9 @@
 import km from '../../backend/models/km_enwl.json';
 import { getSourcesHealth, getTriage } from './api';
 import { mountAsciiBolt } from './asciiBolt';
+import { deviceName } from './devices';
 import { formatAgo, formatElapsed } from './format';
 import type { SourceHealth, TriageItem } from './types';
-
-const DEVICE_NAMES: Record<string, string> = {
-  o2_concentrator: 'Oxygen concentrator',
-  o2_cylinder: 'Oxygen cylinder',
-  ventilator: 'Ventilator',
-  apd_cycler: 'Dialysis cycler',
-};
 
 const SOURCE_NAMES: Record<string, string> = {
   ukpn: 'UK Power Networks',
@@ -38,7 +32,7 @@ export function triageRow(item: TriageItem): string {
     <li class="l-triage__row">
       <span class="l-triage__rank num">${item.rank}</span>
       <span class="l-triage__who">
-        <b>${DEVICE_NAMES[item.device] ?? item.device}</b>
+        <b>${deviceName(item.device)}</b>
         <span><b class="num">${formatElapsed(item.reserve_left_h)}</b> reserve · may stay off <b class="num">${formatElapsed(item.remaining_h[item.q_used])}</b> (${item.q_used})</span>
       </span>
       ${action}

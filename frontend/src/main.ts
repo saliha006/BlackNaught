@@ -19,7 +19,8 @@ import { createMap, type LayerGroup, type OutageMap, type Padding } from './map'
 import { markSelected, renderOutageList, sortOutages } from './outageList';
 import { renderPredict } from './predict';
 import { allOperators, escalatedOutages, type Filters, filterOutages, showsSource } from './state';
-import type { AreaRisk, Cell, Grades, GridStress, Outage, SourceHealth, Triage } from './types';
+import { findPair, renderTwoHouses } from './twoHouses';
+import type { AreaRisk, Cell, Grades, GridStress, Outage, SourceHealth, Triage, TriageItem } from './types';
 
 // The opening dive is slower than a click-to-fly so the city has time to build up around the beam.
 const DIVE_MS = 5200;
@@ -48,6 +49,7 @@ let risk: AreaRisk[] | null = null;
 let feeds: SourceHealth[] | null = null;
 let stress: GridStress | null = null;
 let selected: number | null = null;
+let triageItems: TriageItem[] = [];
 let stopLive: (() => void) | null = null;
 
 const filters: Filters = { operators: allOperators(), escalationsOnly: false };
@@ -87,8 +89,9 @@ function renderCharts() {
 function chromePadding(): Padding {
   const top = $('#predict').getBoundingClientRect().bottom + 16;
   const panel = $('.panel').getBoundingClientRect();
+  const houses = $('#two-houses').getBoundingClientRect();
   return innerWidth > 720
-    ? { top, bottom: 40, left: 40, right: innerWidth - panel.left + 16 }
+    ? { top, bottom: innerHeight - houses.top + 16, left: 40, right: innerWidth - panel.left + 16 }
     : { top, bottom: innerHeight - panel.top + 16, left: 20, right: 20 };
 }
 
@@ -100,10 +103,13 @@ function render() {
   renderOutageList(list, visible, (o) => pick(o.id), filtered ? 'No power cuts match these filters.' : undefined);
   if (selected !== null) markSelected(list, selected, false);
   renderCharts();
+  // The demo pair ignores the filters: it's the centrepiece, and hiding it behind a chip would lose it mid-recording.
+  const pair = findPair(triageItems);
+  renderTwoHouses($('#two-houses'), pair, active.find((o) => o.id === pair?.outageId), (id) => pick(id, undefined, active));
 }
 
-function pick(id: number, duration?: number) {
-  const o = visible.find((x) => x.id === id);
+function pick(id: number, duration?: number, from: Outage[] = visible) {
+  const o = from.find((x) => x.id === id);
   if (!map || !o || !isLocated(o)) return;
   selected = id;
   map.focus(o, duration);
@@ -111,6 +117,7 @@ function pick(id: number, duration?: number) {
 }
 
 function applyTriage(triage: Triage | null) {
+  triageItems = triage?.items ?? [];
   escalated = escalatedOutages(triage);
   controls.setEscalations(triage ? escalated.size : null);
 }
@@ -164,7 +171,7 @@ function dive() {
   else map.overview();
 }
 
-const landing = setupLanding($('#landing'), [$('.topbar'), $('#controls'), $('#predict'), $('.stage')], () => {
+const landing = setupLanding($('#landing'), [$('.topbar'), $('#controls'), $('#predict'), $('#two-houses'), $('.stage')], () => {
   onMap = true;
   // One history entry per visit to the map, so the browser's own Back button also returns to the landing page.
   if (history.state?.view !== 'map') history.pushState({ view: 'map' }, '');

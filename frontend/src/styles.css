@@ -282,6 +282,108 @@ body {
   color: var(--text-faint);
 }
 
+/* Two houses: floats over the bottom-left of the map, next to the beam it explains */
+.two-houses {
+  position: fixed;
+  /* Clear of the map's zoom buttons and attribution, which sit in the bottom-left corner */
+  left: calc(var(--space-6) + 44px);
+  bottom: var(--space-4);
+  z-index: 1;
+  display: grid;
+  gap: var(--space-3);
+  width: min(640px, calc(100% - var(--panel-w) - 4 * var(--space-6)));
+  padding: var(--space-4);
+  background: var(--glass);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+}
+
+.two-houses__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.two-houses__title {
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 400;
+}
+
+.two-houses__note {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+
+.two-houses__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.house {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  background: rgb(0 0 0 / 0.2);
+}
+
+.house[data-escalate='true'] {
+  border-color: var(--sev-escalate);
+}
+
+.house__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.house__device {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.house__facts {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+}
+
+.house__facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--fs-small);
+}
+
+.house__facts dt {
+  color: var(--text-faint);
+}
+
+.house__facts dd {
+  margin: 0;
+}
+
+.house .sev {
+  justify-self: start;
+  margin: 0;
+  font-size: var(--fs-small);
+}
+
+.house__why {
+  margin: 0;
+  padding-left: var(--space-4);
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
 /* Severity: the only hue in the UI, always with its word */
 .sev {
   padding: 2px 10px;
@@ -762,6 +864,20 @@ body {
 
   .predict__title {
     display: none;
+  }
+
+  .two-houses {
+    top: calc(var(--topbar-h) + var(--controls-h) + 140px);
+    bottom: auto;
+    left: var(--space-2);
+    width: auto;
+    right: var(--space-2);
+    max-height: 30vh;
+    overflow-y: auto;
+  }
+
+  .two-houses__grid {
+    grid-template-columns: 1fr;
   }
 
   .predict__tiles {
