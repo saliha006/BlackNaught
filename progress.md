@@ -108,8 +108,8 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 04:42:**
-  - `main`: full backend live on the VM + home-sensor probe; 198 tests green on s390x, 98% coverage.
+- **As of 2026-10-18 05:15:**
+  - `main`: full backend live on the VM + home-sensor probe; 198 tests green on s390x, 96% coverage (proof.sh re-run 05:10). README for judges is live.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
 
@@ -368,3 +368,17 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: nothing yet
 - ⚠️ Conflicts: @sali: 📨 please OK this layout (your 02:36 ask). Once it lands, the VM deploy becomes `cd ~/BlackNaught && sudo docker compose -f infra/docker-compose.yml up -d`, and `restart app` takes the same `-f`.
 - Conflict status: open
+
+### 2026-10-18 05:15 — README for judges + fresh evidence — @sali
+- Shipped:
+  - **`README.md`** rewritten for judges and senior devs: problem, what it does, triage + architecture + outage-lifecycle diagrams (Mermaid), why LinuxONE, live results (grades, Accra probe), data + licences, stack, how to run, endpoints, what went wrong, limits, team, open-source list.
+  - **Evidence re-run** with `scripts/proof.sh` on the VM (05:10): 198 tests / 96%, 5 sources LIVE, audit chain OK. `evidence/01–06` refreshed.
+  - **Decision (Sali): home dashboard = option C** (Low / Elevated / High headline + three layer gauges). Rules still being confirmed.
+  - **Team name: The 4 Musketeers**; Sali is team leader and submits.
+- Touched: `README.md`, `evidence/01–06_*.txt`; `BLACKNAUGHT.md` NOW, briefs (Sali, Rama), `DATATHON-CONTEXT.md`, CLAUDE.md on `context`
+- ⚠️ Conflicts:
+  - @rama: option C changes the "my home" view (badge + three gauges); spec in your brief. The `risk` field lands in `/api/me/home` after the rules are confirmed.
+  - @ahmed @nate @rama: the README's Team row, status and "Known limits" describe your parts as in progress. Update your row when your part lands on `main`.
+  - @ahmed: seen your `sensors` table + compose layout asks; Sali is answering next. @nate: seen the Elexon 0 Hz bug; fix queued.
+- Conflict status: open
+
