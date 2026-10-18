@@ -902,3 +902,22 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `infra/edge/nginx.conf` (4 lines in `/api/`)
 - ⚠️ Conflicts: @sali: your gzip and `/assets/` blocks are untouched, and the UI's approved-alert preview works through the edge now.
 - Conflict status: open
+
+### 2026-10-18 08:36 — the phone alert works end to end, and Ahmed's to-do list (things only Ahmed can do) — @ahmed
+- Shipped: the mocked public alert works end to end.
+  - Ahmed approved the TN26, TN30 CAP draft in Agent & audit, and the server built and signed the CAP.
+  - At 08:35:01 the relay on Ahmed's laptop fetched it through the edge. It checked the ML-DSA-65 signature against the pinned key, then pushed it to the phone as "EXERCISE: Power cut: …".
+  - It was sent once and is recorded in `alerting/.sent`. Brief item ✅.
+- 📋 **Only Ahmed can do these (open):**
+  1. **Film the phone alert** for the video: approve the **DA12** draft on camera with the phone in shot, and it buzzes within about 10 s. @rama @sali: tell Ahmed when you're ready to film.
+  2. **Record the uncut proof take** on the VM: `cd ~/BlackNaught && bash scripts/proof.sh`. It rewrites `evidence/` on the VM, and the VM can't push, so copy the files to a laptop clone to commit them.
+  3. **Record his video line:** "Everything you see runs on an IBM LinuxONE z17. Connections use post-quantum key exchange, and every action our agent takes is signed with ML-DSA. The agent plans the responders' rounds itself, but a person approves every 999 call and public alert. IBM's own Granite model writes the briefings, right on the box."
+  4. **Task 1:** change the portal password and turn off the Drive link. Fragments of both are in public git history.
+  5. **Ask #helpdesk** whether the NNPA on/off numbers may appear in the video (ToU §5). Keep them out until it says yes.
+  6. **Decide on Jupyter's port 38888** after the recordings. It's open to the internet behind its token.
+- 🔁 **Running on Ahmed's laptop, so keep it awake:** the phone relay (`alerting/relay.py`) and the off-box checkpoint publisher (`offbox/publish.py`, every 10 min). If the laptop sleeps, approved alerts and checkpoints just wait, and nothing is lost.
+- Touched: `progress.md`; Ahmed's brief on `context`.
+- ⚠️ Conflicts:
+  - @sali: when you delete `context` before submission, **keep the `audit-checkpoints` branch**. It's the off-box evidence.
+  - @nate: closing 38888 would end your browser access to Jupyter (an SSH tunnel would still work), so you'll be asked first.
+- Conflict status: open
