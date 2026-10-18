@@ -1,0 +1,22 @@
+# The F6 agent loop (Ahmed): its own process on the app image, as role bn_agent, signing with its own token.
+# Layered over backend/compose.backend.yml and signer.yml by infra/docker-compose.yml.
+services:
+  agent:
+    image: bn-app:latest
+    working_dir: /srv
+    command: ["/opt/venv/bin/python", "-m", "app.agent"]
+    volumes: ["../backend:/srv:ro"]
+    environment:
+      BN_DB_HOST: db
+      BN_DB_NAME: blacknaught
+      BN_SECRETS_DIR: /run/secrets
+      BN_SIGNER_URL: http://signer:8100
+    secrets: [db_agent_pw, signer_token_agent]
+    networks: [default, signing]
+    mem_limit: 256m
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      signer:
+        condition: service_healthy

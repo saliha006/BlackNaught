@@ -671,3 +671,39 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: VM `~/BlackNaught/secrets/edge_cert.pem` + `edge_key.pem`, certbot installed on the VM host; `evidence/09_edge_pq_tls.txt`
 - ⚠️ Conflicts: @sali: 📨 **the demo URL is now https://148-100-78-95.sslip.io:8443** (decision, Ahmed). The old https://148.100.78.95:8443 still answers but shows a certificate warning, since the certificate names the hostname. Please mirror it in NOW and the README, and Rama's recordings should use it.
 - Conflict status: open
+
+### 2026-10-18 07:10 — M4 grid stress replay on NESO 1-s data (brief task 12, prediction layer 3) — @nate
+- Shipped:
+  - `ml/m4.py`: a rule, not a trained model. It warns when frequency is below 49.8 Hz and, at the last 5 s rate of fall, would reach LFDD (48.8 Hz) within 60 s × fragility (GB = 1). The thresholds were committed (`9efd852`) before the replay was scored.
+  - **9 Aug 2019** (NESO 1-s): LFDD at 16:53:49 BST. The M4 rule and live STRESSED (< 49.8) both warn at 16:52:35, which is **74 s** ahead. Live EMERGENCY (< 49.5) warns at 16:52:38, 71 s ahead.
+  - **False alarms over Oct 2025 – Sep 2026** (12 months, 8,760 h of 1-s data, no LFDD, lowest reading 49.594 Hz): STRESSED fires **11.1 times a month**, EMERGENCY **0**, M4 **0.4** (5 in the year).
+  - **Honest read:** M4 gains 3 s over the live EMERGENCY band and costs 5 false alarms a year, so **the live band rule stays** and `stress.py` is unchanged. The lead exists only on 1-s data: Elexon's live 15 s feed, about 1.5 min late, would show red after LFDD. It is one event.
+  - 30 tests pass on s390x. Log with the data hashes: `evidence/train_log_m4.txt`. README updated (layer row, results table, data row, limit).
+- Touched: `ml/m4.py`, `ml/tests/test_m4.py`, `evidence/train_log_m4.txt`, `README.md`. NESO files are on the VM in `~/shared/nate/data/neso/` (git-ignored).
+- ⚠️ Conflicts: @sali: none in code. One fact for NOW and the pitch: **"74 seconds of warning on 9 Aug 2019, from 1-second data; the live band rule matches it."** Keep "seconds, not minutes."
+- Conflict status: open
+
+### 2026-10-18 07:16 — README home-sensor row and stale mirrors — @nate
+- Shipped: README home-sensor layer row now gives the served model's result (18.8% of top-1% alerts come true, 8.9× base) instead of "served model in progress"; Open-Meteo data row no longer says "in progress".
+- Touched: `README.md` (two of Nate's lines)
+- ⚠️ Conflicts: @sali: 📨 stale lines that aren't Nate's to edit:
+  - `BLACKNAUGHT.md` NOW, the layer table: M8 is trained (+5.1%, not wired in), the home-sensor model is served in `ml/home_sensor.py`, and M4 is done (74 s, band rule stays). The Pending list still says "M2 live-feature list, waiting on Nate"; that closed at 05:46 (`contracts/model.md`, A1).
+  - README: line 32 says the home risk level "is being built now" (live per NOW 06:00), and the mermaid diagram plus the stack table still mark the edge (live with a trusted cert), agent and frontend "(in progress)".
+  - Demo risk: GB demo homes have no sensor window, so the headline level reads "unknown" under the 06:00 rules (Low needs all three layers). Worth checking before recording.
+- Conflict status: open
+
+### 2026-10-18 07:17 — agent loop v1 is live (task 14, F6) — @ahmed
+- Shipped: `backend/app/agent.py`, running as its own `agent` service (`infra/agent.yml`). It runs as role `bn_agent`, signs with its own signer token, and publishes no port. Every 60 s it does this:
+  - It reads the latest triage and the feeds' health.
+  - It fills 5 responders' 120-min rounds with a greedy knapsack on harm-hours avoided per minute. Visits take 45 min without backup and 20 min with it. Whoever runs out before power is likely back goes first.
+  - It acts only through `decisions.create()`. Every tool call is ML-DSA-signed first, so no signature means no action (retried next tick). The signature is added to the audit chain under the decision's id.
+  - Escalations, CAP drafts and texts to more than 10 carers (`bulk_sms`) wait for an operator. A feed with no good poll for 3 intervals gets `mark_source_stale`; its patients are judged on q90 and re-ranked.
+  - Memory lives in `agent_memory`, so a restart repeats nothing (tested).
+- First live tick: 47 signed decisions. That's 5 rounds covering 15 visits, and 17 patients waiting, so 1 `bulk_sms`, 13 supply requests, 25 escalations and 2 CAP drafts. The `bulk_sms`, escalations and drafts are awaiting approval. Plus 1 sitrep. 12 tests (93% of the module), full suite 222 passed on s390x.
+- Not yet: `field_briefing` and the Granite text (task 15), `recalibrate` (task 16).
+- Deployed with `sudo docker compose -f infra/docker-compose.yml up -d agent` from `~/BlackNaught`. A dry run first showed it only creates the agent container; app, db, signer and edge weren't touched.
+- Touched: `backend/app/agent.py` (new), `backend/tests/test_agent.py` (new), `infra/agent.yml` (new), `infra/docker-compose.yml`, `infra/test-compose.sh`, README run commands (also the missing `make-edge-cert.sh` line).
+- ⚠️ Conflicts:
+  - @sali: a new module in `backend/app/`; no file of yours changed. `bn_agent` can't read `v_triage_latest`, so the agent reads `triage_snapshot`, `patient` and `outage` and repeats the view's `P-xxxxxx` expression to show the same ref. Keep them in step, or grant the view to `bn_agent` and I'll switch. 28 decisions now wait in the control room.
+  - @sali (covering frontend): `/api/agent/decisions` has real rows now. Two CAP drafts are ready to approve: outages 35 (TN26, TN30) and 53 (DA12).
+- Conflict status: open
