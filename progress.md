@@ -822,3 +822,32 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `backend/app/agent.py`, `backend/tests/test_agent.py`
 - ⚠️ Conflicts: @sali: `args.script` is new on `notify_carer`, if the Triage SMS preview wants it.
 - Conflict status: open
+
+### 2026-10-18 08:15 — NNPA on/off timing, firewall and image scan (task 18), README platform section (task 22) — @ahmed
+- NNPA, using Nate's M2 (`m2_hazard.keras`, 6,444 params, read only). Same VM, NNPA on vs `NNPA_DEVICES=0`, each mode in a fresh `docker run` of bn-app, median of 15 graph-mode runs:
+  - batch 1: level (0.34 ms);
+  - batches 256 and 4,096: NNPA about 1.2× faster;
+  - batch 65,536: NNPA about 2.2× slower.
+  - The zDNN precheck shows 9 `zdnn_matmul_transpose_op` (DLFLOAT16) calls with NNPA on and none with it off.
+  - Honest read: this model is too small for the NNPA to matter much. Never compared against x86. **Not for the video until #helpdesk confirms (ToU §5).**
+  - Files: `scripts/nnpa_timing.py`, `evidence/nnpa_timing.csv`, `evidence/nnpa_timing.txt`, `evidence/zdnn_precheck.txt`.
+- Firewall (`evidence/10_firewall.txt`): the public ports are 22, 8443 and **38888 (Jupyter, token-protected, with an explicit INPUT rule)**. App 8000 and Postgres 5432 are on 127.0.0.1 only. The signer and Granite sit on internal networks.
+- Trivy v0.76.0 (checksum-verified) can't open its database on big-endian ("invalid database"). So the SBOM was built on the VM and matched off it: 0 critical, 6 high, in keras, urllib3, jaraco.context and wheel from the base image, all with fixes (`evidence/11_trivy_app.txt`).
+- README: a new "Platform, agent and proof" section covers the stack, edge, signer, agent, simulator, Granite and relay, each with its evidence. The limits now name what isn't done or is demo-grade. The NNPA line no longer claims the Keras model is served. `scripts/proof.sh` now writes `evidence/12_platform.txt`.
+- Touched: the files above, `README.md`, `scripts/proof.sh`, `.gitignore` (`!evidence/nnpa_timing.csv`).
+- ⚠️ Conflicts:
+  - @sali: the README has a new section after Architecture, and your lines are untouched. Three of them are stale and yours to update: "198 tests pass… 96%" (it's 237 now), "That part is being built now", and the "Control-room UI (in progress)" diagram node.
+  - @sali FYI: your gzip also covers JSON. That's fine here, since no response body holds a secret, and BREACH needs one.
+  - @nate: the timing reads your model and doesn't change it.
+  - @all: Jupyter 38888 is public. Say if it should be closed after the recordings.
+- Conflict status: open
+
+### 2026-10-18 08:16 — audit checkpoints published off the box (task 19) — @ahmed
+- Shipped: `offbox/publish.py`. It runs on Ahmed's laptop, because the VM never gets GitHub credentials. Every 10 minutes it reads the new signed checkpoint rows over SSH (a read-only query in the db container; the public API exposes only `seq` and `sig_ok`).
+  - It rebuilds each signed payload byte for byte and checks the ML-DSA-65 signature against the pinned `contracts/signer_pub.pem`. Then it commits one JSON line per checkpoint to the **`audit-checkpoints`** branch and pushes.
+  - Nothing new is published while the server's own chain check fails. A checkpoint that doesn't verify stops publishing at that point; it isn't skipped.
+- Live: checkpoints 109 to 302 are on GitHub (24 so far), all verified. The loop is running on the laptop.
+- Tests: 11 (78%; the rest is the live SSH and API path, which the real runs cover).
+- Touched: `offbox/publish.py`, `offbox/tests/test_publish.py` (new); branch `audit-checkpoints`; README platform section.
+- ⚠️ Conflicts: @sali: none in code. The audit API doesn't expose checkpoint heads or signatures, so the publisher reads them over SSH. If you'd rather expose `GET /api/audit/checkpoints`, I'll switch to it. Don't delete the `audit-checkpoints` branch along with `context` before submission: it's the evidence.
+- Conflict status: open
