@@ -39,10 +39,10 @@ features = {"started_at": row["started_at"],  # tz-aware datetime
 | Model input | From | Mapping |
 |---|---|---|
 | hour, weekday, month | `started_at` | Europe/London local time |
-| log(1 + customers) | `customers` | missing → 11, the ENWL training median |
+| log(1 + customers) | `customers` | missing → the ENWL training median, stored in the model artifact |
 | voltage: LV / HV / unknown | `feeder.type` | NPg `LV` → LV, `HV_N`/`HV_S` → HV; SSEN `LV`/`HV` as is; UKPN (no voltage) and anything else → unknown |
 
-- **Trained on ENWL only:** 2000–22 train, 2023 validate, 2024–26 test, with each storm (`exceptional_event_id`) kept in one split. ENWL 6.6/11 kV → HV; 33/132 kV (0.3% of rows) also → HV, because no live feed reports EHV.
+- **Trained on ENWL only:** 2000–22 train, 2023 validate, 2024–26 test, with each storm (`exceptional_event_id`) kept in one split. ENWL 6.6/11 kV → HV; 33/132 kV (0.2% of rows) also → HV, because no live feed reports EHV.
 - **Voltage is hidden on a random third of training rows**, so "unknown" (every UKPN outage) gets a trained answer, not an extrapolation.
 - **No operator feature.** UKPN, NPg and SSEN outages are scored by the ENWL-trained model. The UKPN cross-check (Apr 2021–Mar 2025, never trained on) measures how well that transfers; M3 recalibration from live grades corrects the rest.
 - **Not inputs:** `cardinality(postcodes)` (ENWL has no equivalent), the nearest ENWL district (meaningless outside the North West), cause and equipment (not live). Never `total_customer_minutes_lost` or the restoration columns: they leak the answer.
@@ -72,6 +72,6 @@ features = {"started_at": row["started_at"],  # tz-aware datetime
 - `~/data/raw/ukpn_ukpn-iis.csv`: 316,435 **restoration-stage** rows = 180,059 incidents, Apr 2021–Mar 2025; `;`-separated.
   - Rolled up per `incident_reference`: first stage start → last stage end; customers summed over stages that aren't re-interruptions.
 - `~/data/raw/SHA256SUMS`
-- Both sources are cut at 5 minutes (brief). `python -m ml.prep ~/data/raw <out>` writes the prepared tables.
+- Both sources are cut at 5 minutes (brief). `python -m ml.prep ~/data/raw <out>` writes the prepared tables. Run of 2026-10-18 (`evidence/train_log_prep.txt`): ENWL 306,251 kept (train 269,170 · validate 9,828 · test 27,253; median 3.5 h); UKPN 178,864 kept (median 2.8 h).
 
 Train on the VM (Jupyter on :38888, or `docker compose run app`), so the training is evidence.
