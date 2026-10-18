@@ -21,24 +21,33 @@ parent=""
 if git fetch -q origin context 2>/dev/null; then parent=$(git rev-parse origin/context); fi
 synced=$(cat "$gitdir/context-synced" 2>/dev/null || echo "")
 
+if [ -n "$parent" ] && [ -z "$synced" ]; then
+  echo "publish refused: run scripts/sync-context.sh first, so there's a base to compare your edits against" >&2
+  exit 1
+fi
+
+# Only files you changed since your last sync are published; everything else keeps the version already on
+# `context`. Publishing every local copy would silently roll back teammates' newer edits to files you never touched.
 blob() { git rev-parse -q --verify "$1:$2" 2>/dev/null || echo none; }
-if [ -n "$parent" ] && [ -n "$synced" ] && [ "$parent" != "$synced" ]; then
-  conflicts=()
-  for f in "${FILES[@]}"; do
-    base=$(blob "$synced" "$f"); remote=$(blob "$parent" "$f"); mine=$(git hash-object "$f")
-    if [ "$remote" != "$base" ] && [ "$mine" != "$base" ] && [ "$mine" != "$remote" ]; then conflicts+=("$f"); fi
-  done
-  if [ ${#conflicts[@]} -gt 0 ]; then
-    printf 'publish refused: changed on context since your last sync AND locally:\n' >&2
-    printf '  %s\n' "${conflicts[@]}" >&2
-    echo "merge by hand (git show origin/context:<file>), then re-run" >&2
-    exit 1
-  fi
+changed=()
+conflicts=()
+for f in "${FILES[@]}"; do
+  [ -f "$f" ] || continue
+  base=$(blob "$synced" "$f"); remote=$(blob "$parent" "$f"); mine=$(git hash-object "$f")
+  [ "$mine" = "$base" ] && continue
+  if [ "$remote" != "$base" ] && [ "$mine" != "$remote" ]; then conflicts+=("$f"); else changed+=("$f"); fi
+done
+if [ ${#conflicts[@]} -gt 0 ]; then
+  printf 'publish refused: changed on context since your last sync AND locally:\n' >&2
+  printf '  %s\n' "${conflicts[@]}" >&2
+  echo "merge by hand (git show origin/context:<file>), then re-run" >&2
+  exit 1
 fi
 
 export GIT_INDEX_FILE="$gitdir/context-index"
 rm -f "$GIT_INDEX_FILE"
-for f in "${FILES[@]}"; do
+if [ -n "$parent" ]; then git read-tree "$parent"; fi
+for f in "${changed[@]}"; do
   git update-index --add --cacheinfo "100644,$(git hash-object -w "$f"),$f"
 done
 tree=$(git write-tree)
