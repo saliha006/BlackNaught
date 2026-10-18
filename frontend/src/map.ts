@@ -1,6 +1,7 @@
 import {
   AttributionControl,
   type GeoJSONSource,
+  type IControl,
   type LayerSpecification,
   Map as MapLibreMap,
   type MapOptions,
@@ -274,6 +275,33 @@ function addPinLayers(map: MapLibreMap) {
   });
 }
 
+/** One tap back to the whole of Great Britain, where every live cut is in view at once. */
+class WholeGbControl implements IControl {
+  private box: HTMLDivElement | null = null;
+
+  constructor(private readonly show: () => void) {}
+
+  onAdd() {
+    const box = document.createElement('div');
+    box.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'bn-globe';
+    button.title = 'Show all of Great Britain';
+    button.setAttribute('aria-label', 'Show all of Great Britain');
+    button.innerHTML =
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg>';
+    button.addEventListener('click', this.show);
+    box.append(button);
+    this.box = box;
+    return box;
+  }
+
+  onRemove() {
+    this.box?.remove();
+  }
+}
+
 /** `padding` returns the space the page's panels cover, so camera moves centre on what is actually visible. */
 export async function createMap(container: HTMLElement, padding: () => Padding): Promise<OutageMap> {
   const map = new MapLibreMap({
@@ -286,6 +314,13 @@ export async function createMap(container: HTMLElement, padding: () => Padding):
   });
   // Bottom-right sits under the floating panel; OSM attribution must stay visible.
   map.addControl(new AttributionControl({ compact: true }), 'bottom-left');
+  // Bottom corners stack the newest control on top, so adding the globe before the zoom group puts it right under it
+  map.addControl(
+    new WholeGbControl(() =>
+      map.easeTo({ ...map.cameraForBounds(GB_BOUNDS, { padding: padding() }), pitch: 0, bearing: 0, duration: 1200 }),
+    ),
+    'bottom-left',
+  );
   map.addControl(new NavigationControl({ visualizePitch: true }), 'bottom-left');
   // A notch quicker than MapLibre's defaults (1/450 wheel, 1/100 trackpad), so a few scroll clicks reach street level
   map.scrollZoom.setWheelZoomRate(1 / 300);
