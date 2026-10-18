@@ -1399,3 +1399,22 @@ body {
     width: auto;
   }
 }
+
+@media (max-width: 720px) {
+  /* Phone: each Predict card keeps its headline and value; the explanation lives on the desktop view */
+  .tile__detail,
+  .tile__lead {
+    display: none;
+  }
+
+  /* Until a fault has the demo pair, the empty card would only cover the map */
+  .two-houses:not([data-expanded]) {
+    display: none;
+  }
+
+  /* Room for My home: the data-mode chip is a developer detail */
+  .topbar__mode {
+    display: none;
+  }
+}
+
