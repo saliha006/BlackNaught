@@ -108,8 +108,8 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 06:39:**
-  - `main`: full backend live on the VM + home-sensor probe; 210 backend tests green on s390x, 96% coverage; frontend 111 tests, 89.7% (proof.sh re-run 05:10). README for judges is live.
+- **As of 2026-10-18 07:25:**
+  - `main`: full backend live on the VM + home-sensor probe; 222 backend tests green on s390x, 96% coverage; frontend 137 tests, 92%. Live UI: https://148-100-78-95.sslip.io:8443 (proof.sh re-run 05:10). README for judges is live.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
 
@@ -707,3 +707,23 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @sali: a new module in `backend/app/`; no file of yours changed. `bn_agent` can't read `v_triage_latest`, so the agent reads `triage_snapshot`, `patient` and `outage` and repeats the view's `P-xxxxxx` expression to show the same ref. Keep them in step, or grant the view to `bn_agent` and I'll switch. 28 decisions now wait in the control room.
   - @sali (covering frontend): `/api/agent/decisions` has real rows now. Two CAP drafts are ready to approve: outages 35 (TN26, TN30) and 53 (DA12).
 - Conflict status: open
+
+### 2026-10-18 07:25 — frontend: triage + approvals, agent & audit, previews, my home (Rama's rows 5, 6, 8, 10–13) — @sali — done
+- Shipped (on `Rama-Frontend`, merged to `main`, live behind Ahmed's nginx):
+  - Side panel tabs: **Power cuts** (Rama's view, unchanged) / **Triage** / **Agent & audit**; **My home** in the top bar.
+  - Triage: rank, expected case then the q50–q90 range, rule used, harm-hours, reasons; Approve / Reject behind the operator sign-in; SMS template preview on a phone.
+  - Agent & audit: Ahmed's decision feed with Approve / Reject, CAP alert phone preview once approved, audit verify (red + first bad row on tamper, checkpoint signature state).
+  - My home: household sign-in, option C level over the three layer gauges, reserve clock, next action, never an ETA.
+  - New-fault ping (outline pulse + "new", none under reduced motion); SIMULATED labels on cells, triage and SMS.
+- Review: ui-audit + an independent review agent with a research ledger (`## Frontend accessibility + dialog pass` in the research doc). Applied: native `<dialog>` (focus, inert background, Escape), a single status line instead of list-wide live regions, top-bar sign-out, landing Brier fetched live, the UKPN curve in the charts, re-renders that keep open rows and focus, 409 shown as "already decided".
+- Tests: 137 frontend (92% lines), build OK; backend 222 green.
+- Touched: `frontend/src/*` (new: `triage`, `agent`, `preview`, `myHome`, `modal`, `tabs`, `dom`), `frontend/index.html`, `frontend/src/styles.css`, `fixtures/api/me_home.json`, `fixtures/api/agent_decisions.json`; VM `frontend/dist`
+- ⚠️ Conflicts: @rama: your list is done up to row 13 and your own views are untouched; row 14 still needs the performance pass and a real-browser look. @ahmed: the UI reads your decisions' `args.patient` / `args.outage_id`; keep those names.
+- Conflict status: open
+
+### 2026-10-18 07:25 — triage rows link the agent's escalate decisions — @sali
+- Shipped: `/api/triage` fills `decision_id` with the newest `escalate` decision for that patient and fault (it was still hard-coded null from before the agent existed). 25 of 32 live rows linked. Test added.
+- Touched: `backend/app/main.py`, `backend/tests/test_triage.py`
+- ⚠️ Conflicts: @ahmed: relies on `args.patient` + `args.outage_id` in escalate decisions.
+- Conflict status: open
+
