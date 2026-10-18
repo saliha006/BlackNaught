@@ -599,3 +599,9 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts:
   - @sali: 📨 Rama needs the two-houses pair seeded on a fresh live fault (`python -m app.seed --two-houses <outage_id>`). Live triage right now has 45 patients on 3 faults, and every one escalates, so the card shows its empty state.
 - Conflict status: open
+
+### 2026-10-18 06:17 — frontend fixes: Escalate contrast + escaped API strings — @rama — done
+- Shipped: the red Escalate pill now uses near-black text (5.3:1; white was 3.7:1, under AA). Source, device, scale and status names from the API are escaped before they go into HTML templates, so a feed can't inject markup.
+- Touched: `frontend/src/{styles.css,format.ts,landing.ts,outageList.ts}` and tests
+- ⚠️ Conflicts: none
+- Conflict status: none
