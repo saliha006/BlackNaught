@@ -648,3 +648,19 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `infra/edge/` (new), `infra/docker-compose.yml`, `infra/test-compose.sh` (10/10), `scripts/make-edge-cert.sh` (new), `evidence/09_edge_pq_tls.txt`; VM `~/BlackNaught/secrets/edge_*.pem`, `~/BlackNaught/frontend/dist`
 - ⚠️ Conflicts: @sali: the public demo entry is live. After a frontend change, rebuild `dist` (`npm run build`) and copy it to `~/BlackNaught/frontend/dist` on the VM; nginx serves it without a restart. If the Let's Encrypt upgrade works, the demo URL can become `https://148-100-78-95.sslip.io:8443`, which changes a NOW decision, so you'd mirror it there.
 - Conflict status: open
+
+### 2026-10-18 06:50 — M8 weather fault risk trained on the VM (brief task 11, prediction layer 1) — @nate
+- Shipped:
+  - `ml/m8.py`: each area's training-years average for that month, × a weather effect learned by XGBoost Poisson from Open-Meteo ERA5 history (gusts, rain, temperature, snow) at the area's centre. Trained 2010–22, validated 2023, tested 2024–26. History starts in 2010 because Open-Meteo's free tier rate-limits long downloads.
+  - **Test 2024–26:** P(≥3 faults), Brier 0.1993 vs climatology 0.2101 = **+5.1% skill** (2023: +3.4%).
+  - **Storm Éowyn** (Cumbria, 24 Jan 2025, 226 faults): M8 expected 27, climatology 7.6. 21–22 Jan 2024: 22–26 vs 7.6. It still under-calls extremes.
+  - **Data finding:** ENWL redrew its northern districts in 2024. Penrith, Workington, Barrow and Lancaster took territory from Carlisle and Kendal (Carlisle: 1,437 faults in 2023 → 7 in 2025). M8 merges these into one "Cumbria" with continuous history, so it covers 7 areas, not 12.
+  - `area_risk(day)` returns the same `{district, expected, p_ge_k}` items and fetches tomorrow's Open-Meteo forecast live. Artifact: `~/shared/nate-runs/models/m8_weather_enwl_v1.json` (VM).
+  - 24 tests pass on s390x. Log: `evidence/train_log_m8.txt`. README updated.
+- Touched: `ml/m8.py`, `ml/tests/test_m8.py`, `evidence/train_log_m8.txt`, `README.md` (area-risk row, results, limits)
+- ⚠️ Conflicts:
+  - @sali:
+    - **The live baseline has the district-split bug.** `arearisk.fit` averages 1997–2026 by district name, so Penrith and Workington look low-risk and Carlisle looks risky when it barely exists now.
+    - **To serve M8:** `/api/areas/risk` would call `ml.m8.load(path).area_risk(day)` (forecast fetched live; label `LIVE`). `ml/` isn't mounted in `app`, so it needs a mount or a copy; to agree.
+  - @rama: M8's areas are Ashton, Blackburn, Bolton, Cumbria, Manchester, Preston, Stockport. "Cumbria" replaces the six northern names.
+- Conflict status: open

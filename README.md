@@ -22,7 +22,7 @@ Two halves: predict where power will fail, then protect the people it will hurt.
 
 | Layer | Question | Lead time | State |
 |---|---|---|---|
-| Area fault risk | Which districts are likely to have faults tomorrow? | Hours to days | Live climatology baseline. Weather model in progress |
+| Area fault risk | Which districts are likely to have faults tomorrow? | Hours to days | Live climatology baseline. Weather model (M8) trained: +5.1% Brier skill on 2024–26, not wired in yet |
 | Home sensors | Which homes will probably lose power in the next 30 minutes? | Minutes | Tested on real Accra sensor data. Served model in progress |
 | Grid stress | Is the whole grid in trouble? | Seconds | Live, from Elexon frequency |
 | Protect | Who runs out of backup first, and who do we call? | During the cut | Live: triage, grading, approvals, CAP alerts, "my home" |
@@ -169,6 +169,13 @@ Kaplan–Meier's 0.131, because the live fields can't rank UKPN outages at all (
 Kaplan–Meier itself on UKPN 2021–24: 0.1297 on that newest year against the ENWL curve's 0.1311 (Brier at 2 h 0.249 vs
 0.256). That's the curve live now.
 
+**Weather fault risk (M8).** For each ENWL area and day, the training years' average for that month, times a weather
+effect XGBoost learns from Open-Meteo history (gusts, rain, temperature, snow) at the area's centre. Trained on
+2010–22, tested on 2024–26 (`ml/m8.py`, `evidence/train_log_m8.txt`). P(3 or more faults in a day): Brier 0.199 against
+the baseline's 0.210, **+5.1% skill**. On Storm Éowyn (Cumbria, 24 Jan 2025, 226 faults) M8 expected 27 faults; the
+baseline expected 7.6. It still under-calls the worst storms. With areas this size, 3 faults happen on 65% of days,
+so the threshold should rise.
+
 **Home-sensor early warning on real data.** One week of nLine GridWatch readings from 429 sensors in Accra, Ghana
 (4.76 M readings, June 2021). Trained on five days, tested on the next two. Label: did this home lose power within 30
 minutes?
@@ -255,7 +262,9 @@ footprints, with phone numbers from Ofcom's range reserved for drama. A table co
 - The live duration model is a Kaplan–Meier curve refitted on UKPN. The trained models beat Kaplan–Meier on held-out
   ENWL outages but not on UKPN's, so they aren't live (see Results). It also scores NPg and SSEN outages, which have no
   open history of their own.
-- Area risk is a climatology baseline and says so. It flags about 39% of district-days, too blunt to act on alone.
+- Live area risk is still the climatology baseline and says so. The weather model (M8) beats it by 5.1% but isn't wired in.
+  ENWL redrew its northern districts in 2024, so the baseline, which averages by district name, has no history for
+  Penrith or Workington; M8 merges them into one Cumbria area.
 - Northern Powergrid can't be graded and SSEN only partly, because grading needs explicit restore times.
 - Next: a pilot with one health team and one network operator, a small real sensor fleet whose data becomes local
   outage labels, a learned combined risk score once one grid has all three data types, and audit checkpoints published
