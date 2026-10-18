@@ -110,7 +110,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
 ## 4. ▶ Current tasks (2026-10-17 v3), in order
 **▶ New 2026-10-18 06:05 (from Sali)**
 - ✅ **App side of the signer is wired** (on `main`): `HttpSigner` sends `Authorization: Bearer <signer_token_app>` on `/sign`, nothing on `/verify`, and a `purpose` per call (`audit_checkpoint`, `cap_alert`). Tested end to end against your signer image on the VM with a throwaway key: sign OK, verify OK, tampered → false, wrong token → 401.
-- ⬜ **What your `infra/docker-compose.yml` must give the `app` service** to switch signing on (nothing changes until you do):
+- ✅ **What your `infra/docker-compose.yml` must give the `app` service** *(done 2026-10-18 06:22: live; first signed checkpoint seq 109, `sig_ok: true`)* to switch signing on (nothing changes until you do):
   - env `BN_SIGNER_URL=http://signer:8100`;
   - the compose secret `signer_token_app` (file `secrets/signer_token_app` from your `make-signer-secrets.sh`), mounted at `/run/secrets/signer_token_app`. The app reads it at startup **only** when `BN_SIGNER_URL` is set, and fails loudly if it's missing;
   - the private network shared with `signer`.
@@ -168,7 +168,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
    - Post a NNPA go/no-go in `progress.md`. `[⚠ @nate needs the image]`
 5. ✅ **Labs 01 + 02 run and screenshotted** (they're mandatory). Split with the team if needed.
 6. ✅ **Contract freeze:** *Done 2026-10-18 05:07 by Ahmed: events frozen as they are; a sensor's type and its home link go in a new `sensors` table, asked of Sali in `progress.md`.* Originally: (Sali drafted it; please ✅ in `progress.md` or add kinds) co-author `contracts/events.schema.json` with Sali. Events: heartbeat, last-gasp, DNO fault, frequency reading, SMS reply, IODA event, shedding stage. `[⚠ shared with ALL]`
-7. 🟡 *(layout OK'd by Sali 06:05)* **Compose skeleton** (the backend stack already runs; extend it, see the status update)
+7. 🟡 *(layout OK'd by Sali 06:05)* *(Ahmed 2026-10-18 06:22: `infra/docker-compose.yml` live with the signer; edge and Granite still to add)* **Compose skeleton** (the backend stack already runs; extend it, see the status update)
    - `app` (FROM the IBM image + `pip install fastapi uvicorn pg8000 httpx`)
    - `postgres:17` on `127.0.0.1`
    - `edge` (nginx on trixie)
@@ -176,7 +176,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
    - `mem_limit` on each service, plus restart policies
    - *Done when:* `docker compose up -d` is green on the VM. `[⚠ @sali: app runs Sali's FastAPI; agree the entrypoint]`
 8. ⬜ **LUKS2 volume for Postgres data** (HANDOFF §7.7, §9.5). Screenshot `cryptsetup luksDump`. `[⚠ @sali: DB data path]`
-9. 🟡 **Signer** *(signer built 2026-10-18 05:56: on `main`, not wired yet; the data-key wrap is still to do)* *(Sali 06:05: app client done; compose wiring is yours, see the block at the top)*
+9. 🟡 **Signer** *(signer built 2026-10-18 05:56: on `main`, not wired yet; the data-key wrap is still to do)* *(Sali 06:05: app client done; compose wiring is yours, see the block at the top)* *(Ahmed 2026-10-18 06:22: wired and live, checkpoints signed)*
    - ML-DSA-65 keygen; sign and verify (test `-rawin`).
    - Wrap the data key for the AES-GCM columns. `[⚠ @sali uses it for encrypted columns + audit checkpoints]`
 10. ⬜ **🎯 Walking skeleton by 00:30** `[⚠ shared with ALL]`: ingest → DB → API → map, running on the VM.
