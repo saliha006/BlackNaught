@@ -15,6 +15,8 @@ SSEN_URL = "https://ssen-powertrack-api.opcld.com/gridiview/reporter/info/livefa
 ELEXON_URL = "https://data.elexon.co.uk/bmrs/api/v1/system/frequency"
 UKPN_RESTORED_STATUS = 5
 EARLIEST_PLAUSIBLE_YEAR = 2000
+# Elexon has published runs of 0 Hz (182 readings on 2026-08-06); the stress rule would read them as a GB emergency
+PLAUSIBLE_HZ = (45.0, 55.0)
 
 
 @dataclass
@@ -130,4 +132,5 @@ def parse_ssen(document: dict[str, Any]) -> list[Outage]:
 
 
 def parse_elexon(document: dict[str, Any]) -> list[tuple[datetime, float]]:
-    return [(timeparse.iso(d["measurementTime"]), float(d["frequency"])) for d in document.get("data", [])]
+    readings = [(timeparse.iso(d["measurementTime"]), float(d["frequency"])) for d in document.get("data", [])]
+    return [(t, hz) for t, hz in readings if PLAUSIBLE_HZ[0] <= hz <= PLAUSIBLE_HZ[1]]
