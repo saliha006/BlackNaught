@@ -208,7 +208,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
     - A **number validator** rejects any number that isn't in the decision record.
     - Test: delete Granite, and the decisions stay the same.
 16. ⬜ **Self-correction:** read the overnight grades; if Brier drifts, apply an isotonic correction per horizon (GB only) and log it before and after. `[⚠ @sali grades table]`
-17. 🟡 *(Ahmed 2026-10-18 06:44: live at https://148.100.78.95:8443, X25519MLKEM768 proven from outside, evidence/09; self-signed until the Let's Encrypt upgrade)* **Edge PQ TLS.** nginx on OpenSSL 3.5; prove it with `openssl s_client -groups X25519MLKEM768`. Serves Rama's static build and proxies `/api` and `/stream` (SSE buffering off).
+17. ✅ *(Ahmed 2026-10-18 06:49: live at https://148-100-78-95.sslip.io:8443 with a Let's Encrypt certificate; X25519MLKEM768 + verified certificate proven from outside, evidence/09)* **Edge PQ TLS.** nginx on OpenSSL 3.5; prove it with `openssl s_client -groups X25519MLKEM768`. Serves Rama's static build and proxies `/api` and `/stream` (SSE buffering off).
 18. ⬜ **NNPA on/off timing → `evidence/nnpa_timing.csv`** (guardrail above), plus a Trivy scan of the app image and `iptables -L`.
 19. ⬜ **Publish audit checkpoints off-box** (a git commit every N minutes). `[⚠ @sali audit chain]`
 20. ⬜ **03:00 freeze.** Make sure the agent and grading are **running overnight**. Stay reachable for VM restarts.
@@ -216,6 +216,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
 22. ⬜ **Video:** your line, plus the README section on the platform and proof.
 
 ## 5. Done log (newest first)
+- 2026-10-18 06:49: **Edge PQ TLS (task 17)** ✅. nginx on OpenSSL 3.5, X25519MLKEM768, trusted certificate, UI + /api + /stream; demo URL https://148-100-78-95.sslip.io:8443.
 - 2026-10-18 05:07: **Contract freeze (task 6)** ✅. Events frozen as they are; the `sensors` table is asked of Sali in `progress.md`.
 
 ## 6. Waiting on / owed to others
