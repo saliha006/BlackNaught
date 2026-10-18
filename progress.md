@@ -225,3 +225,19 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: VM `~/BlackNaught` (git state only), `progress.md`
 - ⚠️ Conflicts: @ahmed @nate @rama: use `~/BlackNaught` only as the deploy copy (pull + restart), and clone `~/work/<name>` for your own testing. @ahmed: Nate's and Rama's SSH keys still need adding.
 - Conflict status: open
+
+### 2026-10-18 02:36 — team onboarding fixes — @sali
+- Shipped:
+  - "Start here" section above;
+  - `scripts/git-hooks/commit-msg` (blocks AI co-author trailers; enable it with `git config core.hooksPath scripts/git-hooks`);
+  - `contracts/model.md` (the backend's model interface);
+  - `fixtures/api/cap_alert_sample.xml` + `stream_sample.txt` (all fixtures checked against the live response models);
+  - `contracts/*.md` is now allowed in git.
+  - The docs bundle (CLAUDE.md, briefs with dated status updates, PRD, design doc, skills, research, handoff; scanned, no secrets) is going out on Discord.
+- Touched: `progress.md`, `.gitignore`, `contracts/model.md`, `fixtures/api/*`, `scripts/git-hooks/`
+- ⚠️ Conflicts:
+  - @nate: `contracts/model.md` is your file, drafted from the backend side; the M2 live-feature list is open with Sali.
+  - @ahmed: build edge, signer and granite into the running `bn-backend` stack (no second Postgres); agree it with Sali.
+  - @rama: merge `origin/main` into `Rama-Frontend` (42 commits behind).
+  - All: the freeze time in your briefs predates the team starting; Sali will confirm a new one.
+- Conflict status: open
