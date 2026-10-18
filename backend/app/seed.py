@@ -134,7 +134,7 @@ def main() -> None:
     conn = connect("bn_migrator", args.database)
     try:
         conn.run("SET ROLE bn_owner")
-        if args.per_outage:
+        if args.per_outage or args.two_houses is not None:
             print("patients:", seed(conn, args.per_outage, args.two_houses, random.Random(args.seed), args.max_age_h))
         if args.households:
             print("household logins:", households(conn, args.households, args.households_out),

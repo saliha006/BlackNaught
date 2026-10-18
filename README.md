@@ -147,8 +147,9 @@ scores 0.25.
 | SSEN | +4 h | 10 | 64 | 0.279 | 0.229 to 0.285 |
 | Northern Powergrid | both | 0 | 483 | n/a | No restore times published |
 
-UKPN is the one to trust, because it publishes explicit restore times. This is the baseline the trained survival model
-has to beat.
+UKPN is the one to trust, because it publishes explicit restore times. These grades are for the ENWL-fitted curve
+(`m1-km-enwl`). Since 06:50 the live triage uses a Kaplan–Meier curve refitted on UKPN's own outages (`m1-km-ukpn`),
+and the grader scores the two side by side by model id.
 
 **Trained duration models (M2), offline test.** Trained on the VM on ENWL 2000–22 (269,170 outages), tested on ENWL
 2024–26 and on 178,864 UKPN outages none of the models saw (`ml/notebooks/m2_duration.ipynb`). Integrated Brier over the
@@ -164,7 +165,9 @@ first 24 hours; lower is better:
 Start time, customers and voltage carry little signal. The fault's cause carries the most, and the live feeds don't
 publish it. Trained on one operator, the models don't beat Kaplan–Meier on another, so they aren't live. Recalibrating
 on UKPN 2021–24 didn't close the gap: on UKPN's newest year (Apr 2024–Mar 2025) the calibrated model scores 0.143 against
-Kaplan–Meier's 0.131, because the live fields can't rank UKPN outages at all (C-index 0.50).
+Kaplan–Meier's 0.131, because the live fields can't rank UKPN outages at all (C-index 0.50). What did help was refitting
+Kaplan–Meier itself on UKPN 2021–24: 0.1297 on that newest year against the ENWL curve's 0.1311 (Brier at 2 h 0.249 vs
+0.256). That's the curve live now.
 
 **Home-sensor early warning on real data.** One week of nLine GridWatch readings from 429 sensors in Accra, Ghana
 (4.76 M readings, June 2021). Trained on five days, tested on the next two. Label: did this home lose power within 30
@@ -249,8 +252,9 @@ footprints, with phone numbers from Ofcom's range reserved for drama. A table co
 ## Limits and next steps
 
 - Patients and the GB home sensors are simulated. The faults, restore times, frequency and Accra data are real.
-- The live duration model is still the Kaplan–Meier baseline. The trained models beat it on held-out ENWL outages but
-  not on UKPN's, so they aren't live (see Results).
+- The live duration model is a Kaplan–Meier curve refitted on UKPN. The trained models beat Kaplan–Meier on held-out
+  ENWL outages but not on UKPN's, so they aren't live (see Results). It also scores NPg and SSEN outages, which have no
+  open history of their own.
 - Area risk is a climatology baseline and says so. It flags about 39% of district-days, too blunt to act on alone.
 - Northern Powergrid can't be graded and SSEN only partly, because grading needs explicit restore times.
 - Next: a pilot with one health team and one network operator, a small real sensor fleet whose data becomes local

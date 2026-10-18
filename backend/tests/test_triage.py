@@ -8,6 +8,7 @@ import httpx
 import pytest
 
 from app import harm, survival
+from app.config import settings
 from app.crypto import blind_index
 from app.ingest import feeds, store
 from app.main import app
@@ -53,6 +54,13 @@ def test_geometric_tail_beyond_grid():
 def test_load_hashes_the_artifact():
     raw = Path("/srv/models/km_enwl.json").read_bytes()
     assert MODEL.sha256 == hashlib.sha256(raw).hexdigest() and MODEL.model_id == "m1-km-enwl"
+
+
+def test_live_curve_is_the_ukpn_refit_and_restores_faster():
+    live = survival.load(settings().model_path)
+    assert live.model_id == "m1-km-ukpn"
+    # Nate's refit: UKPN restores faster than ENWL, S(1 h) 0.794 vs 0.823
+    assert live.conditional(0, 1) < MODEL.conditional(0, 1)
 
 
 # --- harm ------------------------------------------------------------------------------------------
