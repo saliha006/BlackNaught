@@ -95,6 +95,18 @@ async def test_seed_places_patients_on_real_footprints(db_factory, superuser):
     assert superuser.run("SELECT count(*) FROM patient WHERE device = 'ventilator' AND reserve_h = 15")[0][0] >= 1
 
 
+@pytest.mark.anyio
+async def test_seed_cli_can_add_just_the_two_houses(db_factory, superuser, monkeypatch, capsys):
+    superuser.run("TRUNCATE outage, outage_version, postcode_geo, patient RESTART IDENTITY CASCADE")
+    superuser.run("INSERT INTO postcode_geo VALUES ('N1 3LD', 51.5456, -0.0890, 'E01', 'Islington', true, now())")
+    o = feeds.Outage("ukpn", "INCD-2", "active", datetime.now(UTC) - timedelta(hours=1),
+                     postcodes=["N1 3LD"], lat=51.545, lon=-0.089)
+    await store.sync(db_factory("bn_ingest"), "ukpn", [o], datetime.now(UTC))
+    monkeypatch.setattr(sys, "argv", ["seed", "--per-outage", "0", "--two-houses", "1", "--database", "blacknaught_test"])
+    seed_main()
+    assert capsys.readouterr().out.strip() == "patients: 2"
+
+
 def test_seed_cli(superuser, monkeypatch, capsys):
     monkeypatch.setattr(sys, "argv", ["seed", "--per-outage", "1", "--database", "blacknaught_test"])
     seed_main()
