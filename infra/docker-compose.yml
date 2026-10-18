@@ -1,15 +1,16 @@
-# The production stack (Ahmed): Sali's backend as it runs today, plus the signer. Deploy only from the VM's deploy copy:
+# The production stack (Ahmed): Sali's backend as it runs today, plus the signer, the edge, the agent and Granite.
 #   cd ~/BlackNaught && sudo docker compose -f infra/docker-compose.yml up -d
 # The project name is the live stack's, so an `up` from any other clone would swap that clone's code into the live app.
 # Once this is live, keep using it: an `up` from backend/ alone would take the signer settings back off `app`.
 name: bn-backend  # the running stack's project, so db, app and the pgdata volume carry on as they are
 
 include:
-  # Sali's file stays untouched; signer.yml and agent.yml are layered over it the way more -f files would be.
+  # Sali's file stays untouched; the other files are layered over it the way more -f files would be.
   - path:
       - ../backend/compose.backend.yml
       - signer.yml
       - agent.yml
+      - granite.yml
 
 services:
   edge:

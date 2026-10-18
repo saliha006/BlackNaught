@@ -1,0 +1,24 @@
+# F8 Granite (Ahmed; decision 2026-10-18: Q4_K_M in its own container). One process holds the model, pinned by its
+# SHA-256, on an internal network that only the agent joins: no published port and no route out to the internet.
+# The model lives outside the repo, in ~/models on the VM.
+services:
+  granite:
+    image: bn-app:latest
+    working_dir: /srv
+    command: ["/opt/venv/bin/python", "-m", "app.granite"]
+    volumes: ["../backend:/srv:ro", "../../models:/models:ro"]
+    environment:
+      BN_GRANITE_MODEL: /models/granite-3.3-2b-instruct-be.Q4_K_M.gguf
+      BN_GRANITE_SHA256: 1f91f281a2be2843ef2f638eb62072f426208c8dea390f97af01cb6f511ca6ff
+    networks: [writing]
+    mem_limit: 2g
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/opt/venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8200/health', timeout=3)"]
+      interval: 15s
+      retries: 4
+      start_period: 180s
+
+networks:
+  writing:
+    internal: true

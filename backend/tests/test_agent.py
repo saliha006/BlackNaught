@@ -89,8 +89,8 @@ async def agent_db(db_factory, superuser):
     return db
 
 
-async def started(db, signer, workers: int = 1) -> Agent:
-    agent = Agent(db, signer, workers)
+async def started(db, signer, workers: int = 1, granite=None) -> Agent:
+    agent = Agent(db, signer, workers, granite)
     await agent.load_memory()
     return agent
 
@@ -106,17 +106,20 @@ def decisions(superuser) -> dict[str, list]:
 async def test_one_tick_plans_acts_and_leaves_reach_to_people_for_a_human(agent_db, superuser):
     signer = FakeSigner()
     agent = await started(agent_db, signer)
-    assert await agent.tick(NOW) == 5
+    assert await agent.tick(NOW) == 6
     made = decisions(superuser)
-    assert set(made) == {"assign_visit", "escalate", "notify_carer", "draft_cap_alert", "write_sitrep"}
+    assert set(made) == {"assign_visit", "escalate", "notify_carer", "draft_cap_alert", "write_sitrep", "field_briefing"}
     # one responder, 120 min: the empty concentrator first, then two more visits; one ventilator patient waits
     assert len(made["assign_visit"][0][1]["patients"]) == 3
     assert made["escalate"][0][0] == made["draft_cap_alert"][0][0] == "awaiting_approval"
     assert made["assign_visit"][0][0] == made["notify_carer"][0][0] == made["write_sitrep"][0][0] == "auto_done"
     assert made["escalate"][0][1]["service"] == "ambulance"
-    assert made["draft_cap_alert"][0][1] == {"outage_id": 1, "area": "N1"}
+    cap_args = made["draft_cap_alert"][0][1]
+    assert cap_args["outage_id"] == 1 and cap_args["area"] == "N1" and cap_args["writer"] == "template"
+    assert cap_args["description"].startswith("There is a power cut in N1. It started at 21:00 UTC")
     assert "Waiting: 1. Awaiting an operator: 2." in made["write_sitrep"][0][1]["text"]
-    assert signer.calls == 5
+    assert made["field_briefing"][0][1]["text"].startswith("Responder W1. Stop 1: P-")
+    assert signer.calls == 6
 
 
 @pytest.mark.anyio
@@ -151,8 +154,40 @@ async def test_no_signature_means_no_action_and_the_retry_does_not_double_up(age
         await agent.tick(NOW)
     assert superuser.run("SELECT count(*) FROM decision")[0][0] == 0
     signer.down = False
-    assert await agent.tick(NOW) == 5
+    assert await agent.tick(NOW) == 6
     assert await agent.tick(NOW + timedelta(minutes=1)) == 0
+
+
+class FakeGranite:
+    def __init__(self):
+        self.asked = 0
+
+    async def write(self, style: str, facts: str) -> str:
+        self.asked += 1
+        return "In plain words: " + facts
+
+
+def decided(superuser) -> list[tuple[str, dict]]:
+    """Every decision without its wording, so runs with and without Granite can be compared."""
+    wording = {"text", "description", "writer"}
+    return sorted(((tool, {k: v for k, v in args.items() if k not in wording})
+                   for tool, _, args in superuser.run("SELECT tool, state, args FROM decision")),
+                  key=lambda d: (d[0], json.dumps(d[1], sort_keys=True)))
+
+
+@pytest.mark.anyio
+async def test_granite_only_changes_the_wording_never_the_decisions(agent_db, superuser):
+    await (await started(agent_db, FakeSigner())).tick(NOW)
+    without = decided(superuser)
+    superuser.run("TRUNCATE decision, agent_memory CASCADE")
+    granite = FakeGranite()
+    await (await started(agent_db, FakeSigner(), granite=granite)).tick(NOW)
+    assert decided(superuser) == without
+    assert granite.asked == 3  # the CAP text, the sitrep and one briefing
+    written = {tool: args for tool, _, args in superuser.run("SELECT tool, state, args FROM decision")
+               if "writer" in args}
+    assert {args["writer"] for args in written.values()} == {"granite"}
+    assert written["write_sitrep"]["text"].startswith("In plain words: Patients in active outages: 4.")
 
 
 @pytest.mark.anyio

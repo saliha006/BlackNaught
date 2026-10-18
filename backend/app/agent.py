@@ -12,6 +12,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import os
 from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -23,6 +24,7 @@ from . import audit, decisions
 from .cap import area_desc
 from .config import read_secret, settings
 from .db import Db
+from .granite import Granite
 from .runtime import INTERVALS
 
 log = logging.getLogger("agent")
@@ -38,6 +40,12 @@ BULK_SMS_OVER = 10                 # carers texted in one round above this go to
 SITREP_EVERY = timedelta(minutes=15)
 SITREP_MAX_WAITING = 20            # rationale lines naming who waits; the rest are counted
 SUPPLY = {"o2_concentrator": "oxygen cylinder", "o2_cylinder": "oxygen cylinder"}  # anything else: a backup battery
+SITREP_STYLE = ("Rewrite this situation report for a control-room operator in two or three short sentences of plain "
+                "English. Keep every number exactly as given and add no new facts or numbers.")
+BRIEFING_STYLE = ("Write a short field briefing for a community responder from this task list: one line per stop, in "
+                  "order, saying who, when and why it matters. Keep every number exactly as given and add no new facts.")
+CAP_STYLE = ("Write the description of a public emergency alert about this power cut in one or two calm sentences for "
+             "the public. Use only these facts: add no numbers, times, causes or promises, and never mention patients.")
 
 # the same pseudonym as v_triage_latest, so the control room and the decision log name a patient the same way
 TRIAGE = """
@@ -113,10 +121,11 @@ def plan(patients: list[Patient], workers: int = WORKERS, shift_min: int = SHIFT
 
 
 class Agent:
-    def __init__(self, db: Db, signer: audit.HttpSigner | None, workers: int = WORKERS):
+    def __init__(self, db: Db, signer: audit.HttpSigner | None, workers: int = WORKERS, granite: Granite | None = None):
         self.db = db
         self.signer = signer
         self.workers = workers
+        self.granite = granite
         self.memory: dict[str, Any] = {}
 
     async def load_memory(self) -> None:
@@ -143,6 +152,11 @@ class Agent:
                 "sig_b64": signed["sig_b64"]})
         log.info("%s → %s (%s)", tool, state, decision_id)
         return decision_id
+
+    async def words(self, style: str, facts: str) -> tuple[str, str]:
+        """(text, writer): Granite's wording when it's up and its numbers check out, otherwise the facts as written."""
+        text = await self.granite.write(style, facts) if self.granite is not None else None
+        return (text, "granite") if text else (facts, "template")
 
     async def call_once(self, memo: str, tool: str, args: dict[str, Any], rationale: list[str], now: datetime) -> int:
         if memo in self.memory:
@@ -174,8 +188,9 @@ class Agent:
             await self.remember([f"stale:{source}"], source in stale, now)
         return calls
 
-    async def assign(self, now: datetime, schedule: Plan) -> int:
-        calls = 0
+    async def assign(self, now: datetime, schedule: Plan) -> list[str]:
+        """Returns the responders who got a new task list."""
+        changed = []
         for worker, stops in schedule.visits.items():
             refs = [p.ref for p, _ in stops]
             if sorted(refs) == sorted(self.memory.get(f"visits:{worker}", [])):
@@ -185,9 +200,21 @@ class Agent:
                     f"{p.ref} at +{at} min: harm {p.harm:.1f} over a {p.visit_min} min visit"
                     + ("; reserve runs out before power is likely back" if p.escalate else "") for p, at in stops
                 ], now)
-                calls += 1
+                changed.append(worker)
             await self.remember([f"visits:{worker}"], refs, now)
-        return calls
+        return changed
+
+    async def brief(self, now: datetime, schedule: Plan, workers: list[str]) -> int:
+        for worker in workers:
+            facts = f"Responder {worker}. " + " ".join(
+                f"Stop {n}: {p.ref} at +{at} min, {p.device.replace('_', ' ')}, "
+                f"{'has a backup' if p.other_backup else 'no backup'}, reserve {p.reserve_left_h:.1f} h"
+                + ("; it runs out before power is likely back." if p.escalate else ".")
+                for n, (p, at) in enumerate(schedule.visits[worker], 1))
+            text, writer = await self.words(BRIEFING_STYLE, facts)
+            await self.call("field_briefing", {"worker": worker, "text": text, "writer": writer},
+                            [f"the task list of {worker} changed"], now)
+        return len(workers)
 
     async def help_unreached(self, now: datetime, schedule: Plan) -> int:
         """Whoever waits gets their carer told (one bulk_sms for an operator past BULK_SMS_OVER carers); a supply is
@@ -227,10 +254,16 @@ class Agent:
         due = [o for o, n in per_outage.items() if n >= CAP_MIN_PATIENTS and f"draft_cap_alert:{o}" not in self.memory]
         if not due:
             return 0
-        rows = await self.db.rows("SELECT outage_id, postcodes FROM outage WHERE outage_id = ANY(:ids)", ids=due)
+        rows = await self.db.rows("SELECT outage_id, postcodes, started_at, customers FROM outage"
+                                  " WHERE outage_id = ANY(:ids)", ids=due)
         for r in rows:
-            o = r["outage_id"]
-            await self.call("draft_cap_alert", {"outage_id": o, "area": area_desc(r["postcodes"])},
+            o, area = r["outage_id"], area_desc(r["postcodes"])
+            # public text: only what the DNO itself publishes, never anything about the patients behind the draft
+            facts = (f"There is a power cut in {area}. It started at {r['started_at']:%H:%M} UTC"
+                     + (f" and affects {r['customers']} customers." if r["customers"] else "."))
+            description, writer = await self.words(CAP_STYLE, facts)
+            await self.call("draft_cap_alert", {"outage_id": o, "area": area, "description": description,
+                                                "writer": writer},
                             [f"{per_outage[o]} electricity-dependent patients in this outage (≥ {CAP_MIN_PATIENTS})"],
                             now, f"draft_cap_alert:{o}")
         return len(rows)
@@ -249,7 +282,8 @@ class Agent:
         rationale = [f"{p.ref} waits: harm {p.harm:.1f} over {p.visit_min} min" for p in waiting[:SITREP_MAX_WAITING]]
         if len(waiting) > SITREP_MAX_WAITING:
             rationale.append(f"and {len(waiting) - SITREP_MAX_WAITING} more with less harm per minute")
-        await self.call("write_sitrep", {"text": text}, rationale, now)
+        text, writer = await self.words(SITREP_STYLE, text)
+        await self.call("write_sitrep", {"text": text, "writer": writer}, rationale, now)
         await self.remember(["sitrep_at"], now.isoformat(), now)
         return 1
 
@@ -267,10 +301,12 @@ class Agent:
         patients = list(by_ref.values())
         calls = await self.mark_stale(now, stale, widen(patients, set(stale)))
         if rows:
+            # every decision first; Granite's wording (briefings last) can be slow and must never hold one up
             schedule = plan(patients, self.workers)
-            assigned = await self.assign(now, schedule)
-            calls += assigned + await self.help_unreached(now, schedule) + await self.draft_alerts(now, pairs)
-            calls += await self.sitrep(now, patients, schedule, stale, replanned=assigned > 0)
+            changed = await self.assign(now, schedule)
+            calls += len(changed) + await self.help_unreached(now, schedule) + await self.draft_alerts(now, pairs)
+            calls += await self.sitrep(now, patients, schedule, stale, replanned=bool(changed))
+            calls += await self.brief(now, schedule, changed)
         ticks = self.memory.get("loop", {}).get("ticks", 0) + 1
         await self.remember(["loop"], {"ticks": ticks, "last_tick": now.isoformat()}, now)
         return calls
@@ -289,10 +325,10 @@ class Agent:
 
 async def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
-    url = settings().signer_url
+    url, granite_url = settings().signer_url, os.environ.get("BN_GRANITE_URL")
     async with httpx.AsyncClient(timeout=10) as client:
         signer = audit.HttpSigner(client, url, read_secret("signer_token_agent")) if url else None
-        await Agent(Db("bn_agent"), signer).run()
+        await Agent(Db("bn_agent"), signer, granite=Granite(client, granite_url) if granite_url else None).run()
 
 
 if __name__ == "__main__":

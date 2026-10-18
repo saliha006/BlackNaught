@@ -11,8 +11,9 @@ services:
       BN_DB_NAME: blacknaught
       BN_SECRETS_DIR: /run/secrets
       BN_SIGNER_URL: http://signer:8100
+      BN_GRANITE_URL: http://granite:8200
     secrets: [db_agent_pw, signer_token_agent]
-    networks: [default, signing]
+    networks: [default, signing, writing]
     mem_limit: 256m
     restart: unless-stopped
     depends_on:
