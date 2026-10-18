@@ -129,7 +129,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
   - Then `/api/audit/verify` should show `last_checkpoint.sig_ok: true` after the next checkpoint (every 500 rows or 5 min). Log it in `progress.md`.
 
 **▶ 2026-10-18 06:05 (from Sali)**
-- ⬜ **Public alert broadcast, mocked (your 05:15 + 05:31 decisions, approved by Sali).** An operator-approved CAP alert (`GET /api/alerts/cap/{id}` after `POST /api/decisions/{id}/approve`) is pushed to your Android phone over ADB from your laptop, behind a channel interface a government alerting service can replace later. Pitch line: "Blacknaught drafts standard CAP 1.2 alerts that a government alerting service can broadcast; in the demo a phone stands in for that channel." Never "we send alerts to the public". Log it in `progress.md` when done; Rama may film the phone.
+- 🟡 *(Ahmed 2026-10-18 07:52: `alerting/relay.py` built and tested, a real notification reached the phone, the signer key is published as `contracts/signer_pub.pem`. The end-to-end run with an operator approval is still to film)* **Public alert broadcast, mocked (your 05:15 + 05:31 decisions, approved by Sali).** An operator-approved CAP alert (`GET /api/alerts/cap/{id}` after `POST /api/decisions/{id}/approve`) is pushed to your Android phone over ADB from your laptop, behind a channel interface a government alerting service can replace later. Pitch line: "Blacknaught drafts standard CAP 1.2 alerts that a government alerting service can broadcast; in the demo a phone stands in for that channel." Never "we send alerts to the public". Log it in `progress.md` when done; Rama may film the phone.
 - ✅ **Compose layout OK'd by Sali (task 7):** go ahead with `infra/docker-compose.yml` `include:`-ing `backend/compose.backend.yml`. Update "Start here" + the README run commands when it lands.
 - ✅ **`sensor` table shipped** (migration `0010_sensor.sql`, applied on the VM). Named `sensor` (singular, like `patient` and `freq_reading`): `sensor_id` PK, `type` in home / anchor / control, `household_id` (required for home, null otherwise, enforced by a CHECK), `cell_l1`. `bn_ingest` reads + writes, `bn_agent` reads.
 - ✅ **Publish clobber fixed:** Sali merged Nate's version of the context scripts. Run once: `git config blacknaught.builder ahmed`.
@@ -180,7 +180,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
    - Post a NNPA go/no-go in `progress.md`. `[⚠ @nate needs the image]`
 5. ✅ **Labs 01 + 02 run and screenshotted** (they're mandatory). Split with the team if needed.
 6. ✅ **Contract freeze:** *Done 2026-10-18 05:07 by Ahmed: events frozen as they are; a sensor's type and its home link go in a new `sensors` table, asked of Sali in `progress.md`.* Originally: (Sali drafted it; please ✅ in `progress.md` or add kinds) co-author `contracts/events.schema.json` with Sali. Events: heartbeat, last-gasp, DNO fault, frequency reading, SMS reply, IODA event, shedding stage. `[⚠ shared with ALL]`
-7. 🟡 *(layout OK'd by Sali 06:05)* *(Ahmed 2026-10-18 06:22: `infra/docker-compose.yml` live with the signer; edge and Granite still to add)* **Compose skeleton** (the backend stack already runs; extend it, see the status update)
+7. ✅ *(Ahmed 2026-10-18 07:52: the edge, the agent and Granite are added; the whole stack runs from `infra/docker-compose.yml`)* *(layout OK'd by Sali 06:05)* *(Ahmed 2026-10-18 06:22: `infra/docker-compose.yml` live with the signer; edge and Granite still to add)* **Compose skeleton** (the backend stack already runs; extend it, see the status update)
    - `app` (FROM the IBM image + `pip install fastapi uvicorn pg8000 httpx`)
    - `postgres:17` on `127.0.0.1`
    - `edge` (nginx on trixie)
@@ -211,7 +211,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
     - **Capacity:** a greedy knapsack on harm-hours avoided (e.g. 5 workers and 12 patients; log who waits and why).
     - Every tool call is logged and signed. Memory in Postgres, with a restart test.
     - `[⚠ uses @nate's predict() + @sali's triage/decisions/grades tables]`
-15. ⬜ **F8: Granite.** Granite 3.3 2B Instruct **BE** GGUF through the lab image's `llama_cpp_python` (server mode, threads 2, `max_tokens` ≤ 200, results cached).
+15. 🟡 *(Ahmed 2026-10-18 07:52: live, Q4_K_M in its own container, pinned by SHA-256, on an internal network only the agent joins. It words the sitrep, the field briefings and the CAP text, all number-checked, one fresh text a tick at ~80 s each. The welfare-call script is still to do)* **F8: Granite.** Granite 3.3 2B Instruct **BE** GGUF through the lab image's `llama_cpp_python` (server mode, threads 2, `max_tokens` ≤ 200, results cached).
     - Writes the field briefing, welfare-call script, situation report and CAP alert text.
     - A **number validator** rejects any number that isn't in the decision record.
     - Test: delete Granite, and the decisions stay the same.
@@ -224,6 +224,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
 22. ⬜ **Video:** your line, plus the README section on the platform and proof.
 
 ## 5. Done log (newest first)
+- 2026-10-18 07:52: **Compose skeleton (task 7)** ✅. db, app, signer, edge, agent and Granite in one `infra/docker-compose.yml`, with 17 boundary checks in `infra/test-compose.sh`.
 - 2026-10-18 06:49: **Edge PQ TLS (task 17)** ✅. nginx on OpenSSL 3.5, X25519MLKEM768, trusted certificate, UI + /api + /stream; demo URL https://148-100-78-95.sslip.io:8443.
 - 2026-10-18 05:07: **Contract freeze (task 6)** ✅. Events frozen as they are; the `sensors` table is asked of Sali in `progress.md`.
 
