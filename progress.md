@@ -682,3 +682,12 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `ml/m4.py`, `ml/tests/test_m4.py`, `evidence/train_log_m4.txt`, `README.md`. NESO files are on the VM in `~/shared/nate/data/neso/` (git-ignored).
 - ⚠️ Conflicts: @sali: none in code. One fact for NOW and the pitch: **"74 seconds of warning on 9 Aug 2019, from 1-second data; the live band rule matches it."** Keep "seconds, not minutes."
 - Conflict status: open
+
+### 2026-10-18 07:16 — README home-sensor row and stale mirrors — @nate
+- Shipped: README home-sensor layer row now gives the served model's result (18.8% of top-1% alerts come true, 8.9× base) instead of "served model in progress"; Open-Meteo data row no longer says "in progress".
+- Touched: `README.md` (two of Nate's lines)
+- ⚠️ Conflicts: @sali: 📨 stale lines that aren't Nate's to edit:
+  - `BLACKNAUGHT.md` NOW, the layer table: M8 is trained (+5.1%, not wired in), the home-sensor model is served in `ml/home_sensor.py`, and M4 is done (74 s, band rule stays). The Pending list still says "M2 live-feature list, waiting on Nate"; that closed at 05:46 (`contracts/model.md`, A1).
+  - README: line 32 says the home risk level "is being built now" (live per NOW 06:00), and the mermaid diagram plus the stack table still mark the edge (live with a trusted cert), agent and frontend "(in progress)".
+  - Demo risk: GB demo homes have no sensor window, so the headline level reads "unknown" under the 06:00 rules (Low needs all three layers). Worth checking before recording.
+- Conflict status: open

@@ -23,7 +23,7 @@ Two halves: predict where power will fail, then protect the people it will hurt.
 | Layer | Question | Lead time | State |
 |---|---|---|---|
 | Area fault risk | Which districts are likely to have faults tomorrow? | Hours to days | Live climatology baseline. Weather model (M8) trained: +5.1% Brier skill on 2024–26, not wired in yet |
-| Home sensors | Which homes will probably lose power in the next 30 minutes? | Minutes | Tested on real Accra sensor data. Served model in progress |
+| Home sensors | Which homes will probably lose power in the next 30 minutes? | Minutes | Trained and tested on real Accra sensor data: top 1% of alerts come true 18.8% of the time, 8.9× the base rate. GB demo homes have no sensor feed yet |
 | Grid stress | Is the whole grid in trouble? | Seconds | Live band rule on Elexon frequency. Replayed on NESO 1-s data: 74 s warning before the 9 Aug 2019 demand disconnection |
 | Protect | Who runs out of backup first, and who do we call? | During the cut | Live: triage, grading, approvals, CAP alerts, "my home" |
 
@@ -256,7 +256,7 @@ SSE stream at `/stream`.
 | IODA (Georgia Tech) | Wide-area outage signal | Free for research |
 | postcodes.io | Postcode lookups | Open Government Licence |
 | nLine GridWatch Accra | Home-sensor study | CC BY-NC 4.0, GPS and IDs stripped first |
-| Open-Meteo | Weather for area risk (in progress) | CC BY 4.0 |
+| Open-Meteo | Weather for area risk (M8) | CC BY 4.0 |
 
 There is no real patient data anywhere. Every patient is synthetic (`backend/app/seed.py`), placed on real fault
 footprints, with phone numbers from Ofcom's range reserved for drama. A table constraint refuses non-synthetic rows.
