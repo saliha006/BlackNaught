@@ -148,6 +148,14 @@ def test_sign_rejects_a_bad_body(url, body):
     assert call(url, "/sign", body, "Bearer app-token")[0] == 400
 
 
+def test_a_refusal_still_reaches_a_caller_that_sent_a_body(url):
+    # A refusal sent before the body is read makes the OS reset the connection, and the caller sees an error instead.
+    body = {"purpose": "audit_checkpoint", "payload_b64": b64(b"x" * 200_000)}
+    for _ in range(20):
+        assert call(url, "/sign", body)[0] == 401
+        assert call(url, "/nope", body)[0] == 404
+
+
 def test_an_oversized_body_is_refused_before_it_is_read(url):
     assert raw_post(url, "/verify", {"Content-Length": str(signer.MAX_BODY + 1)}) == 413
 

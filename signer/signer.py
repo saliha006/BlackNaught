@@ -102,6 +102,16 @@ class Signer:
         raise SignerError(done.stderr.decode(errors="replace"))
 
 
+def json_object(raw: bytes) -> dict:
+    try:
+        body = json.loads(raw)
+    except ValueError:
+        raise ClientError(400, "body must be JSON") from None
+    if not isinstance(body, dict):
+        raise ClientError(400, "body must be a JSON object")
+    return body
+
+
 def base64_field(body: dict, name: str) -> bytes:
     try:
         decoded = base64.b64decode(body.get(name), validate=True)
@@ -125,20 +135,23 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         routes = {"/sign": self.sign, "/verify": self.verify}
         try:
+            # The body is read before any refusal: closing with unread bytes makes the OS reset the connection, and the
+            # caller would get a connection error instead of our 401 or 404.
+            raw = self.read_body()
             if self.path not in routes:
                 raise ClientError(404, "not found")
-            self.reply(200, routes[self.path]())
+            self.reply(200, routes[self.path](raw))
         except ClientError as e:
             self.reply(e.status, {"error": str(e)})
         except (SignerError, subprocess.TimeoutExpired) as e:
             log(event="openssl_failed", path=self.path, detail=str(e)[:500])
             self.reply(500, {"error": "signer failed; see its log"})
 
-    def sign(self) -> dict[str, str]:
+    def sign(self, raw: bytes) -> dict[str, str]:
         caller = self.signer.caller(self.headers.get("Authorization", ""))
         if caller is None:
             raise ClientError(401, "missing or unknown token")
-        body = self.json_body()
+        body = json_object(raw)
         purpose = body.get("purpose")
         if not isinstance(purpose, str) or not 0 < len(purpose) <= 64:
             raise ClientError(400, "purpose must be a string of 1-64 characters")
@@ -147,24 +160,18 @@ class Handler(BaseHTTPRequestHandler):
         log(event="signed", caller=caller, purpose=purpose, payload_sha256=hashlib.sha256(payload).hexdigest())
         return {"alg": ALG, "key_id": self.signer.key_id, "sig_b64": base64.b64encode(signature).decode()}
 
-    def verify(self) -> dict[str, bool]:
-        body = self.json_body()
+    def verify(self, raw: bytes) -> dict[str, bool]:
+        body = json_object(raw)
         return {"ok": self.signer.verify(base64_field(body, "payload_b64"), base64_field(body, "sig_b64"))}
 
-    def json_body(self) -> dict:
+    def read_body(self) -> bytes:
         try:
             length = int(self.headers["Content-Length"])
         except (TypeError, ValueError):
             raise ClientError(411, "Content-Length required") from None
         if length > MAX_BODY:
             raise ClientError(413, "body over 1 MiB")
-        try:
-            body = json.loads(self.rfile.read(max(length, 0)))
-        except ValueError:
-            raise ClientError(400, "body must be JSON") from None
-        if not isinstance(body, dict):
-            raise ClientError(400, "body must be a JSON object")
-        return body
+        return self.rfile.read(max(length, 0))
 
     def reply(self, status: int, body: dict) -> None:
         data = json.dumps(body).encode()
