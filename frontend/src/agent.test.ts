@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import decisions from '../../fixtures/api/agent_decisions.json';
 import audit from '../../fixtures/api/audit_verify.json';
-import { confirmText, renderAudit, renderDecisions } from './agent';
+import { confirmText, readable, renderAudit, renderDecisions } from './agent';
 import type { AgentDecision, AuditVerify } from './types';
 
 const sample = decisions as AgentDecision[];
@@ -37,6 +37,14 @@ describe('renderDecisions', () => {
     expect(list.textContent).toContain('No agent decisions yet');
     renderDecisions(list, null, handlers());
     expect(list.textContent).toContain('unavailable');
+  });
+});
+
+describe('readable', () => {
+  it("shows a report's text, else key: value pairs, else the raw summary", () => {
+    expect(readable({ ...sample[0], args_summary: '{"text": "32 patients"}' })).toBe('32 patients');
+    expect(readable({ ...sample[0], args_summary: '{"outage_id": 3, "areas": ["TN26", "TN30"]}' })).toBe('outage id: 3 · areas: TN26, TN30');
+    expect(readable({ ...sample[0], args_summary: '{"cut off' })).toBe('{"cut off');
   });
 });
 

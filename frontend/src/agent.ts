@@ -58,6 +58,14 @@ export function confirmText(d: AgentDecision, approve: boolean, backupLeft?: str
   }
 }
 
+/** The arguments as a sentence a duty manager can read: a report's own text, else "key: value" pairs. */
+export function readable(d: AgentDecision): string {
+  const a = args(d);
+  if (typeof a.text === 'string') return a.text;
+  const pairs = Object.entries(a).map(([k, v]) => `${k.replace(/_/g, ' ')}: ${Array.isArray(v) ? v.join(', ') : v}`);
+  return pairs.length ? pairs.join(' · ') : d.args_summary;
+}
+
 export interface DecisionActions {
   decide(id: string, approve: boolean): void;
   previewCap(id: string): void;
@@ -75,7 +83,7 @@ function decisionRow(d: AgentDecision, on: DecisionActions) {
   );
   const why = el('ul', 'decision__why');
   for (const line of d.rationale) why.append(el('li', '', line));
-  li.append(head, el('p', 'decision__args', d.args_summary), why);
+  li.append(head, el('p', 'decision__args', readable(d)), why);
 
   const actions = el('div', 'triage__actions');
   if (d.state === 'awaiting_approval') {
