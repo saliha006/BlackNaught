@@ -10,7 +10,7 @@
 
 ---
 
-## NOW (updated 2026-10-18 03:30)
+## NOW (updated 2026-10-18 04:05)
 
 ### Headline
 **Blacknaught predicts blackouts before they happen and protects the people they'd hurt most.**
@@ -30,6 +30,8 @@ Full records with the rejected options: Sali's vault Log (Sali); the summary is 
 | Date | Decision |
 |---|---|
 | 18 Oct | **Headline = predict + protect** (the line above). Reverses 17 Oct "triage only"; triage stays as the co-headline |
+| 18 Oct | **Shared docs live on the public repo's `context` branch** and auto-sync to every agent each prompt (`scripts/sync-context.sh`). Only Sali publishes. **Delete the branch before submission.** Reverses 17 Oct "docs never on GitHub" |
+| 18 Oct | **Docs merged:** `BLACKNAUGHT.md` + `DATATHON-CONTEXT.md`; off-vision material archived locally |
 | 18 Oct | **Individual SSH keys** for all four. The leaked shared `.pem` was removed from the VM. Ahmed still needs to turn off the Drive link and change the portal password |
 | 17 Oct | **Countries:** GB is the proving ground; **Ghana** is the lead target (OOP 26.7%, real nLine sensor data); **Sri Lanka** second (OOP 54.8%, stated); South Africa is a reference; Bangladesh and Pakistan are parked. Free healthcare = free at the point of use **and** OOP < 30% |
 | 17 Oct | **Training data:** ENWL (312,936 outages) + UKPN IIS (316,435), downloaded **onto LinuxONE** via API keys. Non-commercial data (nLine Accra) is accepted and credited |
