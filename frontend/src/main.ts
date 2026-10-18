@@ -4,12 +4,13 @@ import '@fontsource/ibm-plex-sans/500.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import './styles.css';
 import './landing.css';
-import { ApiError, getCells, getOutages, getTriage, isLive } from './api';
+import { ApiError, getAreaRisk, getCells, getOutages, getStress, getTriage, isLive } from './api';
 import { renderControls } from './controls';
 import { isLocated } from './geo';
 import { setupLanding } from './landing';
 import { createMap, type LayerGroup, type OutageMap, type Padding } from './map';
 import { markSelected, renderOutageList, sortOutages } from './outageList';
+import { renderPredict } from './predict';
 import { allOperators, escalatedOutages, type Filters, filterOutages } from './state';
 import type { Cell, Outage } from './types';
 
@@ -42,9 +43,9 @@ const controls = renderControls($('#controls'), filters, layers, {
   layer: (group, on) => map?.setLayerVisible(group, on),
 });
 
-/** The space the toggle row and outage panel cover, so the camera centres on the open part of the map. */
+/** The space the toggle row, Predict strip and outage panel cover, so the camera centres on the open part of the map. */
 function chromePadding(): Padding {
-  const top = $('#controls').getBoundingClientRect().bottom + 16;
+  const top = $('#predict').getBoundingClientRect().bottom + 16;
   const panel = $('.panel').getBoundingClientRect();
   return innerWidth > 720
     ? { top, bottom: 40, left: 40, right: innerWidth - panel.left + 16 }
@@ -75,7 +76,7 @@ function dive() {
   else map.overview();
 }
 
-const landing = setupLanding($('#landing'), [$('.topbar'), $('#controls'), $('.stage')], () => {
+const landing = setupLanding($('#landing'), [$('.topbar'), $('#controls'), $('#predict'), $('.stage')], () => {
   onMap = true;
   // One history entry per visit to the map, so the browser's own Back button also returns to the landing page.
   if (history.state?.view !== 'map') history.pushState({ view: 'map' }, '');
@@ -124,6 +125,11 @@ async function start() {
   // The map can finish loading after the visitor has already left the landing page.
   if (onMap) dive();
 }
+
+// Each layer fails on its own: a missing forecast shows "No data" without holding up the map.
+Promise.all([getAreaRisk().catch(() => null), getStress().catch(() => null)]).then(([risk, stress]) =>
+  renderPredict($('#predict-tiles'), risk, stress),
+);
 
 start().catch((err: Error) => {
   list.replaceChildren();

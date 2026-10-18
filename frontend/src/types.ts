@@ -54,6 +54,22 @@ export interface SourceHealth {
   label: Label;
 }
 
+export interface AreaRisk {
+  district: string;
+  p_ge_k: number;
+  expected: number;
+  label: Label;
+}
+
+export interface GridStress {
+  grid: string;
+  hz: number | null;
+  measured_at: string | null;
+  state: 'NORMAL' | 'STRESSED' | 'EMERGENCY' | 'SPLIT_SUSPECTED' | 'UNKNOWN';
+  seconds_to_next_rung: number | null;
+  label: Label;
+}
+
 export interface Cell {
   cell_id: string;
   level: number;

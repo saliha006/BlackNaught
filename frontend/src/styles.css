@@ -181,6 +181,88 @@ body {
   font-weight: 400;
 }
 
+/* Predict strip: the three layers, left of the outage panel and level with its top */
+.predict {
+  position: fixed;
+  top: calc(var(--topbar-h) + var(--controls-h) + var(--space-4));
+  left: var(--space-6);
+  right: calc(var(--panel-w) + 2 * var(--space-4));
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.predict__title {
+  margin: var(--space-3) 0 0;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--text-faint);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.predict__tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.predict__loading {
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--text-faint);
+}
+
+.tile {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  background: var(--glass);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+}
+
+.tile p {
+  margin: 0;
+}
+
+.tile__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+
+.tile__value {
+  font-size: 1.75rem;
+  font-weight: 300;
+  line-height: 1.15;
+}
+
+.tile[data-severity='risk'] .tile__value {
+  color: var(--sev-risk);
+}
+
+.tile[data-severity='escalate'] .tile__value {
+  color: var(--sev-escalate);
+}
+
+.tile__detail {
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+
+.tile__lead {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
 /* Severity: the only hue in the UI, always with its word */
 .sev {
   padding: 2px 10px;
@@ -424,6 +506,24 @@ body {
   .controls {
     left: var(--space-2);
     max-width: calc(100% - 2 * var(--space-2));
+  }
+
+  .predict {
+    left: var(--space-2);
+    right: var(--space-2);
+    grid-template-columns: 1fr;
+  }
+
+  .predict__title {
+    display: none;
+  }
+
+  .predict__tiles {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: 72%;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
 
   /* Lift zoom buttons and attribution above the bottom sheet; .stage outranks maplibre-gl.css, which loads later */
