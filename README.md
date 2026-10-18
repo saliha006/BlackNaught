@@ -152,6 +152,9 @@ agent can reach Granite, and the app answers only on the VM itself.
   - partial faults where only one home in three loses power.
 
   Every event is labelled SIMULATED.
+- **Real sensors, replayed.** `backend/app/replay.py` plays a week of real nLine GridWatch readings from 429 plug-in
+  sensors in Accra (1-7 June 2021, CC BY-NC 4.0) into the same sensor path at ten times speed. Every event is
+  labelled REPLAY. The data has no coordinates, so the sensors share one cell at Accra's centre.
 - **Granite on the box.** IBM Granite 3.3 2B Instruct, in the big-endian Q4_K_M build, runs in its own container
   through the lab image's `llama_cpp`. It won't load unless the model file matches its pinned SHA-256. It sits on an
   internal network that only the agent joins, with no route out.

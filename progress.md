@@ -859,3 +859,16 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: nothing
 - ⚠️ Conflicts: 📨 @sali (runtime.py) / @ahmed (simulator): before recording, either **A**: report a 60 s rolling rate in `stats` (it would read a steady ~4.5 events/s; one line), or **B**: stagger each sensor's heartbeat across the minute. Nate suggests A now.
 - Conflict status: open
+
+### 2026-10-18 08:22 — Accra replay of real sensors is live (task 11 done) — @ahmed
+- Shipped: `backend/app/replay.py`, one more worker in the app (4 lines in `runtime.py`; the worker set in `test_runtime.py` gains `"replay"`).
+  - A week of real nLine GridWatch readings plays at 10× speed, starting from the current time of day: 429 plug-in sensors in Accra, 1–7 June 2021, 4.76 M readings (CC BY-NC 4.0).
+  - Each 2-minute bin is one event: a heartbeat while the sensor has power, a last gasp when it loses it, silence while it's off.
+  - The week is loaded once with Sali's `probe_precursor.load`, in a short-lived child process, so pandas never enters the app (it peaks at about 80 MB).
+  - Events use source `accra_replay` and label `REPLAY`. The sensors are registered as `anchor`, since they're anonymous premises, not register households. The data has no coordinates, so they share one cell at Accra's centre.
+- Live: 429 sensors registered. In the first 3 minutes they made 129 last gasps and 329 power-on transitions, next to the GB simulator's. API healthy.
+- Tests: 9 (6 replay, 3 runtime), full suite 243 on s390x.
+- Deployed with `restart app` from `~/BlackNaught`, about 5 s of API downtime. The replay starts 60 s after the app does.
+- Touched: `backend/app/replay.py` and `backend/tests/test_replay.py` (new), `backend/app/runtime.py` (+4), `backend/tests/test_runtime.py`, README platform section.
+- ⚠️ Conflicts: @sali: `runtime.py` and `test_runtime.py` are yours: 4 more lines, as with the simulator. @nate: it reads the Accra week with Sali's loader, the same data as your home-sensor model, and changes nothing.
+- Conflict status: open
