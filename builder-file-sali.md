@@ -117,7 +117,7 @@
 **A. Unblock the team (do first, ~15 min)**
 1. ✅ *(done 04:55: all three have Write)* **GitHub → Settings → Collaborators:** `meep-boop`, `aldrichbanas07`, `rama0623` must have **Write**. Without it they can't push.
 2. ⏸ *(deferred 04:55: Sali decides later)* **Set and announce the freeze time** on Discord (proposal: features 06:30, video 07:00–09:00, submit 09:30). Then update `BLACKNAUGHT.md` → NOW and the briefs.
-3. ⬜ **🟠 Decide the home-dashboard risk display** (A three gauges / B stacked model / C risk level + gauges; recommended C). This unblocks Rama's "Predict" strip and task 9.
+3. ✅ *(05:40: Sali chose **C**; rules still to confirm)* **🟠 Decide the home-dashboard risk display** (A three gauges / B stacked model / C risk level + gauges; recommended C). This unblocks Rama's "Predict" strip and task 9.
 4. ⬜ **🟠 Agree the M2 live-feature list with Nate** (`contracts/model.md`). This unblocks Nate's main model. *Waiting on Nate: Sali passes it on when he's done.*
 5. ⬜ **Pings:**
    - Rama: test the VM login.
@@ -125,22 +125,24 @@
    - Everyone: `git pull` on `main`, then `bash scripts/sync-context.sh`.
 
 **B. Submission blockers (by ~06:00)**
-6. ✅ *(04:55)* **Team name chosen; Sali is the registered team leader** (so Sali submits). Still needed in the README title: the name + Hack2Skill number.
+6. ✅ **Team: The 4 Musketeers; Sali is team leader** (submits). Title `[The 4 Musketeers_IBM Z Datathon 2026 Project]`; no Hack2Skill number needed.
 7. ✅ *(done by Ahmed)* **IBM labs 01 + 02** run and screenshotted.
 8. ➡ *(moved to Ahmed 04:55)* **#helpdesk question:** can the video show NNPA on/off timing of our own model (ToU §5)?
 
 **C. Build (05:00–06:30)**
-9. ⬜ **If C is chosen:** add a `risk` block to `/api/me/home` (level + the three layer gauges with source and horizon) and tests. Ship it.
+- ⬜ **Answer Ahmed's asks** (progress.md 05:07 + 05:10): a `sensors` table migration (`sensor_id` PK, `type`, `household_id`, `cell_l1`); OK his `infra/docker-compose.yml` that `include:`s ours.
+- ⬜ **Elexon 0 Hz bug** (Nate, 05:07): drop out-of-range frequency readings before `stress.state()`.
+9. ⬜ **(C chosen; confirm the rules first)** add a `risk` block to `/api/me/home` (level + the three layer gauges with source and horizon) and tests. Ship it.
 10. ⬜ **Integration support:**
     - Ahmed: nginx `:8443` → `/api`, `/stream` (no buffering), `BN_SIGNER_URL`.
     - Nate: swap `KmModel` for M2; serve the home-sensor model.
 
 **D. Freeze + evidence (06:30–07:00)**
-11. ⬜ **Backend freeze.**
+11. 🟡 *(05:40: no freeze yet, Sali's call; grades checked + proof.sh re-run + evidence committed)* **Backend freeze.**
     - Check the overnight grades (`/api/agent/grades`).
     - Re-run `bash ~/BlackNaught/scripts/proof.sh`.
     - Screenshots: the Jupyter training notebook with the IP visible, the terminal proof, and `/api/docs` once the edge is up.
-12. ⬜ **README for judges** (main, public):
+12. ✅ *(05:40)* **README for judges** (main, public):
     - problem; data + licences; architecture;
     - how to run on LinuxONE; results (grades, probe);
     - choices + failures; who did what; next steps;

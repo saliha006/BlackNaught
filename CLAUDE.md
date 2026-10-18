@@ -8,7 +8,7 @@ Blacknaught predicts blackouts before they happen and protects the people they'd
 
 | Slot | Value |
 |---|---|
-| Project | **Blacknaught** (IBM Z Datathon 2026, Manchester hub; Track 1 + Track 2 built in) |
+| Project | **Blacknaught** (IBM Z Datathon 2026, Manchester hub; Track 1 + Track 2 built in). Team **The 4 Musketeers**; Sali is team leader (submits) |
 | One-line pitch | Blacknaught predicts blackouts before they happen and protects the people they'd hurt most: AI on LinuxONE that flags where power is likely to fail and, when it does, ranks and alerts the electricity-dependent people who'd run out of backup first. (headline changed 18 Oct; see `BLACKNAUGHT.md` → NOW) |
 | Repo · main branch | `github.com/saliha006/BlackNaught` · `main`. Builder branches: `sali-backend`, `Rama-Frontend`, `nate-ml`, `ahmed-platform` |
 | Where docs live | **The `context` branch** (docs only, no code) of the public repo; **deleted before submission**. Local copies are git-ignored on `main`. Pull: `bash scripts/sync-context.sh` · publish: `bash scripts/publish-context.sh "what changed"` |

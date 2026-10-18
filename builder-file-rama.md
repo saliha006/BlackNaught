@@ -72,6 +72,7 @@
   - grid stress (seconds, NESO).
 - **Triage + alerting** of electricity-dependent people stay the core of "who this helps".
 - **Never say:** "predicts every blackout", "minutes ahead from frequency", "voltage dips warn of blackouts" (the probe shows ≈ chance).
+- **▶ 2026-10-18 05:40 (from Sali): home-dashboard risk = option C.** "My home" shows one headline badge (**Low / Elevated / High**) with the three layer gauges underneath: home (next 30 min), area (tomorrow), grid (now). Each gauge shows its source, horizon and "updated" time; a layer with no data shows "no data", never Low. It arrives as a `risk` block in `/api/me/home` (shape in `contracts/openapi.yaml` once Sali ships it; exact rules still being confirmed).
 - **UI implication:** a "Predict" strip on top of the control room, with the three layers and their honest lead times: tomorrow's district risk (`/api/areas/risk`), homes at risk in the next 30 min (once Nate's layer 2 is served), grid stress (`/api/grids/gb/stress`). Then the existing "Protect" views below: triage, two-houses, approvals, CAP.
 - **Start with `progress.md` → "Start here"** on GitHub (clone, hooks, `scripts/sync-context.sh`, VM access).
 - ⚠ **Times in this brief (00:30 skeleton, 03:00 freeze) predate the team starting.** Sali will confirm a new freeze time on Discord; until then, prioritise top-down.

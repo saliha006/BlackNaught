@@ -17,7 +17,7 @@
 | 18 Nov | IBM Z Day (winners may present) |
 
 ## 2. Submission checklist
-- **Title:** `[<Team Name>_IBM Z Datathon 2026 Project]`. ⚠ Still need the team name + Hack2Skill team number.
+- **Title:** `[The 4 Musketeers_IBM Z Datathon 2026 Project]` (no Hack2Skill number needed in it).
 - **Video ≤ 3:00:** problem, data, solution, **how it uses IBM Z: show the LinuxONE instance, its IP and the model**. Everyone speaks; captions burned in. Recorded against `http://148.100.78.95:<port>` (judges match IPs).
 - **Public GitHub repo** with commits from every member, and a README covering:
   - problem; data + licences; architecture;
