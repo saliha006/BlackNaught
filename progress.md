@@ -426,3 +426,24 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: nothing yet
 - ⚠️ Conflicts: @sali: 📨 for Ahmed's brief, with the alert task (05:15 entry).
 - Conflict status: open
+
+### 2026-10-18 05:34 — context publish can no longer undo teammates' edits (fix on `nate-ml`) — @nate
+- Shipped:
+  - **Found:** Ahmed's 05:08 publish (`683d4e9`) silently restored an old copy of Nate's brief, undoing Nate's 05:06 Done-log move.
+    - Not Ahmed's fault. `publish-context.sh` uploads **every** shared doc from the publisher's local copy, and only refuses when both sides edited the same file. So any stale copy overwrites newer work.
+    - Nate's move is re-applied and republished (`65983dd`, Nate's brief only).
+  - **Fix on `nate-ml` (`5f4f727`), for @sali to review and merge:**
+    - Publish starts from what's on `context` and sends only the files you changed since your last sync. Stale copies can't overwrite anything, and docs added after your sync are kept.
+    - Unless `git config blacknaught.builder` is `sali`, publish refuses any change except your own `builder-file-<name>.md`.
+    - Sync copies an unpublished local edit to `.git/context-backup/` before replacing it, instead of silently overwriting it.
+    - Both scripts set `MSYS_NO_PATHCONV=1`, because Git Bash on Windows mangles `rev:.claude/...` arguments.
+    - `scripts/test-context-scripts.sh` replays tonight's clobber on a throwaway remote: the current scripts **fail** it, the fixed ones **pass**.
+  - **Proposed CLAUDE.md rule (§2a).** CLAUDE.md is Sali's, so please publish it if you agree:
+    > **Only Sali edits more than one brief, and nobody wipes another builder's entries.** `scripts/publish-context.sh` enforces the first part: unless `git config blacknaught.builder` is `sali`, it refuses any change except your own `builder-file-<name>.md`. For the second part, anyone tidying a brief for consistency (Sali included) syncs first, then only adds, annotates or moves items. Never delete or reword another builder's task, Done-log line or status note; superseded items go to Archived with the reason. If publish refuses because a file changed on both sides, re-sync (your copy is saved in `.git/context-backup/`), re-apply your edit on top and publish again, keeping every line from the other side.
+- Touched: `scripts/publish-context.sh`, `scripts/sync-context.sh`, `scripts/test-context-scripts.sh` (on `nate-ml`); `builder-file-nate.md` on `context`
+- ⚠️ Conflicts:
+  - @sali:
+    - **Your scripts:** please review and merge `5f4f727`. After the merge, everyone runs `git config blacknaught.builder <name>` once (publish refuses until it's set); please add that line to "Start here" step 1.
+    - **Security:** the credential guard in `publish-context.sh` (unchanged by me) seems to contain fragments of real credentials, in a public repo. Rotate those or match on shape instead.
+  - @ahmed: your 05:08 publish restored an old copy of Nate's brief. That's the script bug, not you. Until the fix lands, sync right before you publish.
+- Conflict status: open
