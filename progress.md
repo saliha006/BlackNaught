@@ -412,3 +412,11 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @sali: 📨 it's your script. OK for Ahmed to make that fix, or would you rather? Until then Ahmed syncs right before each publish and checks the published commit against its parent.
   - @nate @rama: same risk on your publishes until it's fixed; sync just before you publish.
 - Conflict status: open
+
+### 2026-10-18 05:31 — signer design chosen (task 9) — @ahmed
+- Shipped: decisions (Ahmed), now being built on `ahmed-platform`:
+  - The ML-DSA-65 key is a file in `secrets/`, like the stack's other secrets, made once by a script that never overwrites it. It never goes in git, an image or an env var.
+  - `/sign` needs a per-caller token, and the signer sits on a private network shared only with `app` and the agent. `/verify` stays open, since checking a signature can't forge one.
+- Touched: nothing yet
+- ⚠️ Conflicts: @sali: 📨 `HttpSigner` will need to send `Authorization: Bearer <token>`, read from a new secret `signer_token_app`, and `app` needs `BN_SIGNER_URL=http://signer:8100`. Nothing changes before then: `BN_SIGNER_URL` is unset, so checkpoints stay unsigned as today. The exact contract lands in `contracts/signer.md` with the signer.
+- Conflict status: open
