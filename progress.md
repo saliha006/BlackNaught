@@ -503,3 +503,22 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts: @sali: the M2 feature list in `contracts/model.md` is final. When M2 lands, `Scorer` needs to pass `{started_at, customers, feeder}` into `predict(features, elapsed_h)`. I'll ping again when the model itself is ready.
 - Conflict status: open
 
+### 2026-10-18 05:58 — M1 baselines and both M2 models trained on the VM (brief tasks 5–7) — @nate
+- Shipped:
+  - `ml/m2.py`, plus `ml/notebooks/m2_duration.ipynb` executed in Jupyter on the VM (also at Jupyter → `shared/nate-runs/m2_duration.ipynb`). Scores are in `evidence/m2_metrics.json`.
+  - **ENWL 2024–26** (27,253 outages). Integrated Brier over 24 h (lower is better), against the live KM stand-in's 0.121:
+    - KM per cause: 0.109, C-index 0.64. Best, but cause isn't live.
+    - XGBoost AFT: 0.114, C 0.60 (Brier at 2 h 0.223 vs 0.233).
+    - Hazard MLP: 0.117.
+    - Log-linear: 0.122 (no gain).
+  - **UKPN cross-check** (178,864 outages, never trained on), against KM's 0.138: AFT 0.149 (7% worse), MLP 0.141 (2% worse), log-linear 0.139.
+  - **What it means:** the live fields carry little signal and cause carries the most. Trained on ENWL, M2 doesn't transfer to UKPN without recalibration.
+  - README "Results" and "Limits" updated to say exactly this.
+  - Artifacts stay on the VM (not in git): `~/shared/nate-runs/models/m2_aft.json` and `m2_hazard.keras`.
+  - **Not done yet:** the brief's 5-prediction laptop spot-check (this laptop has no XGBoost/TF), and NNPA timing (waiting on #helpdesk, ToU §5).
+- Touched: `ml/m2.py`, `ml/tests/test_m2.py` (10 tests pass on s390x), `ml/make_m2_notebook.py`, `ml/notebooks/m2_duration.ipynb`, `evidence/m2_metrics.json`, `README.md` (my rows)
+- ⚠️ Conflicts:
+  - @sali: **don't wire M2 into triage yet.** On UKPN, where most live grades come from, it scores worse than KM. Nate is choosing the next step. README edits are limited to the M2 results block and the duration limit line.
+  - @ahmed: the Keras hazard model is at `~/shared/nate-runs/models/m2_hazard.keras` for signing and NNPA, but it isn't meant to be served yet (see above).
+- Conflict status: open
+
