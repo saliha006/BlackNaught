@@ -121,6 +121,30 @@ async def test_http_signer_contract():
 
 
 @pytest.mark.anyio
+async def test_checkpoints_api_gives_the_signed_bytes_and_leaves_unsigned_ones_out(fresh, db_factory):
+    agent = db_factory("bn_agent")
+    await audit.append(agent, "x", "a", None, {}, T0)
+    assert await audit.Checkpointer(agent, None).maybe_checkpoint(T0) is not None  # unsigned
+    signer = FakeSigner()
+    for minutes in (10, 20, 30):
+        await audit.append(agent, "x", "a", None, {}, T0)
+        assert await audit.Checkpointer(agent, signer).maybe_checkpoint(T0 + timedelta(minutes=minutes)) is not None
+    async with app.router.lifespan_context(app):
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t") as c:
+            signed = (await c.get("/api/audit/checkpoints")).json()
+            page = (await c.get("/api/audit/checkpoints", params={"after": signed[0]["seq"], "limit": 1})).json()
+            assert (await c.get("/api/audit/checkpoints", params={"limit": 501})).status_code == 422
+    assert len(signed) == 3 and all(c["alg"] == "ML-DSA-65" and c["key_id"] == "k1" for c in signed)
+    for c in signed:
+        assert c["payload"].encode() in signer.signed  # byte for byte what the signer was given
+        assert await signer.verify(c["payload"].encode(), c["sig_b64"])
+        fields = json.loads(c["payload"])
+        assert (fields["seq"], fields["head"]) == (c["seq"], c["head"])
+        assert datetime.fromisoformat(fields["at"]) == datetime.fromisoformat(c["at"])
+    assert [c["seq"] for c in page] == [signed[1]["seq"]]
+
+
+@pytest.mark.anyio
 async def test_verify_api(fresh, db_factory):
     await audit.append(db_factory("bn_agent"), "x", "a", None, {}, T0)
     async with app.router.lifespan_context(app):

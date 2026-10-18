@@ -310,3 +310,15 @@ async def stream(request: Request, last_event_id: int | None = Header(default=No
 async def audit_verify(request: Request):
     runtime = request.app.state.runtime
     return await audit.verify(request.app.state.api_db, runtime.signer if runtime else None)
+
+
+@app.get("/api/audit/checkpoints", response_model=list[schemas.SignedCheckpoint])
+async def audit_checkpoints(request: Request, after: int = Query(default=0, ge=0),
+                            limit: int = Query(default=100, ge=1, le=500)):
+    """Signed checkpoints with the exact bytes the signer signed, so anyone can check them against
+    contracts/signer_pub.pem without trusting this server. Unsigned ones are left out."""
+    rows = await request.app.state.api_db.rows(
+        "SELECT seq, head, at, alg, key_id, sig_b64 FROM v_audit_checkpoint"
+        " WHERE seq > :after AND sig_b64 IS NOT NULL ORDER BY seq LIMIT :limit", after=after, limit=limit)
+    return [{**r, "head": bytes(r["head"]).hex(),
+             "payload": audit.checkpoint_payload(r["seq"], bytes(r["head"]), r["at"]).decode()} for r in rows]

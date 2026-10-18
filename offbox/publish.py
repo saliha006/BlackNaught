@@ -1,39 +1,36 @@
 """Publishes the VM's signed audit checkpoints off the box, to the `audit-checkpoints` branch on GitHub (Ahmed).
 
 The audit chain lives in Postgres on the VM, so whoever holds root there could rewrite it. Once a signed head is on
-GitHub, a chain rewritten behind it stops matching that head. The VM never holds GitHub credentials, so this runs on
-the laptop. Every 10 minutes it reads the new checkpoint rows over SSH (the public API exposes only seq and sig_ok,
-not the head or the signature), checks each ML-DSA-65 signature here against the pinned contracts/signer_pub.pem,
-and commits one JSON line per new checkpoint. Nothing new is published while the server's own chain check fails.
+GitHub, a chain rewritten behind it stops matching that head. The VM never holds GitHub credentials, so this runs
+somewhere else: every 10 minutes as a GitHub Action (.github/workflows/audit-checkpoints.yml), so it keeps going with
+nobody at a laptop. It reads the new signed checkpoints from the public GET /api/audit/checkpoints, rebuilds each
+signed payload from its fields, checks the ML-DSA-65 signature here against the pinned contracts/signer_pub.pem, and
+commits one JSON line per new checkpoint. Nothing new is published while the server's own chain check fails.
 
-Run from Git Bash on the laptop, with the SSH agent loaded and the branch's worktree checked out next to the repo:
-    python offbox/publish.py          # every 10 minutes
-    python offbox/publish.py --once
+Needs OpenSSL 3.5 (ML-DSA) and a checkout of the audit-checkpoints branch:
+    python offbox/publish.py --once --repo <branch checkout>
+    python offbox/publish.py          # every 10 minutes, into ../BlackNaught-checkpoints
 """
 import argparse
 import hashlib
 import json
 import logging
-import shlex
-import shutil
 import subprocess
 import sys
 import time
 import urllib.request
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "alerting"))
 from relay import BASE_URL, PUBLIC_KEY, verify  # noqa: E402  (one signature check for the alerts and the audit)
 
-VM = "linux1@148.100.78.95"
-REPO = ROOT.parent / "BlackNaught-checkpoints"  # a worktree on the audit-checkpoints branch
+REPO = ROOT.parent / "BlackNaught-checkpoints"  # the laptop's worktree on the audit-checkpoints branch
 LOG = "checkpoints.jsonl"
 EVERY_S = 600
 BATCH = 100
-EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 HEX = frozenset("0123456789abcdef")
 
 log = logging.getLogger("offbox")
@@ -59,7 +56,7 @@ def key_id(public_key: Path) -> str:
 
 
 def signed_at(row: dict) -> datetime:
-    return EPOCH + timedelta(microseconds=row["at_us"])
+    return datetime.fromisoformat(row["at"])
 
 
 def refusal(row: dict, pinned: str, public_key: Path) -> str | None:
@@ -69,7 +66,11 @@ def refusal(row: dict, pinned: str, public_key: Path) -> str | None:
         return "its head isn't a SHA-256 in hex"
     if row["alg"] != "ML-DSA-65" or row["key_id"] != pinned:
         return f"it's signed by {row['alg']} key {row['key_id']}, not the pinned {pinned}"
-    if not verify(payload(row["seq"], head, signed_at(row)), row["sig_b64"], public_key):
+    # the signature is checked over bytes rebuilt from the fields, so a payload that says something else can't pass
+    signed = payload(row["seq"], head, signed_at(row))
+    if row["payload"].encode() != signed:
+        return "its payload doesn't match its seq, head and time"
+    if not verify(signed, row["sig_b64"], public_key):
         return "its signature doesn't verify"
     return None
 
@@ -124,21 +125,17 @@ class Publisher:
         return len(records)
 
 
-def ssh_checkpoints(after: int) -> list[dict]:
-    sql = ("SELECT coalesce(json_agg(c ORDER BY c.seq), '[]') FROM (SELECT seq, encode(head, 'hex') AS head,"
-           " (extract(epoch FROM at) * 1000000)::bigint AS at_us, alg, key_id, sig_b64 FROM bn.audit_checkpoint"
-           f" WHERE seq > {int(after)} AND sig_b64 IS NOT NULL ORDER BY seq LIMIT {BATCH}) c")
-    # read-only, as postgres over the container's own socket, so no database password is needed off the VM
-    remote = f"docker exec bn-backend-db-1 psql -U postgres -d blacknaught -tAc {shlex.quote(sql)}"
-    # the ssh the shell would run (Git's, which can use the Git Bash agent), not whichever Windows finds first
-    done = subprocess.run([shutil.which("ssh") or "ssh", "-o", "BatchMode=yes", VM, remote],
-                          capture_output=True, text=True, check=True, timeout=60)
-    return json.loads(done.stdout)
+def get(path: str) -> object:
+    with urllib.request.urlopen(BASE_URL + path, timeout=60) as resp:
+        return json.load(resp)
+
+
+def api_checkpoints(after: int) -> list[dict]:
+    return get(f"/api/audit/checkpoints?after={after}&limit={BATCH}")
 
 
 def api_status() -> dict:
-    with urllib.request.urlopen(BASE_URL + "/api/audit/verify", timeout=60) as resp:
-        return json.load(resp)
+    return get("/api/audit/verify")
 
 
 def main() -> None:
@@ -147,7 +144,7 @@ def main() -> None:
     parser.add_argument("--once", action="store_true", help="publish what's new, then exit")
     parser.add_argument("--repo", type=Path, default=REPO, help="the audit-checkpoints worktree")
     args = parser.parse_args()
-    publisher = Publisher(ssh_checkpoints, api_status, args.repo)
+    publisher = Publisher(api_checkpoints, api_status, args.repo)
     while True:
         try:
             publisher.publish()

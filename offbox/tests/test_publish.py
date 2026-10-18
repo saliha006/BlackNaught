@@ -35,12 +35,14 @@ def sign(private: Path, data: bytes, tmp_path: Path) -> str:
 
 
 def checkpoint(seq: int, key, tmp_path: Path, signed: bytes | None = None, **change) -> dict:
-    """A row as the VM returns it, signed the way the signer signs a checkpoint (or over `signed` instead)."""
+    """A checkpoint as GET /api/audit/checkpoints returns it (FastAPI writes UTC with a Z), signed the way the signer
+    signs one, or over `signed` instead."""
     private, public = key
-    at_us = (SIGNED_AT - publish.EPOCH) // timedelta(microseconds=1) + seq
+    at = SIGNED_AT + timedelta(microseconds=seq)
     head = hashlib.sha256(str(seq).encode()).hexdigest()
-    row = {"seq": seq, "head": head, "at_us": at_us, "alg": "ML-DSA-65", "key_id": publish.key_id(public)}
-    row["sig_b64"] = sign(private, signed or publish.payload(seq, head, publish.signed_at(row)), tmp_path)
+    body = publish.payload(seq, head, at)
+    row = {"seq": seq, "head": head, "at": at.isoformat().replace("+00:00", "Z"), "alg": "ML-DSA-65",
+           "key_id": publish.key_id(public), "payload": body.decode(), "sig_b64": sign(private, signed or body, tmp_path)}
     return {**row, **change}
 
 
@@ -106,7 +108,7 @@ def test_a_bad_signature_stops_publishing_at_that_checkpoint(key, tmp_path, bran
 
 
 @pytest.mark.parametrize("change", [{"key_id": "0123456789abcdef"}, {"alg": "ML-DSA-44"}, {"head": "zz" * 32},
-                                    {"head": "ab" * 31}])
+                                    {"head": "ab" * 31}, {"payload": '{"at":"x","head":"y","seq":1}'}])
 def test_a_foreign_key_or_a_malformed_head_is_refused(key, tmp_path, branch, change):
     work, remote = branch
     assert publish.Publisher(source([checkpoint(1, key, tmp_path, **change)]), lambda: OK, work, key[1]).publish() == 0

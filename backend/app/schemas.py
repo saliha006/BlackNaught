@@ -207,3 +207,13 @@ class AuditVerify(BaseModel):
     reason: str | None
     last_checkpoint: CheckpointStatus | None
     took_ms: int
+
+
+class SignedCheckpoint(BaseModel):
+    seq: int
+    head: str
+    at: datetime
+    alg: str
+    key_id: str
+    sig_b64: str
+    payload: str

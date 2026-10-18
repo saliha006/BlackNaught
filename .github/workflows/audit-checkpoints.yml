@@ -1,0 +1,36 @@
+# Off-box audit checkpoints (Ahmed): every 10 minutes GitHub, not the VM, copies each newly signed checkpoint to the
+# audit-checkpoints branch after checking its ML-DSA-65 signature against contracts/signer_pub.pem. The VM holds no
+# GitHub credentials, and this keeps running with nobody at a laptop while the VM stays up for judging.
+name: audit-checkpoints
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: audit-checkpoints
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    # Debian trixie's OpenSSL is 3.5, the first with ML-DSA; ubuntu-24.04's own is 3.0
+    container: debian:trixie-slim
+    timeout-minutes: 10
+    steps:
+      - name: Install git, Python and OpenSSL 3.5
+        run: apt-get update && apt-get install -y --no-install-recommends git python3 openssl ca-certificates
+
+      - name: Fetch the publisher, the pinned key and the branch
+        env:
+          REMOTE: https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+        run: |
+          git clone -q --depth 1 --single-branch --branch main "$REMOTE" src
+          git clone -q --single-branch --branch audit-checkpoints "$REMOTE" log
+          git -C log config user.name "blacknaught-audit[bot]"
+          git -C log config user.email "blacknaught-audit[bot]@users.noreply.github.com"
+
+      - name: Publish what's new
+        run: python3 src/offbox/publish.py --once --repo log

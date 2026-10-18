@@ -21,6 +21,7 @@ GETS = [
     "/api/agent/decisions",
     "/api/agent/grades",
     "/api/audit/verify",
+    "/api/audit/checkpoints",
 ]
 
 

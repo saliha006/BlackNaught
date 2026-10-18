@@ -365,6 +365,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuditVerify'
+  /api/audit/checkpoints:
+    get:
+      summary: Audit Checkpoints
+      description: 'Signed checkpoints with the exact bytes the signer signed, so
+        anyone can check them against
+
+        contracts/signer_pub.pem without trusting this server. Unsigned ones are left
+        out.'
+      operationId: audit_checkpoints_api_audit_checkpoints_get
+      parameters:
+      - name: after
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: After
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          default: 100
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SignedCheckpoint'
+                title: Response Audit Checkpoints Api Audit Checkpoints Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
     AgentDecision:
@@ -1027,6 +1070,40 @@ components:
       - source
       - updated
       title: RiskLayer
+    SignedCheckpoint:
+      properties:
+        seq:
+          type: integer
+          title: Seq
+        head:
+          type: string
+          title: Head
+        at:
+          type: string
+          format: date-time
+          title: At
+        alg:
+          type: string
+          title: Alg
+        key_id:
+          type: string
+          title: Key Id
+        sig_b64:
+          type: string
+          title: Sig B64
+        payload:
+          type: string
+          title: Payload
+      type: object
+      required:
+      - seq
+      - head
+      - at
+      - alg
+      - key_id
+      - sig_b64
+      - payload
+      title: SignedCheckpoint
     SourceState:
       properties:
         source:
