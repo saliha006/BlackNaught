@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#07090c" />
     <title>Blacknaught · Control room</title>
+    <!-- The glance window's picture is the largest thing on first paint, so it downloads alongside the CSS, not after it -->
+    <link rel="preload" as="image" href="/gb-night.webp" type="image/webp" fetchpriority="high" />
   </head>
   <body>
     <div class="landing" id="landing">
@@ -24,10 +26,41 @@
           </ul>
           <button class="l-btn l-btn--ghost" type="button" data-enter>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5L9 4Zm0 0v13.5m6-11v13.5" /></svg>
-            Open the live map
+            Open control room
           </button>
         </nav>
 
+        <!-- Glance window: the state of the grid in one look, before any scrolling. A still picture, not a second live
+             map, so it costs no WebGL and never catches a swipe meant for the page. -->
+        <section class="glance" id="glance" aria-labelledby="glance-title" data-state="loading">
+          <div class="glance__bar">
+            <span class="glance__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <h2 class="glance__title" id="glance-title">Power cuts in Great Britain</h2>
+            <span class="badge" data-label="LIVE">LIVE</span>
+            <span class="glance__updated" id="glance-updated">loading…</span>
+          </div>
+          <div class="glance__body">
+            <div class="glance__mapwrap">
+              <button class="glance__map" type="button" data-enter aria-label="Open the live map">
+                <img src="/gb-night.webp" alt="Map of Great Britain at night; each glow is a power cut, red severe and amber moderate" width="390" height="585" fetchpriority="high" />
+                <span class="glance__glows" id="glance-glows" aria-hidden="true"></span>
+              </button>
+              <p class="glance__attr">© OpenStreetMap contributors · OpenMapTiles</p>
+            </div>
+            <div class="glance__read">
+              <p class="glance__count"><b class="num" id="glance-count">–</b> power cuts right now</p>
+              <ul class="glance__sev">
+                <li data-severity="severe"><b class="num" id="glance-severe">–</b> Severe</li>
+                <li data-severity="moderate"><b class="num" id="glance-moderate">–</b> Moderate</li>
+              </ul>
+              <p class="glance__note">Severe: someone who relies on power at home needs help (simulated patients), or a whole region is off.</p>
+              <button class="l-btn l-btn--ghost glance__near" id="glance-near" type="button">Is there one near me?</button>
+              <p class="glance__nearest" id="glance-nearest" aria-live="polite"></p>
+              <p class="glance__help">Power off at home? Call <a href="tel:105">105</a>, free, any time.</p>
+              <button class="l-btn" type="button" data-enter>Open the live map</button>
+            </div>
+          </div>
+        </section>
         <header class="l-hero" id="l-top">
           <canvas class="l-bolt" id="l-bolt" role="img" aria-label="A lightning bolt drawn in ASCII characters, slowly turning. Drag to spin it."></canvas>
           <span class="l-pill">
@@ -154,7 +187,7 @@
           <div class="l-split__text">
             <h2 id="l-control-title" class="l-display">A control room<br />for welfare checks</h2>
             <p>Live faults on a 3D map, a ranked list of who to reach first and why, and one-click approval for every escalation. Nothing goes to 999 without a person signing it off.</p>
-            <button class="l-btn" type="button" data-enter>Open the live map</button>
+            <button class="l-btn" type="button" data-enter>Open the control room</button>
           </div>
           <div class="l-split__visual">
             <div class="l-chart">
@@ -189,7 +222,7 @@
           <div class="l-split__text">
             <h2 id="l-feeds-title" class="l-display">Every feed watched.<br />Every gap admitted.</h2>
             <p>When a feed goes quiet, Blacknaught never reads silence as "power back". It widens its uncertainty, re-ranks the people affected, and says so on screen.</p>
-            <button class="l-btn" type="button" data-enter>Open the live map</button>
+            <button class="l-btn" type="button" data-enter>See it live</button>
           </div>
         </section>
 
@@ -198,7 +231,7 @@
             <h2 id="l-faq-title" class="l-display">Have questions?<br />We've got answers.</h2>
             <div>
               <p>Short answers to what people ask first. The full design, data and evidence are in the project docs.</p>
-              <button class="l-btn" type="button" data-enter>Open the live map</button>
+              <button class="l-btn" type="button" data-enter>Open the map</button>
             </div>
           </div>
           <div class="l-faq__list" id="l-faq-list"></div>

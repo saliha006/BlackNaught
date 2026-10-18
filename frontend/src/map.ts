@@ -10,7 +10,7 @@ import {
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
-import { beamsToGeoJSON, cellsToGeoJSON, fogAreasToGeoJSON, isLocated, type Located, outagesToGeoJSON } from './geo';
+import { beamsToGeoJSON, cellsToGeoJSON, fogAreasToGeoJSON, GB_BOUNDS, isLocated, type Located, outagesToGeoJSON } from './geo';
 import { grainTile } from './grain';
 import { sweepFeatures } from './sweep';
 import type { Cell, Outage } from './types';
@@ -19,7 +19,6 @@ import type { Cell, Outage } from './types';
 setWorkerUrl(workerUrl);
 
 const BASEMAP = 'https://tiles.openfreemap.org/styles/dark';
-const GB_BOUNDS: [number, number, number, number] = [-8.6, 49.8, 2.0, 59.2];
 export type Padding = { top: number; bottom: number; left: number; right: number };
 
 export type LayerGroup = 'beams' | 'sweep' | 'cells';

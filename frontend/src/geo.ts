@@ -20,6 +20,9 @@ export const SCALE_RADIUS: Record<Scale, number> = {
   unresolved: 5,
 };
 
+/** [west, south, east, north] of Great Britain; here rather than in map.ts so the landing page can use it without MapLibre. */
+export const GB_BOUNDS: [number, number, number, number] = [-8.6, 49.8, 2.0, 59.2];
+
 // How far an outage's footprint reaches, in metres: roughly what its scale implies. The sweep and the fog grain share it.
 export const SWEEP_RADIUS_M: Record<Scale, number> = {
   home: 120,

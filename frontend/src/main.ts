@@ -37,6 +37,7 @@ import { connectLive, formatRate, type Refetch } from './live';
 import type { LayerGroup, OutageMap, Padding } from './map';
 import { askLogin, confirm, openModal } from './modal';
 import { renderMyHome } from './myHome';
+import { type GlanceData, nearestText, renderGlance } from './glance';
 import { renderNearby } from './nearby';
 import { markSelected, renderOutageList, sortOutages } from './outageList';
 import { renderPredict } from './predict';
@@ -62,6 +63,43 @@ const status = $('#data-mode');
 const dashboard = $('#dashboard');
 $('#dash-grid').append($('#predict'), $('#analysis'), $('.panel'), $('#two-houses'));
 let here: LatLon | null = null;
+const glance = $('#glance');
+let glanceData: GlanceData | null = null;
+
+// The glance window fills from the first data, before the map's chunk has even downloaded
+const firstData = Promise.all([getOutages(), getCells(), getTriage(TRIAGE_LIMIT).catch(() => null)]);
+firstData.then(
+  ([outages, , triage]) => {
+    glanceData = { outages: outages.filter((o) => o.status === 'active'), escalated: escalatedOutages(triage) };
+    renderGlance(glance, glanceData);
+  },
+  () => renderGlance(glance, null),
+);
+
+/** Location only when the person asks; shared by the glance window and the map's list. */
+function locate(onFound: () => void, onFail: () => void) {
+  if (!navigator.geolocation) return onFail();
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      here = [pos.coords.latitude, pos.coords.longitude];
+      onFound();
+    },
+    onFail,
+    { timeout: 8000 },
+  );
+}
+
+$('#glance-near').addEventListener('click', () => {
+  const out = $('#glance-nearest');
+  out.textContent = 'Finding you…';
+  locate(
+    () => {
+      out.textContent = glanceData ? nearestText(glanceData, here!) : "Power cuts haven't loaded yet.";
+      render();
+    },
+    () => (out.textContent = "Couldn't get your location. The live map lists the most serious cuts first."),
+  );
+});
 
 status.textContent = isLive ? 'Live API' : 'Fixture data';
 status.dataset.mode = isLive ? 'live' : 'fixture';
@@ -169,6 +207,10 @@ function render() {
   const pair = findPair(triageItems);
   renderTwoHouses($('#two-houses'), pair, active.find((o) => o.id === pair?.outageId), (id) => pick(id, undefined, active));
   renderNearby($('#nearby-list'), visible, escalated, here, (id) => pick(id, undefined, active));
+  if (outagesLoaded) {
+    glanceData = { outages: active, escalated };
+    renderGlance(glance, glanceData);
+  }
   renderTriageTab();
 }
 
@@ -393,14 +435,12 @@ $('#dash-to-map').addEventListener('click', () => {
 });
 $('#use-location').addEventListener('click', () => {
   // Only on request: the page never asks for a location by itself
-  navigator.geolocation?.getCurrentPosition(
-    (pos) => {
-      here = [pos.coords.latitude, pos.coords.longitude];
+  locate(
+    () => {
       $('#use-location').textContent = 'Nearest first';
       render();
     },
     () => announce("Couldn't get your location; showing the most serious cuts first"),
-    { timeout: 8000 },
   );
 });
 
@@ -437,10 +477,10 @@ async function start() {
   const [m, outages, cellData, triage] = await Promise.all([
     // MapLibre is most of the JS; loading it as its own chunk lets the landing page paint before it arrives
     import('./map').then(({ createMap }) => createMap($('#map'), chromePadding)),
-    getOutages(),
-    getCells(),
+    firstData.then(([o]) => o),
+    firstData.then(([, c]) => c),
     // Triage only powers the escalations toggle; the map must still load without it.
-    getTriage(TRIAGE_LIMIT).catch(() => null),
+    firstData.then(([, , t]) => t),
   ]);
   map = m;
   for (const [group, on] of Object.entries(layers) as [LayerGroup, boolean][]) if (!on) map.setLayerVisible(group, false);

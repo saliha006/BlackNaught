@@ -176,9 +176,6 @@ export function mountAsciiBolt(canvas: HTMLCanvasElement): () => void {
   let raf = 0;
   let prev = performance.now();
   let visible = true;
-  // Idle sway runs for five seconds, then the bolt holds still (WCAG 2.2.2); a drag wakes it for another five
-  const SWAY_FOR_MS = 5000;
-  let swayUntil = performance.now() + SWAY_FOR_MS;
 
   const draw = () => {
     const dpr = Math.min(devicePixelRatio || 1, 2);
@@ -216,17 +213,11 @@ export function mountAsciiBolt(canvas: HTMLCanvasElement): () => void {
       yaw = base + SWAY * Math.sin(phase * 0.7);
     }
     draw();
-    const settled = !dragging && Math.abs(fling) < 0.01 && now > swayUntil;
-    raf = visible && !settled ? requestAnimationFrame(tick) : 0;
+    raf = visible ? requestAnimationFrame(tick) : 0;
   };
 
   const onDown = (e: PointerEvent) => {
     dragging = true;
-    swayUntil = performance.now() + SWAY_FOR_MS;
-    if (!raf && !reduceMotion) {
-      prev = performance.now();
-      raf = requestAnimationFrame(tick);
-    }
     last = { x: e.clientX, y: e.clientY };
     canvas.setPointerCapture(e.pointerId);
   };
