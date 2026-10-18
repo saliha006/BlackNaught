@@ -14,7 +14,7 @@ describe('renderTriage', () => {
     const rows = [...list.querySelectorAll('li.triage')];
     expect(rows[0].querySelector('.triage__rank')!.textContent).toBe('#1');
     const terms = [...rows[0].querySelectorAll('dt')].map((d) => d.textContent);
-    expect(terms.slice(0, 2)).toEqual(['Backup left', 'Likely back in']);
+    expect(terms.slice(0, 3)).toEqual(['Backup left', 'Likely back in', 'Range (q50 to q90)']);
     expect(rows[0].querySelector('.badge')!.textContent).toBe('SIMULATED');
     expect(rows[0].querySelector('summary')!.textContent).toBe('Why ranked here');
   });
@@ -38,6 +38,24 @@ describe('renderTriage', () => {
     expect(on.decide).toHaveBeenCalledWith('d-1', false);
     expect(on.sms).toHaveBeenCalledWith(withDecision[0]);
     expect(on.show).toHaveBeenCalledWith(items[0].outage_id);
+  });
+
+  it('keeps an open "why" and the focused button when a refresh changes the data', () => {
+    document.body.innerHTML = '<ul id="l"></ul>';
+    const list = document.querySelector<HTMLElement>('#l')!;
+    const on = actions();
+    renderTriage(list, items, new Set(), on);
+    const first = list.querySelector<HTMLElement>('li.triage')!;
+    first.querySelector('details')!.setAttribute('open', '');
+    first.querySelector<HTMLButtonElement>('[data-action="Preview SMS"]')!.focus();
+    const before = list.firstElementChild;
+    renderTriage(list, items, new Set(), on);
+    expect(list.firstElementChild).toBe(before);
+    renderTriage(list, [{ ...items[0], harm: items[0].harm + 1 }, ...items.slice(1)], new Set(), on);
+    const again = list.querySelector<HTMLElement>(`[data-key="${items[0].patient_ref}"]`)!;
+    expect(again).not.toBe(before);
+    expect(again.querySelector('details')!.hasAttribute('open')).toBe(true);
+    expect((document.activeElement as HTMLElement).dataset.action).toBe('Preview SMS');
   });
 
   it('says so when nobody is in a live cut', () => {

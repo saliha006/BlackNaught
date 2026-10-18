@@ -68,5 +68,14 @@ describe('renderAudit', () => {
     expect(root.textContent).toContain('none yet');
     renderAudit(root, null, vi.fn());
     expect(root.textContent).toContain('Not checked yet');
+    expect(root.querySelector('h2')!.textContent).toBe('Audit chain');
+  });
+
+  it('drops an old verdict when a fresh check fails', () => {
+    const root = document.createElement('section');
+    renderAudit(root, { ...(audit as AuditVerify), ok: false, first_bad_seq: 1, reason: 'missing_seq' }, vi.fn());
+    renderAudit(root, 'failed', vi.fn());
+    expect(root.dataset.ok).toBeUndefined();
+    expect(root.textContent).toContain("Couldn't verify right now");
   });
 });

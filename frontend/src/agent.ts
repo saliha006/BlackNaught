@@ -1,4 +1,4 @@
-import { badge, button, el, facts } from './dom';
+import { badge, button, el, facts, rerender } from './dom';
 import type { AgentDecision, AuditVerify } from './types';
 
 const TOOL_NAMES: Record<string, string> = {
@@ -28,6 +28,7 @@ export interface DecisionActions {
 
 function decisionRow(d: AgentDecision, on: DecisionActions) {
   const li = el('li', 'decision');
+  li.dataset.key = d.id;
   li.dataset.state = d.state;
   const head = el('header', 'decision__head');
   head.append(
@@ -63,7 +64,7 @@ export function renderDecisions(list: HTMLElement, decisions: AgentDecision[] | 
     list.replaceChildren(el('li', 'panel__loading', 'No agent decisions yet. They appear here as the agent acts.'));
     return;
   }
-  list.replaceChildren(...decisions.map((d) => decisionRow(d, on)));
+  rerender(list, JSON.stringify(decisions), () => decisions.map((d) => decisionRow(d, on)));
 }
 
 const REASON_TEXT: Record<string, string> = {
@@ -74,11 +75,13 @@ const REASON_TEXT: Record<string, string> = {
 };
 
 /** Verify walks the whole hash chain on the server; red names the first row that no longer fits. */
-export function renderAudit(root: HTMLElement, result: AuditVerify | null, onVerify: () => void) {
+export function renderAudit(root: HTMLElement, result: AuditVerify | 'failed' | null, onVerify: () => void) {
   const head = el('header', 'audit__head');
-  head.append(el('h3', '', 'Audit chain'), badge('LIVE'), button('Verify now', 'chip', onVerify));
-  if (!result) {
-    root.replaceChildren(head, el('p', 'card__note', 'Not checked yet.'));
+  head.append(el('h2', '', 'Audit chain'), badge('LIVE'), button('Verify now', 'chip', onVerify));
+  if (result === null || result === 'failed') {
+    // An old verdict must not stay on screen (or stay red) once a fresh check can't run
+    delete root.dataset.ok;
+    root.replaceChildren(head, el('p', 'card__note', result === null ? 'Not checked yet.' : "Couldn't verify right now."));
     return;
   }
   root.dataset.ok = String(result.ok);

@@ -1,5 +1,5 @@
 import { deviceName } from './devices';
-import { badge, button, el, facts } from './dom';
+import { badge, button, el, facts, rerender } from './dom';
 import { formatElapsed } from './format';
 import type { TriageItem } from './types';
 
@@ -11,6 +11,7 @@ export interface TriageActions {
 
 function row(item: TriageItem, awaiting: Set<string>, on: TriageActions) {
   const li = el('li', 'triage');
+  li.dataset.key = item.patient_ref;
   li.dataset.escalate = String(item.escalate);
 
   const head = el('header', 'triage__head');
@@ -25,7 +26,8 @@ function row(item: TriageItem, awaiting: Set<string>, on: TriageActions) {
   const numbers = facts('triage__facts', [
     ['Backup left', formatElapsed(item.reserve_left_h)],
     ['Likely back in', formatElapsed(item.remaining_h.q50)],
-    [`Could take (${item.q_used})`, formatElapsed(item.remaining_h[item.q_used])],
+    ['Range (q50 to q90)', `${formatElapsed(item.remaining_h.q50)} to ${formatElapsed(item.remaining_h.q90)}`],
+    [`Rule used (${item.q_used})`, formatElapsed(item.remaining_h[item.q_used])],
     ['Harm-hours', item.harm.toFixed(1)],
   ]);
 
@@ -58,5 +60,6 @@ export function renderTriage(list: HTMLElement, items: TriageItem[], awaiting: S
     list.replaceChildren(el('li', 'panel__loading', 'Nobody on the register is in a live power cut right now.'));
     return;
   }
-  list.replaceChildren(...[...items].sort((a, b) => a.rank - b.rank).map((item) => row(item, awaiting, on)));
+  const sorted = [...items].sort((a, b) => a.rank - b.rank);
+  rerender(list, JSON.stringify([sorted, [...awaiting]]), () => sorted.map((item) => row(item, awaiting, on)));
 }
