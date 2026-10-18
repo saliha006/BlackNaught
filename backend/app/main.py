@@ -238,7 +238,8 @@ async def approve(request: Request, decision_id: uuid.UUID, body: schemas.Approv
 async def agent_decisions(request: Request, limit: int = Query(default=100, ge=1, le=500)):
     rows = await request.app.state.api_db.rows(
         "SELECT decision_id, tool, state, created_at, args, rationale FROM v_decisions"
-        " ORDER BY created_at DESC LIMIT :limit", limit=limit)
+        # anything waiting for an operator comes first, so it can't scroll out of a short feed behind newer decisions
+        " ORDER BY state = 'awaiting_approval' DESC, created_at DESC LIMIT :limit", limit=limit)
     return [{
         "id": str(r["decision_id"]),
         "tool": r["tool"],

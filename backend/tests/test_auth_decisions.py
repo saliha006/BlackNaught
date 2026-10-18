@@ -110,6 +110,17 @@ async def test_escalation_waits_for_a_human_and_is_audited(client, db_factory):
 
 
 @pytest.mark.anyio
+async def test_a_waiting_decision_stays_in_the_feed_however_many_come_after(client, db_factory):
+    agent = db_factory("bn_agent")
+    waiting, _ = await decisions.create(agent, "draft_cap_alert", {"outage_id": 1}, ["3 patients in this outage"])
+    for i in range(3):
+        await decisions.create(agent, "write_sitrep", {"text": f"round {i}"}, [])
+    feed = (await client.get("/api/agent/decisions?limit=2")).json()
+    assert feed[0]["id"] == waiting  # older than the sitreps, but an operator still has to see it
+    assert feed[1]["tool"] == "write_sitrep"
+
+
+@pytest.mark.anyio
 async def test_approve_rejects_non_uuid(client):
     await log_in(client)
     assert (await client.post("/api/decisions/not-a-uuid/approve", json={"approve": True})).status_code == 422
