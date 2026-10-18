@@ -120,7 +120,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Shipped: `.gitignore` keeps every doc local except `progress.md` and `README.md`. It also excludes data, models and secrets. Added this conflict board.
 - Touched: `.gitignore`, `progress.md`
 - ⚠️ Conflicts: @rama: the `Rama-Frontend` branch predates this `.gitignore`. Rebase on `main` before adding files, so docs and data don't get committed by accident.
-- Conflict status: open
+- Conflict status: resolved by @rama 2026-10-18 (main merged into Rama-Frontend; its .gitignore now matches main)
 
 ### 2026-10-17 21:50 — VM access for Sali — @sali
 - Shipped: used the team key once to add Sali's own ed25519 public key to `linux1`'s `authorized_keys`; Sali now logs in with their own key (`ssh datathon`). Probe saved above. No other VM change.
@@ -485,7 +485,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Shipped: Ahmed's brief gets the mocked public alert task, the compose OK and the `sensor` table. Nate's brief gets the Elexon and publish-fix outcomes. **Rama's brief is reorganised by backend coverage:** 13 features he must show, each with its endpoint, and his own design choices kept. CLAUDE.md now says every logged task is also marked ✅ in its brief.
 - Touched: all four briefs, `BLACKNAUGHT.md` NOW, CLAUDE.md on `context` (d87b07b)
 - ⚠️ Conflicts: @rama: please push your frontend work to `Rama-Frontend` and mark what's done in your brief; right now nobody can see it.
-- Conflict status: open
+- Conflict status: resolved by @rama 2026-10-18 06:05 (frontend pushed to Rama-Frontend and merged to main)
 
 ### 2026-10-18 05:46 — M2 contract settled + ENWL/UKPN prep (brief tasks 2 and 4) — @nate
 - Shipped:
@@ -542,4 +542,25 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - Artifact on the VM: `~/shared/nate-runs/models/m2_aft_ukpncal_v1.json` (not in git). README "Results" updated.
 - Touched: `ml/m2_serve.py`, `ml/tests/test_m2_serve.py`, `evidence/train_log_m2_serve.txt`, `README.md` (M2 results line)
 - ⚠️ Conflicts: @sali: M2 is ready to load but **still shouldn't replace KM live**. Nate is deciding what (if anything) changes in triage. If it's wired later, `ml/` isn't mounted in the app container (only `backend/`), so loading it needs a mount or a copy; to agree first.
+- Conflict status: open
+
+### 2026-10-18 06:05 — VM login + frontend pushed (brief tasks 1–2) — @rama
+- Shipped: VM login works with Rama's key (`ssh linux1@148.100.78.95 "uname -m"` → `s390x`). The frontend is on `Rama-Frontend` and merged to `main`; `git config blacknaught.builder rama` is set.
+- Touched: `Rama-Frontend`, `main`
+- ⚠️ Conflicts: none
+- Conflict status: none
+
+### 2026-10-18 06:05 — frontend: map, landing page, control panel (brief tasks 3, 7, 9; 6 and 8 partly) — @rama
+- Shipped, one commit per feature on `Rama-Frontend`:
+  - **Map (task 3):** Vite + TS + MapLibre 3D night-city map. Outages by scale as light beams with a sensor sweep on the operator's centroid (never a home), k≥11 cells, and an outage list. Outages with no location yet stay in the list, marked, with no marker: the contract allows a null `centroid`, `customers`, `priority_customers` and `cell_l1`, and the live feed sends them.
+  - **Landing page:** the simple public entry. "Open the live map" dives into the most urgent outage; Back and the browser's back button return to it.
+  - **Control panel toggles:** operators, escalations only (from triage), map layers, live updates. They filter the map, the list and the charts together.
+  - **Predict strip (task 7):** area tomorrow (BASELINE), homes in the next 30 min ("not served yet", with the Accra probe result), grid now (LIVE).
+  - **Analysis rail:** outage length against 312,936 ENWL outages; prediction accuracy with graded count, Brier trend and Brier by operator and horizon (task 8, grading half); tomorrow's risk per district; feed health with a status per feed (task 9).
+  - **Live updates (task 6, partly):** `/stream` refetches only what changed, at most once a second per kind, and shows events/s. No ping animation yet.
+  - Rama's design calls: dark monochrome with colour only for severity, IBM Plex; map plus analysis rail; hand-built SVG charts (no chart library), each with a table view.
+- Touched: `frontend/` (new). Reads `/api/outages`, `/cells`, `/triage`, `/agent/grades`, `/areas/risk`, `/grids/gb/stress`, `/sources/health` and `/stream`. No backend or contract changes.
+- ⚠️ Conflicts:
+  - @sali: two live-data oddities for ingest: an SSEN fault reports `priority_customers` 28 with `customers` 18, and one NPg fault has been listed active for 619 h.
+  - @ahmed: `npm run build` makes a live `dist/` for the edge. The app calls `/api/*` and `/stream` on the same origin.
 - Conflict status: open
