@@ -163,6 +163,10 @@ async def triage(request: Request, limit: int = Query(default=50, ge=1, le=200),
     rows = await request.app.state.api_db.rows(
         "SELECT * FROM v_triage_latest WHERE rank > :cursor ORDER BY rank LIMIT :limit", cursor=cursor, limit=limit + 1
     )
+    # Ahmed's agent files one escalate decision per patient and fault; link the newest so the row can be approved in place
+    linked = {(d["patient"], d["outage_id"]): str(d["decision_id"]) for d in await request.app.state.api_db.rows(
+        "SELECT decision_id, args->>'patient' AS patient, CAST(args->>'outage_id' AS int) AS outage_id"
+        " FROM v_decisions WHERE tool = 'escalate' ORDER BY created_at")}
     runtime = request.app.state.runtime
     model = runtime.scorer.model if runtime else None
     items = [{
@@ -177,7 +181,7 @@ async def triage(request: Request, limit: int = Query(default=50, ge=1, le=200),
         "harm": r["harm"],
         "escalate": r["escalate"],
         "why": r["why"]["reasons"],
-        "decision_id": None,
+        "decision_id": linked.get((r["patient_ref"], r["outage_id"])),
     } for r in rows[:limit]]
     return {
         "tick_at": rows[0]["tick_at"] if rows else datetime.now(UTC),
