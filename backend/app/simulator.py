@@ -10,6 +10,7 @@ import asyncio
 import logging
 import random
 import uuid
+import zlib
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
@@ -31,6 +32,9 @@ DROP_P, RECOVER_P = 0.05, 0.15
 BEHIND_BACKUP_P = 0.08
 PARTIAL_FAULT_P = 0.25
 RESTORED_KEEP = timedelta(hours=2)  # a restored fault keeps its sensors this long, so the return is seen
+# each sensor reports in its own 5 s slot of the minute, the way a real fleet's clocks drift apart, rather than the
+# whole fleet in one burst (which also made the control room's 5 s events/s read 0 most of the time)
+SLOTS = 12
 
 FAULTS = """
 SELECT outage_id, status, started_at, postcodes FROM outage
@@ -49,6 +53,10 @@ class Sensor:
     behind_backup: bool
     online: bool = True
     gasped: bool = False
+
+    @property
+    def slot(self) -> int:
+        return zlib.crc32(self.sensor_id.encode()) % SLOTS
 
 
 def footprint(outage_id: int, spots: list[tuple[str, float, float]]) -> list[Sensor]:
@@ -107,12 +115,15 @@ class Simulator:
             "payload": {"kind": kind, "sensor_id": s.sensor_id, "cell_l1": s.cell_l1},
         })
 
-    async def tick(self, now: datetime) -> int:
-        """One heartbeat round; returns the number of events sent."""
+    async def tick(self, now: datetime, slot: int | None = None) -> int:
+        """One round for the sensors in this slot of the minute (every sensor when slot is None); returns the number of
+        events sent."""
         faults = {f["outage_id"]: f for f in await self.db.rows(FAULTS, cut=now - RESTORED_KEEP)}
         await self.place(list(faults.values()))
         sent = 0
         for s in list(self.sensors.values()):
+            if slot is not None and s.slot != slot:
+                continue
             fault = faults.get(s.outage_id)
             if fault is None:  # restored long enough ago, or gone from the feed: the sensor is retired
                 del self.sensors[s.sensor_id]
@@ -131,11 +142,12 @@ class Simulator:
         return sent
 
     async def run(self) -> None:
+        slot = 0
         while True:
-            # the first round waits one heartbeat, like a real fleet's next report after a restart
-            await asyncio.sleep(HEARTBEAT_S)
+            await asyncio.sleep(HEARTBEAT_S / SLOTS)
             try:
-                await self.tick(datetime.now(UTC))
+                await self.tick(datetime.now(UTC), slot)
             except Exception:
                 # one bad round must not stop the fleet; the next one rebuilds from the same footprints
                 log.exception("simulator tick failed")
+            slot = (slot + 1) % SLOTS
