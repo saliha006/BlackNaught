@@ -80,7 +80,7 @@ flowchart LR
         APP["app: one asyncio process<br/>ingest, scorer, grader, FastAPI"]
         DB[("Postgres 17<br/>least-privilege roles")]
         EDGE["nginx edge, post-quantum TLS (in progress)"]
-        SIGN["Signer, ML-DSA-65 (in progress)"]
+        SIGN["Signer, ML-DSA-65"]
         AGENT["Agent loop and Granite (in progress)"]
     end
     UI["Control-room UI (in progress)"]
@@ -114,7 +114,7 @@ Some choices worth knowing:
 | API | FastAPI, uvicorn, sse-starlette | Async and pure Python, so no wheel problems |
 | DB driver | pg8000 | psycopg2 has no s390x wheel |
 | Database | PostgreSQL 17 | Roles, views and `SECURITY DEFINER` give least privilege with no extra services |
-| Crypto | AES-256-GCM via libcrypto (`ctypes`), argon2id sessions, ML-DSA-65 signer (in progress) | Uses CPACF. `cryptography` isn't available on s390x |
+| Crypto | AES-256-GCM via libcrypto (`ctypes`), argon2id sessions, ML-DSA-65 signer for audit checkpoints (OpenSSL 3.5) | Uses CPACF. `cryptography` isn't available on s390x |
 | Alerts | CAP 1.2 XML, XSD-validated in tests | The OASIS standard for public warnings |
 | Frontend | Vite, TypeScript, MapLibre GL (in progress) | Built on a laptop, served as static files |
 | Tests | pytest, pytest-cov, httpx, xmlschema | Run on the VM against a separate test database |
@@ -195,15 +195,17 @@ for s in pg_super_pw db_migrator_pw db_ingest_pw db_api_pw db_agent_pw bidx_key 
   openssl rand -hex 32 > secrets/$s
 done
 
-cd backend
-sudo docker compose -f compose.backend.yml up -d --build
-sudo docker compose -f compose.backend.yml exec app python -m app.migrate
-sudo docker compose -f compose.backend.yml exec app python -m app.auth bootstrap   # operator login
-sudo docker compose -f compose.backend.yml exec app python -m app.seed             # synthetic patients
+# the full stack: the backend plus the ML-DSA signer
+sudo docker compose -f infra/docker-compose.yml build signer
+bash scripts/make-signer-secrets.sh   # once, as a docker-group user (not sudo), so the signer can read its key
+sudo docker compose -f infra/docker-compose.yml up -d --build
+sudo docker compose -f infra/docker-compose.yml exec app python -m app.migrate
+sudo docker compose -f infra/docker-compose.yml exec app python -m app.auth bootstrap   # operator login
+sudo docker compose -f infra/docker-compose.yml exec app python -m app.seed             # synthetic patients
 curl -s localhost:8000/api/health
 
 # tests
-sudo docker compose -f compose.backend.yml run --rm --no-deps app pytest --cov=app
+sudo docker compose -f backend/compose.backend.yml run --rm --no-deps app pytest --cov=app
 ```
 
 API docs live at `/api/docs`. The API binds to `127.0.0.1`; the public entry point is the nginx edge.
