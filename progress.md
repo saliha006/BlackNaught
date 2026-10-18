@@ -103,7 +103,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 ### 2026-10-17 21:50 — VM access for Sali — @sali
 - Shipped: used the team key once to add Sali's own ed25519 public key to `linux1`'s `authorized_keys`; Sali now logs in with their own key (`ssh datathon`). Probe saved above. No other VM change.
 - Touched: VM `~/.ssh/authorized_keys` (append only). Nothing removed.
-- ⚠️ Conflicts: @ahmed: you own VM keys. Nothing of yours was changed, and the team key + your key are still there. Still yours: remove the leaked team key once everyone has their own, delete the Drive link, and change the portal password (it was in the form). Docker isn't installed yet; tell Sali if you want him to run HANDOFF §3.1.
+- ⚠️ Conflicts: @ahmed: you own VM keys. Nothing of yours was changed, and the team key + your key are still there. Still yours: remove the leaked team key once everyone has their own, delete the Drive link, and change the portal password (it was in the form). Docker isn't installed yet; tell Sali if you want them to run HANDOFF §3.1.
 - Conflict status: open
 
 ### 2026-10-17 22:15 — VM platform setup (Docker + Jupyter) — @sali
@@ -240,4 +240,12 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @ahmed: build edge, signer and granite into the running `bn-backend` stack (no second Postgres); agree it with Sali.
   - @rama: merge `origin/main` into `Rama-Frontend` (42 commits behind).
   - All: the freeze time in your briefs predates the team starting; Sali will confirm a new one.
+- Conflict status: open
+
+### 2026-10-18 03:01 — individual SSH keys on the VM — @sali
+- Shipped: added labelled keys for `ahmed`, `nate` and `rama` to `linux1`'s `authorized_keys` (backed up first). Test with `ssh linux1@148.100.78.95 "hostname; uname -m"` → `datathon4musketeers s390x`.
+- Touched: VM `~/.ssh/authorized_keys` (append only)
+- ⚠️ Conflicts:
+  - @ahmed: once all three of you confirm you can log in, the leaked `Generated-by-Nova` key gets removed. Also: turn off the Drive link and change the portal password. Is the unlabelled key `SHA256:2rIcU3uJ…MHHI` yours? If nobody claims it, it goes too.
+  - @rama: your key was labelled from its `G.R.P.Bhaskara2@newcastle.ac.uk` comment; say if that's wrong.
 - Conflict status: open
