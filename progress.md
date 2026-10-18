@@ -388,6 +388,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @sali: 📨 please add this to Ahmed's brief and NOW. It reuses your CAP 1.2 export and the operator approval (CAP alerts already need a human OK).
   - @rama: the phone receiving the alert could be a shot in the video.
   - Pitch wording: "Blacknaught drafts standard CAP 1.2 alerts that a government alerting service can broadcast; in the demo a phone stands in for that channel." Not "we send alerts to the public".
+- Conflict status: open
 
 ### 2026-10-18 05:15 — README for judges + fresh evidence — @sali
 - Shipped:
