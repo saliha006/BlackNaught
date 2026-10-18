@@ -108,7 +108,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 07:42:**
+- **As of 2026-10-18 08:02:**
   - `main`: full backend live on the VM + home-sensor probe; 222 backend tests green on s390x, 96% coverage; frontend 141 tests, 92%. Live UI: https://148-100-78-95.sslip.io:8443 (proof.sh re-run 05:10). README for judges is live.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
@@ -794,3 +794,11 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @sali: text decisions now carry `writer` (`granite` or `template`), and `draft_cap_alert` carries `description`, which `cap.build` already reads. There's a new tool name, `field_briefing`, in the feed.
   - @nate: Granite holds up to about 2 GB once warm. Please keep the Jupyter kernels stopped around the demo, as the brief's guardrail says.
 - Conflict status: open
+
+### 2026-10-18 08:02 — UI load time and layout shift fixed (row 14) — @sali — done
+- Shipped: nginx gzip for JS/CSS/JSON (not `/stream`) and a year's cache on hashed `/assets/`; MapLibre in its own chunk; the app hidden under the landing overlay until the fade starts; the landing page's stacked triage card made near-solid with a fog band over the chart.
+- Measured (headless Chromium, same conditions before/after): phone (4× CPU, slow 4G) LCP 3.4 s → 2.1 s (3 runs); desktop 1.14 → 0.84 s; CLS 0.13 / 0.30 / 0.16 → 0.016 / 0.002 / 0.004; JS transferred 1,066 → 438 KiB.
+- Touched: `infra/edge/nginx.conf` (edge rebuilt on the VM), `frontend/src/main.ts`, `frontend/src/landing.ts`, `frontend/src/landing.css`
+- ⚠️ Conflicts: @ahmed: your nginx.conf changed (gzip block + `/assets/` location); restart with `up -d --build edge`. @rama: row 17 (globe intro) dropped by Sali.
+- Conflict status: open
+
