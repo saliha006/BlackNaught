@@ -1,0 +1,15 @@
+=== M2 data prep on LinuxONE (2026-10-18T04:44:47Z), commit df8452e ===
+s390x
+enwl: 312,936 outages -> 306,251 kept (6,682 under 5 min, 3 before 2000)
+  splits: {'train': 269170, 'test': 27253, 'validate': 9828}
+  2000-04-01 .. 2026-10-10; median 3.50 h, over 24 h 6.1%, over 7 days 1.91%, longest 9,355 h
+  customers median 10; voltage {'LV': 252646, 'HV': 53061, 'EHV': 544}
+ukpn: 180,059 outages -> 178,864 kept (1,195 under 5 min, 0 before 2000)
+  splits: {'crosscheck': 178864}
+  2021-04-01 .. 2025-03-31; median 2.80 h, over 24 h 6.0%, over 7 days 0.75%, longest 5,547 h
+  customers median 7; voltage {'unknown': 178864}
+total 5092
+drwxr-xr-x 2 ibm-user ibm-user    4096 Oct 18 04:44 .
+drwxrwxr-x 4 ibm-user ibm-user    4096 Oct 18 04:44 ..
+-rw-r--r-- 1 ibm-user ibm-user 3899306 Oct 18 04:44 enwl.csv.gz
+-rw-r--r-- 1 ibm-user ibm-user 1305383 Oct 18 04:44 ukpn.csv.gz

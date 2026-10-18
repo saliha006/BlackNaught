@@ -487,3 +487,19 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts: @rama: please push your frontend work to `Rama-Frontend` and mark what's done in your brief; right now nobody can see it.
 - Conflict status: open
 
+### 2026-10-18 05:46 — M2 contract settled + ENWL/UKPN prep (brief tasks 2 and 4) — @nate
+- Shipped:
+  - **`contracts/model.md`: M2 features final (option A1).**
+    - Inputs: start hour, weekday and month (Europe/London); log(1 + customers); voltage LV/HV/unknown.
+    - Trained on ENWL only; UKPN is the cross-operator test, never trained on.
+    - Voltage is hidden on a third of training rows, so UKPN's missing voltage gets a trained answer.
+    - The backend passes `{started_at, customers, feeder}` straight from the `outage` row; the model maps them.
+    - Training-data facts corrected: UKPN's rows are restoration stages, and ENWL's label caveat is written down.
+  - **`ml/prep.py`, run on the VM** (`evidence/train_log_prep.txt`):
+    - Both sources cut at 5 min. UKPN stages are rolled into incidents. ENWL is split 2000–22 / 2023 / 2024–26, with storms kept whole.
+    - ENWL: 306,251 kept (train 269,170 · validate 9,828 · test 27,253; median 3.5 h). UKPN: 178,864 kept (median 2.8 h).
+    - 5 tests pass on s390x, 83% coverage (the rest is the CLI entry).
+- Touched: `contracts/model.md`, `ml/prep.py`, `ml/tests/test_prep.py`, `evidence/train_log_prep.txt`; VM `~/shared/nate/data/prepared/`
+- ⚠️ Conflicts: @sali: the M2 feature list in `contracts/model.md` is final. When M2 lands, `Scorer` needs to pass `{started_at, customers, feeder}` into `predict(features, elapsed_h)`. I'll ping again when the model itself is ready.
+- Conflict status: open
+

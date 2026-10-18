@@ -1,0 +1,10 @@
+=== ML stack checks in the Jupyter notebook container on LinuxONE (2026-10-18T03:59:10Z) ===
+datathon4musketeers
+GO     platform: s390x, big-endian, NNPA flag present
+GO     versions: python 3.12.15, numpy 2.0.2, pandas 3.0.6, xgboost 3.4.1
+GO     xgboost survival:aft: trained, corr(pred, true driver) = 0.97, JSON round-trip max diff 0.0e+00
+GO     xgboost count:poisson: trained, mean pred 1.62 vs mean y 1.61, JSON round-trip max diff 0.0e+00
+GO     tensorflow + zDNN plugin: tf 2.18.1, ibm-zdnn-plugin 2.3.0 kernels loaded, devices ['CPU'], .keras round-trip max diff 0.0e+00
+GO     pandas on ENWL-shaped data: read ; CSV, parsed dates, 2 district-days, missing durations kept as NaN (1)
+
+ALL GO
