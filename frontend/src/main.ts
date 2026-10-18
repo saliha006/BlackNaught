@@ -37,12 +37,12 @@ import { connectLive, formatRate, type Refetch } from './live';
 import type { LayerGroup, OutageMap, Padding } from './map';
 import { askLogin, confirm, openModal } from './modal';
 import { renderMyHome } from './myHome';
-import { type GlanceData, nearestText, renderGlance } from './glance';
 import { renderNearby } from './nearby';
 import { markSelected, renderOutageList, sortOutages } from './outageList';
 import { renderPredict } from './predict';
 import { capPhone, parseCap, smsPhone } from './preview';
 import { allOperators, escalatedOutages, type Filters, filterOutages, showsSource } from './state';
+import { homeStatus, type Location, renderStatus, type StatusData } from './status';
 import { setupTabs } from './tabs';
 import { renderTriage } from './triage';
 import { findPair, renderTwoHouses } from './twoHouses';
@@ -63,18 +63,33 @@ const status = $('#data-mode');
 const dashboard = $('#dashboard');
 $('#dash-grid').append($('#predict'), $('#analysis'), $('.panel'), $('#two-houses'));
 let here: LatLon | null = null;
-const glance = $('#glance');
-let glanceData: GlanceData | null = null;
+const termStatus = $('#term-status');
+const termBody = $('#term-body');
+const mapEl = $('#map');
+const stage = $('.stage');
+let statusData: StatusData | null | 'failed' = null;
+let location: Location = 'pending';
+const showStatus = () => renderStatus(termStatus, homeStatus(statusData, here, location));
 
-// The glance window fills from the first data, before the map's chunk has even downloaded
+// The status fills from the first data, before the map's chunk has even downloaded
 const firstData = Promise.all([getOutages(), getCells(), getTriage(TRIAGE_LIMIT).catch(() => null)]);
 firstData.then(
   ([outages, , triage]) => {
-    glanceData = { outages: outages.filter((o) => o.status === 'active'), escalated: escalatedOutages(triage) };
-    renderGlance(glance, glanceData);
+    statusData = { outages: outages.filter((o) => o.status === 'active'), escalated: escalatedOutages(triage) };
+    showStatus();
   },
-  () => renderGlance(glance, null),
+  () => {
+    statusData = 'failed';
+    showStatus();
+  },
 );
+
+/** One map: inside the landing page's window while that's up, full screen in the control room. */
+function placeMap(inWindow: boolean) {
+  (inWindow ? termBody : stage).prepend(mapEl);
+  map?.setEmbedded(inWindow);
+}
+placeMap(true);
 
 /** Location only when the person asks; shared by the glance window and the map's list. */
 function locate(onFound: () => void, onFail: () => void) {
@@ -89,17 +104,19 @@ function locate(onFound: () => void, onFail: () => void) {
   );
 }
 
-$('#glance-near').addEventListener('click', () => {
-  const out = $('#glance-nearest');
-  out.textContent = 'Finding you…';
-  locate(
-    () => {
-      out.textContent = glanceData ? nearestText(glanceData, here!) : "Power cuts haven't loaded yet.";
-      render();
-    },
-    () => (out.textContent = "Couldn't get your location. The live map lists the most serious cuts first."),
-  );
-});
+// Sali's call: the browser asks for the location as the page opens, and the window answers by itself
+locate(
+  () => {
+    location = 'found';
+    showStatus();
+    showArea();
+    render();
+  },
+  () => {
+    location = 'denied';
+    showStatus();
+  },
+);
 
 status.textContent = isLive ? 'Live API' : 'Fixture data';
 status.dataset.mode = isLive ? 'live' : 'fixture';
@@ -187,6 +204,8 @@ function renderCharts() {
 
 /** The space the toggle row, Predict strip and outage panel cover, so the camera centres on the open part of the map. */
 function chromePadding(): Padding {
+  // In the landing page's window the map has the whole frame, bar the status card in the top right
+  if (!onMap) return { top: 16, bottom: 16, left: 16, right: 16 };
   const nearby = $('#nearby').getBoundingClientRect();
   // The nearby list is the only thing over the map: a right column on wide screens, a bottom strip on a phone
   return innerWidth > 720
@@ -208,8 +227,8 @@ function render() {
   renderTwoHouses($('#two-houses'), pair, active.find((o) => o.id === pair?.outageId), (id) => pick(id, undefined, active));
   renderNearby($('#nearby-list'), visible, escalated, here, (id) => pick(id, undefined, active));
   if (outagesLoaded) {
-    glanceData = { outages: active, escalated };
-    renderGlance(glance, glanceData);
+    statusData = { outages: active, escalated };
+    showStatus();
   }
   renderTriageTab();
 }
@@ -397,12 +416,22 @@ function setLiveUpdates(on: boolean) {
 }
 
 /** Zoom straight into the outage at the top of the list, the same one a person would check first. */
-function dive() {
+/**
+ * Open the map on the person, once we know where they are, in the window and in the control room alike. Until then:
+ * the whole of GB in the window (never some other town), and the most serious cut in the control room.
+ */
+function showArea() {
   if (!map) return;
   map.setLive(true);
-  const top = sortOutages(visible.filter(isLocated))[0];
+  if (here) return map.lookAt(here);
+  const top = onMap ? sortOutages(visible.filter(isLocated))[0] : undefined;
   if (top) pick(top.id, DIVE_MS);
   else map.overview();
+}
+
+function dive() {
+  placeMap(false);
+  showArea();
 }
 
 /** The operator dashboard sits over the map, so going back to the map is instant and keeps the camera where it was. */
@@ -446,9 +475,9 @@ $('#use-location').addEventListener('click', () => {
 
 function showLanding() {
   onMap = false;
-  map?.setLive(false);
+  placeMap(true);
   landing.open();
-  map?.reset();
+  showArea();
   markSelected(list, -1);
 }
 
@@ -475,14 +504,19 @@ if (history.state?.view) history.replaceState(null, '');
 
 async function start() {
   const [m, outages, cellData, triage] = await Promise.all([
-    // MapLibre is most of the JS; loading it as its own chunk lets the landing page paint before it arrives
-    import('./map').then(({ createMap }) => createMap($('#map'), chromePadding)),
+    // MapLibre is most of the JS and now draws in the landing page's window, so it waits for the page's own load
+    // (the poster picture included): building it any earlier pushed phone LCP from 2.3 s to 3 s
+    new Promise<void>((done) => (document.readyState === 'complete' ? done() : addEventListener('load', () => done(), { once: true })))
+      .then(() => import('./map'))
+      .then(({ createMap }) => createMap($('#map'), chromePadding)),
     firstData.then(([o]) => o),
     firstData.then(([, c]) => c),
     // Triage only powers the escalations toggle; the map must still load without it.
     firstData.then(([, , t]) => t),
   ]);
   map = m;
+  map.setEmbedded(!onMap);
+  map.setLive(true);
   for (const [group, on] of Object.entries(layers) as [LayerGroup, boolean][]) if (!on) map.setLayerVisible(group, false);
   active = outages.filter((o) => o.status === 'active');
   cells = cellData;
@@ -492,8 +526,10 @@ async function start() {
 
   render();
   map.onSelect((id) => pick(id));
-  // The map can finish loading after the visitor has already left the landing page.
+  // The map can finish loading after the visitor has already left the landing page; on the landing page it dives
+  // inside the window instead, so both show the same street-level view.
   if (onMap) dive();
+  else showArea();
   if (isLive) setLiveUpdates(true);
   else controls.setLive('unavailable');
 }

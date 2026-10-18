@@ -69,6 +69,8 @@ export interface OutageMap {
   /** Fly down to street level over an outage. `duration` in ms; longer for the opening dive. */
   focus(outage: Located, duration?: number): void;
   onSelect(handler: (id: number) => void): void;
+  /** Fly to a place with no cut to show, e.g. a person's home when their area is clear. */
+  lookAt(at: [number, number]): void;
   /** Ease to the tilted whole-GB view, for when there is no outage to dive into. */
   overview(): void;
   /** Jump back to the flat GB view behind the landing page, ready for the next dive. */
@@ -76,6 +78,8 @@ export interface OutageMap {
   /** Run the sensor animation only while the map is on screen. */
   setLive(on: boolean): void;
   setLayerVisible(group: LayerGroup, visible: boolean): void;
+  /** Inside the landing page: one finger scrolls the page, two fingers (or Ctrl + wheel) move the map. */
+  setEmbedded(on: boolean): void;
 }
 
 // Checked once up front: map 'error' events also fire for single missing sprites/tiles, which must not drop the basemap.
@@ -219,7 +223,7 @@ function addBeamLayers(map: MapLibreMap) {
 
 /**
  * Labelled pins: each cut says "● Severe" or "● Moderate" in words on the map, and nearby cuts merge into one
- * "2 cuts" bubble that zooms in on tap. Home-scale cuts keep only their glow, so a single house is never pinned.
+ * bubble showing how many, which zooms in on tap. Home-scale cuts keep only their glow, so a single house is never pinned.
  * The words need the basemap's glyphs; on the plain fallback style only the bubbles draw.
  */
 function addPinLayers(map: MapLibreMap) {
@@ -233,7 +237,8 @@ function addPinLayers(map: MapLibreMap) {
     source: 'outage-pins',
     filter: ['has', 'point_count'],
     paint: {
-      'circle-radius': 18,
+      // Sized by how many cuts it holds, with room for a three-digit count
+      'circle-radius': ['interpolate', ['linear'], ['get', 'point_count'], 2, 16, 20, 22, 100, 28],
       'circle-color': ['case', ['>', ['get', 'severe'], 0], FOG.severe, FOG.moderate],
       'circle-stroke-color': '#07090c',
       'circle-stroke-width': 2,
@@ -245,7 +250,8 @@ function addPinLayers(map: MapLibreMap) {
     type: 'symbol',
     source: 'outage-pins',
     filter: ['has', 'point_count'],
-    layout: { 'text-field': ['concat', ['get', 'point_count_abbreviated'], ' cuts'], 'text-font': font, 'text-size': 13 },
+    // The bare count fits the bubble at any size; the bubble's colour and the hover label say what it counts
+    layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-font': font, 'text-size': 15 },
     paint: { 'text-color': '#07090c' },
   });
   map.addLayer({
@@ -486,6 +492,9 @@ export async function createMap(container: HTMLElement, padding: () => Padding):
         essential: false,
       });
     },
+    lookAt([lat, lon]) {
+      map.flyTo({ center: [lon, lat], zoom: 13, pitch: 55, bearing: -20, duration: 2400, padding: padding(), essential: false });
+    },
     onSelect(handler) {
       selectHandler = handler;
     },
@@ -504,6 +513,11 @@ export async function createMap(container: HTMLElement, padding: () => Padding):
       if (!on) return;
       if (reduceMotion) drawSensors(0);
       else raf = requestAnimationFrame(loop);
+    },
+    setEmbedded(on) {
+      if (on) map.cooperativeGestures.enable();
+      else map.cooperativeGestures.disable();
+      map.resize();
     },
     setLayerVisible(group, visible) {
       shown[group] = visible;

@@ -968,225 +968,171 @@
   }
 }
 
-/* Glance window: a window onto the live grid, sitting between the nav and the hero, as if lit from the page behind it */
-.glance {
-  width: min(100%, 1040px, calc(62svh * 16 / 9));
-  margin: var(--space-6) auto 0;
-  border: 1px solid var(--l-border-strong);
-  border-radius: 18px;
-  /* "Fades in from the background" through light, not an entrance animation: a soft halo and an edge that melts into
-     the page. Fading the text in from opacity 0 pushed phone LCP from 2.0 s to 4.4 s, so nothing here animates. */
-  background: linear-gradient(180deg, rgb(20 20 23 / 0.92), var(--l-card-2));
-  box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.02),
-    0 0 80px 10px rgb(255 255 255 / 0.03),
-    0 40px 120px rgb(0 0 0 / 0.6);
+/* A macOS-style window onto the live map, between the navbar and the bolt. ~93% of the page on every device, so the
+   margins either side are always there to scroll the page with, never the map. */
+.term {
+  --term-ok: oklch(0.78 0.16 150);
+  /* 93% of the screen, not of the page's content column, and centred on the screen */
+  width: 93vw;
+  margin: var(--space-6) calc(50% - 46.5vw) 0;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 12px;
+  background: #1e1f29;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.6), 0 0 80px 10px rgb(255 255 255 / 0.03), 0 40px 120px rgb(0 0 0 / 0.6);
   overflow: hidden;
 }
 
-.glance__bar {
+.term__bar {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  height: 44px;
-  padding: 0 var(--space-4);
-  border-bottom: 1px solid var(--l-border);
+  justify-content: center;
+  height: 38px;
+  background: linear-gradient(#3a3b44, #2c2d35);
+  border-bottom: 1px solid rgb(0 0 0 / 0.5);
 }
 
-/* Window dots in grey, not traffic-light colours: on this site red and amber mean severity */
-.glance__dots {
+.term__lights {
+  position: absolute;
+  left: 14px;
   display: inline-flex;
-  gap: 6px;
+  gap: 8px;
 }
 
-.glance__dots i {
-  width: 11px;
-  height: 11px;
+.term__lights i {
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: var(--n-3);
 }
 
-.glance__title {
+/* The macOS close / minimise / zoom colours */
+.term__lights i:nth-child(1) {
+  background: #ff5f57;
+}
+
+.term__lights i:nth-child(2) {
+  background: #febc2e;
+}
+
+.term__lights i:nth-child(3) {
+  background: #28c840;
+}
+
+.term__title {
   margin: 0;
-  font-size: 1rem;
+  font: 500 0.875rem / 1 var(--font-mono);
+  color: #c9cad3;
+}
+
+.term__body {
+  position: relative;
+  height: min(70svh, 720px);
+  background: #07090c;
+}
+
+.term__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.term__body .map {
+  position: absolute;
+  inset: 0;
+  /* Above the still picture, which only fills the frame until the live map has drawn */
+  z-index: 1;
+}
+
+/* The answer first, large and in plain words: green safe, amber or red a cut near you, grey until we know */
+.term__status {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 2;
+  display: grid;
+  gap: var(--space-2);
+  max-width: min(300px, calc(100% - 2 * var(--space-4)));
+  padding: var(--space-3) var(--space-4);
+  background: rgb(14 14 16 / 0.92);
+  border: 1px solid var(--l-border-strong);
+  border-radius: 14px;
+}
+
+.term__status p {
+  margin: 0;
+}
+
+.term__headline {
+  font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 500;
+  line-height: 1.15;
 }
 
-.glance__updated {
-  margin-left: auto;
-  font-size: var(--fs-small);
-  color: var(--text-muted);
+.term__status[data-level='safe'] .term__headline {
+  color: var(--term-ok);
 }
 
-.glance[data-state='error'] .glance__updated {
+.term__status[data-level='moderate'] .term__headline {
   color: var(--sev-risk);
 }
 
-.glance__body {
-  display: grid;
-  grid-template-columns: 2fr 3fr;
-  aspect-ratio: 16 / 8.2;
-}
-
-.glance__mapwrap {
-  position: relative;
-  min-height: 0;
-  border-right: 1px solid var(--l-border);
-}
-
-.glance__map {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  border: 0;
-  background: #07090c;
-  cursor: pointer;
-}
-
-.glance__map img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.glance__glows {
-  position: absolute;
-  inset: 0;
-}
-
-/* Each cut glows where it is; a soft centre fading out reads as an area, not an exact point */
-.glance__glow {
-  position: absolute;
-  width: var(--size);
-  height: var(--size);
-  translate: -50% -50%;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--glow) 0, color-mix(in oklch, var(--glow) 45%, transparent) 40%, transparent 72%);
-}
-
-.glance__glow[data-severity='severe'] {
-  --glow: var(--sev-escalate);
-}
-
-.glance__glow[data-severity='moderate'] {
-  --glow: var(--sev-risk);
-}
-
-.glance__attr {
-  position: absolute;
-  right: var(--space-2);
-  bottom: var(--space-1);
-  margin: 0;
-  font-size: 0.6875rem;
-  color: var(--text-faint);
-}
-
-.glance__read {
-  display: grid;
-  align-content: center;
-  gap: var(--space-3);
-  padding: var(--space-6) var(--space-8);
-}
-
-.glance__read p {
-  margin: 0;
-}
-
-.glance__count {
-  font-size: 1.25rem;
-  color: var(--text-muted);
-}
-
-.glance__count b {
-  display: block;
-  font-size: clamp(3rem, 6vw, 4.5rem);
-  font-weight: 300;
-  line-height: 1;
-  color: var(--text);
-}
-
-.glance__sev {
-  display: flex;
-  gap: var(--space-6);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: 1.25rem;
-}
-
-/* The word plus a dot, so severity never rests on colour alone */
-.glance__sev li::before {
-  content: '';
-  display: inline-block;
-  width: 0.6em;
-  height: 0.6em;
-  margin-right: 0.4em;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.glance__sev [data-severity='severe'] {
+.term__status[data-level='severe'] .term__headline {
   color: var(--sev-escalate);
 }
 
-.glance__sev [data-severity='moderate'] {
-  color: var(--sev-risk);
+.term__detail {
+  font-size: 1.0625rem;
+  color: var(--text-muted);
 }
 
-.glance__sev b {
-  color: var(--text);
+.term__open {
+  position: absolute;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 2;
 }
 
-.glance__note,
-.glance__help {
+.term__hint {
+  position: absolute;
+  /* Centred: the map's zoom buttons own the bottom-left corner */
+  left: 50%;
+  translate: -50% 0;
+  bottom: var(--space-4);
+  z-index: 2;
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: rgb(14 14 16 / 0.85);
   font-size: var(--fs-small);
   color: var(--text-muted);
 }
 
-.glance__help a {
-  color: var(--text);
-}
-
-.glance__near {
-  justify-self: start;
-  min-height: 48px;
-}
-
-.glance__nearest:empty {
-  display: none;
-}
-
-.glance__nearest {
-  font-size: 1.125rem;
+/* Desktops get the wheel-plus-Ctrl message from MapLibre itself; the two-finger hint is for touch screens */
+@media (hover: hover) and (pointer: fine) {
+  .term__hint {
+    display: none;
+  }
 }
 
 @media (max-width: 720px) {
-  /* Phone: the readouts first, the picture under them and no taller than 40% of the screen */
-  .glance {
-    width: calc(100% - 2 * var(--space-4));
+  .term__body {
+    height: 72svh;
   }
 
-  .glance__body {
-    grid-template-columns: 1fr;
-    aspect-ratio: auto;
+  .term__status {
+    padding: var(--space-3) var(--space-4);
   }
 
-  .glance__mapwrap {
-    order: 2;
-    height: 40svh;
-    border-right: 0;
-    border-top: 1px solid var(--l-border);
+  .term__open {
+    left: var(--space-4);
+    right: var(--space-4);
+    bottom: var(--space-4);
   }
 
-  .glance__read {
-    padding: var(--space-4);
-  }
-
-  .glance__updated {
-    display: none;
+  .term__hint {
+    bottom: calc(var(--space-4) + 56px);
   }
 }
 
