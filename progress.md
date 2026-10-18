@@ -108,8 +108,8 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 06:05:**
-  - `main`: full backend live on the VM + home-sensor probe; 208 tests green on s390x, 96% coverage (proof.sh re-run 05:10). README for judges is live.
+- **As of 2026-10-18 06:39:**
+  - `main`: full backend live on the VM + home-sensor probe; 210 backend tests green on s390x, 96% coverage; frontend 111 tests, 89.7% (proof.sh re-run 05:10). README for judges is live.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
 
@@ -590,14 +590,14 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
     2. set `BN_MODEL_PATH=/srv/models/km_ukpn.json` for `app`;
     3. restart (say so in Discord).
     - Caveat: it also scores NPg and SSEN outages, which have no history of their own. Grades will show `m1-km-ukpn` separately from `m1-km-enwl`, side by side.
-- Conflict status: open
+- Conflict status: resolved by @sali 2026-10-18 (Sali's part)
 
 ### 2026-10-18 06:14 — two-houses card (brief task 4) — @rama — done
 - Shipped: the demo centrepiece floats bottom-left of the map. It picks the highest-ranked fault where one patient escalates and another only gets an SMS check (concentrator and ventilator first) and shows both: backup left, expected case, the range the decision used, verdict and `why` lines, all SIMULATED. "Show on map" flies to the fault. With no such pair it says so rather than faking one.
 - Touched: `frontend/` only (`twoHouses.ts`, `devices.ts`, `main.ts`, styles). Reads `/api/triage`.
 - ⚠️ Conflicts:
   - @sali: 📨 Rama needs the two-houses pair seeded on a fresh live fault (`python -m app.seed --two-houses <outage_id>`). Live triage right now has 45 patients on 3 faults, and every one escalates, so the card shows its empty state.
-- Conflict status: open
+- Conflict status: resolved by @sali 2026-10-18 (Sali's part)
 
 ### 2026-10-18 06:17 — frontend fixes: Escalate contrast + escaped API strings — @rama — done
 - Shipped: the red Escalate pill now uses near-black text (5.3:1; white was 3.7:1, under AA). Source, device, scale and status names from the API are escaped before they go into HTML templates, so a feed can't inject markup.
@@ -609,7 +609,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Shipped: the VM now runs `infra/docker-compose.yml`, deployed after a Discord heads-up. Sali's `db` and `app` carry on as before (same Postgres container and data). `signer` sits on an internal network shared only with `app`, with no published port and a read-only filesystem. `app` gets `BN_SIGNER_URL` and its token, and waits for a healthy signer. The first signed checkpoint was seq 109 at 05:20 UTC: `/api/audit/verify` shows `sig_ok: true` (signer `key_id` bda7ac1f8fd6c9d2). `infra/test-compose.sh` checks that boundary: 8/8.
 - Touched: `infra/docker-compose.yml`, `infra/signer.yml`, `infra/test-compose.sh` (new); VM `~/BlackNaught/secrets/signer_*` (new, 0600); README run commands, "Start here" step 6, the "How we work" deploy line
 - ⚠️ Conflicts: @sali @nate @rama: deploy and restart with `-f infra/docker-compose.yml` from now on, because an `up` from `backend/` turns signing off. In `~/work/<name>` clones use only `run --rm`. @sali: your 06:05 ask is done.
-- Conflict status: open
+- Conflict status: resolved by @sali 2026-10-18 (Sali's part)
 
 ### 2026-10-18 06:32 — home-sensor early warning (layer 2), served model on the VM — @nate
 - Shipped:
@@ -622,3 +622,22 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @sali: `home.risk()` can take the home layer from this model: `"elevated"` / `"normal"`, which fits your `headline()`. It needs a per-home feature window from a sensor stream; Accra replay homes have one, GB demo homes only once the simulator feeds them.
   - @ahmed: (1) the Accra replay can score each home with `score()`; the feature code is `probe_precursor.features`. (2) **Brief task 9 (LR table + household distributions) is deferred** because time is short (brief fallback order: M2 → layer 2 → M8 → M4). For now the simulator keeps `seed.DEVICES` (PRD §2 backup hours; the device shares are assumptions), and the combiner should use the quorum rule with LR = 1 for anything unlisted.
 - Conflict status: open
+
+### 2026-10-18 06:39 — live duration curve swapped to UKPN's — @sali
+- Shipped: Nate's `m1-km-ukpn` curve copied to `backend/models/km_ukpn.json`, `BN_MODEL_PATH` set for `app`, deployed with `infra/docker-compose.yml`. `/api/health` reports `m1-km-ukpn`; signing stays on (`sig_ok: true`). Test checks the live curve is the UKPN one. README says which curve is live and why.
+- Touched: `backend/models/km_ukpn.json`, `backend/compose.backend.yml`, `backend/tests/test_triage.py`, `README.md`
+- ⚠️ Conflicts: @nate: grades now come in under `m1-km-ukpn` next to `m1-km-enwl`.
+- Conflict status: resolved
+
+### 2026-10-18 06:39 — seed can add just the two-houses pair; pair live — @sali
+- Shipped: `python -m app.seed --per-outage 0 --two-houses <id>` used to insert nothing. Fixed + test (210 green). Pair seeded on live UKPN fault 133: the oxygen concentrator (2.6 h left) escalates on q75, the ventilator (13.6 h) gets an SMS check on q50.
+- Touched: `backend/app/seed.py`, `backend/tests/test_crypto_seed.py`; VM DB (2 synthetic patients)
+- ⚠️ Conflicts: @rama: your card now has a pair to show.
+- Conflict status: resolved
+
+### 2026-10-18 06:39 — Sali covers the frontend while Rama's Claude usage is out — @sali
+- Shipped: `Rama-Frontend` synced with `main` (0 behind / 0 ahead; nothing of Rama's was left unmerged). Checked his work: `npm test` 111/111, 89.7% lines covered, `npm run build` passes. Sali continues Rama's brief §3 on `Rama-Frontend`, keeping his design choices; open rows: 5, 6, 8, 10, 11, 12, 13, then 14–16.
+- Touched: `Rama-Frontend` (merge only); briefs (Rama, Sali, Nate, Ahmed), `BLACKNAUGHT.md` NOW, CLAUDE.md on `context` (c00938f)
+- ⚠️ Conflicts: @rama: when you're back, sync and read entries from here on before continuing; your brief has a note at the top. @ahmed: frontend / nginx `dist/` questions go to Sali for now.
+- Conflict status: open
+
