@@ -9,7 +9,7 @@ import httpx
 import pytest
 
 from app import audit, survival
-from app.agent import Agent, Patient, plan, widen
+from app.agent import Agent, Patient, brier, corrected, isotonic, plan, widen
 from app.ingest import feeds, store
 from app.seed import INSERT, keys, patient_row
 from app.triage import Scorer
@@ -56,6 +56,16 @@ def test_a_stale_feed_widens_to_q90_and_only_its_patients_cross():
     assert widen([on_stale, on_fresh, covered], {"npg"}) == [on_stale]
     assert on_stale.escalate and not on_fresh.escalate and not covered.escalate
     assert on_stale.why == ["npg feed stale → q90 6.0 h > reserve 4.0 h"]
+
+
+def test_the_correction_is_monotone_and_never_worse_on_the_data_it_was_fitted_on():
+    p = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+    y = [0, 1, 0, 1, 1, 1]
+    steps = isotonic(p, y)
+    fitted = [corrected(steps, q) for q in p]
+    assert fitted == sorted(fitted) and fitted == [0.0, 0.5, 0.5, 1.0, 1.0, 1.0]
+    assert brier(fitted, y) <= brier(p, y)
+    assert corrected(steps, 0.95) == 1.0 and corrected(steps, 0.0) == 0.0  # outside the fitted range: the end steps
 
 
 # --- the loop against the database ---------------------------------------------------------------
@@ -199,6 +209,38 @@ async def test_granite_words_one_text_a_tick_so_the_loop_keeps_up(agent_db, supe
                if "writer" in args}
     assert granite.asked == 1
     assert writers == {"draft_cap_alert": "granite", "write_sitrep": "template", "field_briefing": "template"}
+
+
+def graded(superuser, outcome_sql: str, p_sql: str, n: int = 90) -> None:
+    """n graded +2 h predictions for the GB fault, one a minute, with the given probability and outcome rules."""
+    superuser.run(
+        "INSERT INTO prediction (outage_id, made_at, elapsed_h, model_id, model_sha256, horizon_h, p_still_off,"
+        f" quantiles) SELECT 1, CAST(:t AS timestamptz) + i * interval '1 minute', 1, 'm-test', 'x', 2, {p_sql}, '{{}}'::jsonb"
+        " FROM generate_series(1, :n) i", t=NOW - timedelta(hours=8), n=n)
+    superuser.run(
+        "INSERT INTO grade (pred_id, graded_at, outcome, censored, reason, brier) SELECT pred_id,"
+        f" made_at + interval '2 hours', o, false, 'restored', (p_still_off - o) ^ 2 FROM (SELECT pred_id, made_at,"
+        f" p_still_off, {outcome_sql} AS o FROM prediction WHERE model_id = 'm-test') t")
+
+
+@pytest.mark.anyio
+async def test_drifted_probabilities_get_a_correction_judged_on_newer_grades(agent_db, superuser):
+    # the model says 20% or 80% still off, but 8 in 10 are still off either way
+    graded(superuser, "CASE WHEN pred_id % 10 < 8 THEN 1 ELSE 0 END", "CASE WHEN i % 2 = 0 THEN 0.2 ELSE 0.8 END")
+    agent = await started(agent_db, FakeSigner())
+    await agent.tick(NOW)
+    [(state, args)] = decisions(superuser)["recalibrate"]
+    assert state == "auto_done" and args["horizon_h"] == 2 and args["model_id"] == "m-test"
+    assert args["brier_after"] < args["brier_before"] - 0.1 and (args["n_fit"], args["n_test"]) == (60, 30)
+    assert agent.memory["calibration:m-test:2"] == args["steps"]
+    assert await agent.tick(NOW + timedelta(minutes=1)) == 0  # checked again only after RECALIBRATE_EVERY
+
+
+@pytest.mark.anyio
+async def test_calibrated_probabilities_are_left_alone(agent_db, superuser):
+    graded(superuser, "CASE WHEN pred_id % 10 < 8 THEN 1 ELSE 0 END", "0.8")
+    await (await started(agent_db, FakeSigner())).tick(NOW)
+    assert "recalibrate" not in decisions(superuser)
 
 
 @pytest.mark.anyio

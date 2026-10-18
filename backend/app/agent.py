@@ -13,6 +13,7 @@ import hashlib
 import json
 import logging
 import os
+from bisect import bisect_left
 from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -38,6 +39,10 @@ TRIAGE_MAX_AGE = timedelta(minutes=5)
 CAP_MIN_PATIENTS = 3               # at-risk patients on one outage before a public alert is drafted
 BULK_SMS_OVER = 10                 # carers texted in one round above this go to an operator as one bulk_sms
 SITREP_EVERY = timedelta(minutes=15)
+RECALIBRATE_EVERY = timedelta(hours=1)
+MIN_GRADES = 60    # graded predictions per horizon and model before a correction is fitted
+FIT_SHARE = 2 / 3  # the older grades fit the correction and the newer ones judge it, so it's scored on unseen data
+MIN_GAIN = 0.005   # Brier a correction must save on the newer grades to count as drift
 SITREP_MAX_WAITING = 20            # rationale lines naming who waits; the rest are counted
 SUPPLY = {"o2_concentrator": "oxygen cylinder", "o2_cylinder": "oxygen cylinder"}  # anything else: a backup battery
 # a fresh Granite text takes ~80 s on the VM's CPU, so one a tick keeps the loop's next look at triage close;
@@ -57,6 +62,13 @@ SELECT t.tick_at, 'P-' || upper(substr(md5(t.patient_id::text), 1, 6)) AS ref, t
 FROM triage_snapshot t JOIN patient p USING (patient_id) JOIN outage o USING (outage_id)
 WHERE t.tick_at = (SELECT max(tick_at) FROM triage_snapshot)
 ORDER BY t.rank
+"""
+# GB only: the brief keeps the correction to grids whose feeds give explicit restorations; censored rows can't be scored
+GRADES = """
+SELECT p.horizon_h, p.model_id, p.p_still_off, g.outcome FROM grade g
+JOIN prediction p USING (pred_id) JOIN outage o USING (outage_id)
+WHERE NOT g.censored AND o.source IN ('ukpn', 'npg', 'ssen')
+ORDER BY g.graded_at
 """
 
 
@@ -98,6 +110,34 @@ def widen(patients: list[Patient], stale: set[str]) -> list[Patient]:
             p.why.append(f"{p.source} feed stale → q90 {p.q90_h:.1f} h > reserve {p.reserve_left_h:.1f} h")
             crossed.append(p)
     return crossed
+
+
+def brier(p: list[float], y: list[int]) -> float:
+    return sum((a - b) ** 2 for a, b in zip(p, y)) / len(y)
+
+
+def isotonic(p: list[float], y: list[int]) -> tuple[list[float], list[float]]:
+    """Pool-adjacent-violators: the least-squares non-decreasing fit of outcome on probability, as a step function
+    (each step's upper probability, its corrected value)."""
+    seen: dict[float, list[float]] = {}
+    for pi, yi in zip(p, y):
+        total = seen.setdefault(pi, [0.0, 0])
+        total[0] += yi
+        total[1] += 1
+    blocks: list[list[float]] = []  # [sum of outcomes, count, upper probability]
+    for pi in sorted(seen):
+        blocks.append([*seen[pi], pi])
+        while len(blocks) > 1 and blocks[-2][0] * blocks[-1][1] > blocks[-1][0] * blocks[-2][1]:
+            total, count, upper = blocks.pop()
+            blocks[-1][0] += total
+            blocks[-1][1] += count
+            blocks[-1][2] = upper
+    return [b[2] for b in blocks], [b[0] / b[1] for b in blocks]
+
+
+def corrected(steps: tuple[list[float], list[float]], p: float) -> float:
+    uppers, values = steps
+    return values[min(bisect_left(uppers, p), len(values) - 1)]
 
 
 @dataclass
@@ -294,6 +334,39 @@ class Agent:
         await self.remember(["sitrep_at"], now.isoformat(), now)
         return 1
 
+    async def self_correct(self, now: datetime) -> int:
+        """recalibrate(horizon): a monotone correction per horizon and model, fitted on the older GB grades and kept
+        only if it lowers the Brier on the newer ones, which is what drift looks like for a probability."""
+        last = self.memory.get("recalibrate_at")
+        if last and now - datetime.fromisoformat(last) < RECALIBRATE_EVERY:
+            return 0
+        groups: dict[tuple[int, str], tuple[list[float], list[int]]] = {}
+        for r in await self.db.rows(GRADES):
+            p, y = groups.setdefault((r["horizon_h"], r["model_id"]), ([], []))
+            p.append(float(r["p_still_off"]))
+            y.append(r["outcome"])
+        calls = 0
+        for (h, model_id), (p, y) in sorted(groups.items()):
+            if len(y) < MIN_GRADES:
+                continue
+            cut = int(len(y) * FIT_SHARE)
+            steps = isotonic(p[:cut], y[:cut])
+            before, after = brier(p[cut:], y[cut:]), brier([corrected(steps, q) for q in p[cut:]], y[cut:])
+            if before - after < MIN_GAIN:
+                continue
+            fitted = {"p": [round(v, 3) for v in steps[0]], "corrected": [round(v, 3) for v in steps[1]]}
+            await self.call("recalibrate", {"horizon_h": h, "model_id": model_id, "brier_before": round(before, 4),
+                                            "brier_after": round(after, 4), "n_fit": cut, "n_test": len(y) - cut,
+                                            "steps": fitted}, [
+                f"GB grades at +{h} h: a correction fitted on the older {cut} lowers the Brier on the newer "
+                f"{len(y) - cut} from {before:.4f} to {after:.4f}",
+                "kept in agent memory; the triage scorer doesn't apply it yet",
+            ], now)
+            await self.remember([f"calibration:{model_id}:{h}"], fitted, now)
+            calls += 1
+        await self.remember(["recalibrate_at"], now.isoformat(), now)
+        return calls
+
     async def tick(self, now: datetime) -> int:
         """One pass of the loop; returns the number of tool calls made."""
         rows = await self.db.rows(TRIAGE)
@@ -315,6 +388,7 @@ class Agent:
             calls += len(changed) + await self.help_unreached(now, schedule) + await self.draft_alerts(now, pairs)
             calls += await self.sitrep(now, patients, schedule, stale, replanned=bool(changed))
             calls += await self.brief(now, schedule, changed)
+        calls += await self.self_correct(now)
         ticks = self.memory.get("loop", {}).get("ticks", 0) + 1
         await self.remember(["loop"], {"ticks": ticks, "last_tick": now.isoformat()}, now)
         return calls
