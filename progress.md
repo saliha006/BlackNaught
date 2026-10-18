@@ -12,6 +12,32 @@
 - Conflict status: open | resolved by @<Name> <date>
 ```
 
+## How we work (read once)
+**GitHub:**
+- Code and push from your **own laptop**, as yourself: `git config user.email` must be your GitHub email, because judges read the history.
+- Each person has their own branch: `sali-backend`, `nate-ml`, `Rama-Frontend`, `ahmed-platform`.
+- **Per feature:**
+  1. Check this board.
+  2. Code and test.
+  3. `git push origin <your-branch>`.
+  4. `git merge origin/main` into your branch and re-test, fixing conflicts there (agree with the owner if it's their code).
+  5. Merge to `main`.
+  6. Add an entry below. Flag anyone whose files or contracts you touched with `⚠️ Conflicts: @name`.
+- **Docs** (PRD, briefs, design notes) are git-ignored and shared on Discord/Drive. Only this file and `README.md` live on GitHub.
+
+**LinuxONE VM** (`ssh linux1@148.100.78.95`, with your own SSH key):
+- **Never log into GitHub on the VM.** It's one shared `linux1` user. The VM only **pulls**.
+- **`~/BlackNaught`** is the **deploy copy**, always on `main`, and it runs the live app.
+  - Don't edit code there.
+  - After a merge to `main`: `cd ~/BlackNaught && git pull --ff-only && cd backend && sudo docker compose -f compose.backend.yml restart app`.
+  - Say so in Discord first.
+- **`~/work/<name>`** is your own clone for testing your branch on real s390x: `cd backend && sudo docker compose -f compose.backend.yml run --rm --no-deps app pytest`.
+  - The test DB is shared and reset per run, so **one person tests at a time**.
+- **Jupyter** is at `http://148.100.78.95:38888` (token from Sali; never in screenshots).
+  - Files go in `~/shared`.
+  - Training data is in `~/data/raw/` (ENWL 312,936 + UKPN IIS 316,435, with SHA256SUMS).
+- **Evidence:** `bash ~/BlackNaught/scripts/proof.sh` rewrites `evidence/`. The training notebook is at Jupyter → `shared/blacknaught/train_on_linuxone.ipynb`.
+
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
 - **As of 2026-10-18 02:01:**
@@ -145,4 +171,10 @@
 - Shipped: `scripts/proof.sh` writes `evidence/01–06_*.txt` (platform s390x/9175/NNPA, all containers s390x, training logs, 194 tests on s390x, live service incl. 150 graded UKPN predictions with Brier 0.186 at 2 h, audit verify, 401 without login, NIST AES-GCM, roles, firewall); `notebooks/train_on_linuxone.ipynb` executed in Jupyter on the VM. Triage reason wording fix.
 - Touched: `evidence/`, `scripts/proof.sh`, `notebooks/`, `backend/app/harm.py`
 - ⚠️ Conflicts: @ahmed @rama: `bash ~/BlackNaught/scripts/proof.sh` re-captures everything for the proof slide; the notebook is at Jupyter → `shared/blacknaught/train_on_linuxone.ipynb`.
+- Conflict status: open
+
+### 2026-10-18 02:25 — VM deploy copy reset to main + team workflow — @sali
+- Shipped: the VM's `~/BlackNaught` was a stale `sali-backend` checkout with synced, untracked files. It's now a clean checkout of `main` tracking `origin/main`, so `git pull` works there. Before switching, every untracked file was checked against `main` (103 identical). `secrets/`, `backend/secrets/` and the live app were kept; the app was restarted healthy. Added "How we work" at the top of this file.
+- Touched: VM `~/BlackNaught` (git state only), `progress.md`
+- ⚠️ Conflicts: @ahmed @nate @rama: use `~/BlackNaught` only as the deploy copy (pull + restart), and clone `~/work/<name>` for your own testing. @ahmed: Nate's and Rama's SSH keys still need adding.
 - Conflict status: open
