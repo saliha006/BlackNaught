@@ -15,24 +15,46 @@ from datetime import date
 from pathlib import Path
 
 K = 3  # "≥3 faults in a district tomorrow": 39% of district-days in ENWL 1997–2026 (measured on the VM)
+# ENWL redrew its districts in mid-2024 (Carlisle split into Penrith and Workington), and a few stray rows carry other
+# names. A month with fewer faults than this is stragglers, not a district covering ground, so it isn't averaged in:
+# averaging a 2024 district over 30 years made Penrith and Workington look ~10× safer than they are.
+ACTIVE_MONTH_MIN = 10
+# A district needs this many faults in the last 12 months to still be on today's map (drops Carlisle, Barrow, Lancaster).
+CURRENT_MIN = 100
 
 
 def fit(csv_path: Path) -> dict:
-    per_month: dict[str, dict[int, int]] = defaultdict(lambda: defaultdict(int))
-    years: set[int] = set()
+    counts: dict[str, dict[tuple[int, int], int]] = defaultdict(lambda: defaultdict(int))
+    last = ""
     with csv_path.open(encoding="utf-8-sig", newline="") as f:
         for row in csv.DictReader(f, delimiter=";"):
             started = row["incident_date_time"][:10]
             district = row["district_name"].strip()
             if not started or not district:
                 continue
-            y, m = int(started[:4]), int(started[5:7])
-            years.add(y)
-            per_month[district][m] += 1
-    span = range(min(years), max(years) + 1)
-    days_in = {m: sum(calendar.monthrange(y, m)[1] for y in span) for m in range(1, 13)}
-    rates = {d: {str(m): round(per_month[d][m] / days_in[m], 4) for m in range(1, 13)} for d in per_month}
-    return {"model_id": "climatology-enwl", "k": K, "years": [span.start, span.stop - 1], "rates": rates}
+            counts[district][(int(started[:4]), int(started[5:7]))] += 1
+            last = max(last, started)
+    end = int(last[:4]) * 12 + int(last[5:7]) - 1
+
+    def month_of(t: int) -> tuple[int, int]:
+        return t // 12, t % 12 + 1
+
+    recent = {month_of(end - i) for i in range(12)}
+    partial = month_of(end)  # the export stops mid-month, so its last month would read as a quiet one
+
+    rates = {}
+    for district, cells in counts.items():
+        if sum(n for ym, n in cells.items() if ym in recent) < CURRENT_MIN:
+            continue
+        active = [ym for ym, n in cells.items() if n >= ACTIVE_MONTH_MIN and ym != partial]
+        per_month = {}
+        for m in range(1, 13):
+            months = [ym for ym in active if ym[1] == m]
+            days = sum(calendar.monthrange(y, m)[1] for y, _ in months)
+            per_month[str(m)] = round(sum(cells[ym] for ym in months) / days, 4) if days else 0.0
+        rates[district] = per_month
+    first = min(y for cells in counts.values() for y, _ in cells)
+    return {"model_id": "climatology-enwl", "k": K, "years": [first, int(last[:4])], "rates": rates}
 
 
 def p_at_least(k: int, mean: float) -> float:
