@@ -64,6 +64,11 @@
 ---
 
 ## 3. ▶ Current tasks (2026-10-18 06:05), in order
+**▶ 2026-10-18 11:15 (from Sali): landing glance window + map clarity (critic-agent pass, research ledger in the research doc).**
+- **Glance window** between the navbar and the bolt (navbar, labels and bolt unchanged): count of cuts, Severe / Moderate, a still GB night picture (`frontend/public/gb-night.webp`, 13 KiB, captured from our own map style) with live glows, "Is there one near me?", "Call 105". Not a second map, so no swipe is trapped.
+- **Map:** cuts are labelled pins ("● Severe" / "● Moderate") that cluster into "N cuts"; **beams off by default** (chip kept); a still grain inside the fog from zoom 12. The radar sweep stays on.
+- Phone LCP with the window: 2.2–2.5 s (image preloaded). 152 frontend tests.
+
 **▶ 2026-10-18 08:52 (from Sali): public map + operator dashboard split (Sali's call, from a teammate's idea).**
 - **Map (everyone, tablet-first):** filters on top, a **Forecast** dropdown (the three Predict cards), and one scrollable **Power cuts** column on the right (phone: a short strip at the bottom), each card with the severity in words, sorted by distance after **Near me**. Dots shrink when zoomed out.
 - **Operator dashboard** (landing menu "Dashboard", or the top-bar button): your Predict cards, Two houses, and the Power cuts / Triage / Agent & audit panel with the charts. Your views and tests are intact; they just live there now.

@@ -10,7 +10,7 @@
 
 ---
 
-## NOW (updated 2026-10-18 10:52)
+## NOW (updated 2026-10-18 11:15)
 
 ### Headline
 **Blacknaught predicts blackouts before they happen and protects the people they'd hurt most.**
@@ -29,6 +29,7 @@ Full records with the rejected options: Sali's vault Log (Sali); the summary is 
 
 | Date | Decision |
 |---|---|
+| 18 Oct | **Landing glance window + map pins (Sali, 11:15, critic-agent recommendations):** a still GB picture with live glows and plain readouts above the hero; cuts labelled Severe/Moderate as clustered pins; beams off by default; grain inside the fog. Pillar option A chosen (labelled pins) |
 | 18 Oct | **Area risk = Nate's M8 on the live forecast (Sali, 10:52)**, option B un-parked: LIVE label, hourly Open-Meteo fetch, climatology baseline as fallback; Cumbria merged as Nate trained it |
 | 18 Oct | **Control room = map first (Sali, 08:27):** severity fog (red severe / amber moderate, hover label in words) over live cuts; Predict as a left column; two-houses folded to one line; cells off by default; readable cards (90% opaque, 14 px min) |
 | 18 Oct | **Area risk refit on today's ENWL districts (Sali, 08:27)**, option A: Penrith + Workington (2024 split) no longer read ~10× too safe. **Parked:** swap to Nate's M8 (option B) |
