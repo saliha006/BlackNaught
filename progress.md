@@ -641,3 +641,10 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts: @rama: when you're back, sync and read entries from here on before continuing; your brief has a note at the top. @ahmed: frontend / nginx `dist/` questions go to Sali for now.
 - Conflict status: open
 
+
+### 2026-10-18 06:43 — public HTTPS edge with post-quantum TLS on LinuxONE (task 7 part 2, task 17 part 1) — @ahmed
+- Shipped: `edge` (nginx 1.26.3 on `debian:trixie`, OpenSSL 3.5.7) in `infra/docker-compose.yml`, live at **https://148.100.78.95:8443**. TLS 1.3 offers `X25519MLKEM768` first, with classic X25519 for older clients. It serves the UI (`frontend/dist`, built from `main`) and proxies `/api` and `/stream`; the stream is unbuffered with a 1 h timeout. It looks the app up per request, so the edge survives an app restart. Checked from outside: a client offering only the post-quantum group gets TLS 1.3 (`evidence/09_edge_pq_tls.txt`); the UI, `/api/health` and `/stream` all work through it. The dry run created only `edge`, so app, db and signer were not restarted.
+  - The certificate is **self-signed** for now (decision, Ahmed: self-signed first, then Let's Encrypt for `148-100-78-95.sslip.io` as an upgrade), so browsers warn once.
+- Touched: `infra/edge/` (new), `infra/docker-compose.yml`, `infra/test-compose.sh` (10/10), `scripts/make-edge-cert.sh` (new), `evidence/09_edge_pq_tls.txt`; VM `~/BlackNaught/secrets/edge_*.pem`, `~/BlackNaught/frontend/dist`
+- ⚠️ Conflicts: @sali: the public demo entry is live. After a frontend change, rebuild `dist` (`npm run build`) and copy it to `~/BlackNaught/frontend/dist` on the VM; nginx serves it without a restart. If the Let's Encrypt upgrade works, the demo URL can become `https://148-100-78-95.sslip.io:8443`, which changes a NOW decision, so you'd mirror it there.
+- Conflict status: open
