@@ -24,7 +24,7 @@ Two halves: predict where power will fail, then protect the people it will hurt.
 |---|---|---|---|
 | Area fault risk | Which districts are likely to have faults tomorrow? | Hours to days | Live climatology baseline. Weather model (M8) trained: +5.1% Brier skill on 2024–26, not wired in yet |
 | Home sensors | Which homes will probably lose power in the next 30 minutes? | Minutes | Tested on real Accra sensor data. Served model in progress |
-| Grid stress | Is the whole grid in trouble? | Seconds | Live, from Elexon frequency |
+| Grid stress | Is the whole grid in trouble? | Seconds | Live band rule on Elexon frequency. Replayed on NESO 1-s data: 74 s warning before the 9 Aug 2019 demand disconnection |
 | Protect | Who runs out of backup first, and who do we call? | During the cut | Live: triage, grading, approvals, CAP alerts, "my home" |
 
 Each layer keeps its own source and horizon. We don't blend them into one made-up percentage. For households,
@@ -176,6 +176,19 @@ the baseline's 0.210, **+5.1% skill**. On Storm Éowyn (Cumbria, 24 Jan 2025, 22
 baseline expected 7.6. It still under-calls the worst storms. With areas this size, 3 faults happen on 65% of days,
 so the threshold should rise.
 
+**Grid stress replay (M4).** A rule, not a trained model, with every threshold fixed in code before the replay was
+scored (`ml/m4.py`, `evidence/train_log_m4.txt`). It warns when frequency is below 49.8 Hz and, at the last 5 seconds'
+rate of fall, would reach 48.8 Hz (automatic demand disconnection, LFDD) within 60 s. Replayed on NESO's 1-second data:
+
+| Signal | Warning before LFDD on 9 Aug 2019 | False alarms, Oct 2025 – Sep 2026 |
+|---|---|---|
+| Below 49.8 Hz (live STRESSED) | 74 s | 11.1 a month |
+| Below 49.5 Hz (live EMERGENCY) | 71 s | 0 |
+| M4 rule | 74 s | 0.4 a month (5 in the year) |
+
+Honest reading: M4 gains 3 seconds over the live EMERGENCY band and costs 5 false alarms a year, so the live band rule
+stays. It's one event, and those seconds exist only on 1-s data (see Limits).
+
 **Home-sensor early warning on real data.** One week of nLine GridWatch readings from 429 sensors in Accra, Ghana
 (4.76 M readings, June 2021). Trained on five days, tested on the next two. Label: did this home lose power within 30
 minutes?
@@ -239,6 +252,7 @@ SSE stream at `/stream`.
 | UKPN Interruptions Incentive Scheme (316,435 rows, 180,059 incidents) | Cross-operator validation | CC BY 4.0 |
 | UKPN, Northern Powergrid, SSEN live faults | Live outages and grading | CC BY 4.0, NPg Open Data Licence v1.0, public feed |
 | Elexon system frequency | Grid stress | Public API |
+| NESO historic system frequency (1 s; Aug 2019, Oct 2025 – Sep 2026) | Grid stress replay | NESO Open Data Licence |
 | IODA (Georgia Tech) | Wide-area outage signal | Free for research |
 | postcodes.io | Postcode lookups | Open Government Licence |
 | nLine GridWatch Accra | Home-sensor study | CC BY-NC 4.0, GPS and IDs stripped first |
@@ -266,6 +280,8 @@ footprints, with phone numbers from Ofcom's range reserved for drama. A table co
   ENWL redrew its northern districts in 2024, so the baseline, which averages by district name, has no history for
   Penrith or Workington; M8 merges them into one Cumbria area.
 - Northern Powergrid can't be graded and SSEN only partly, because grading needs explicit restore times.
+- Grid stress warning is seconds, and only on 1-second data. Elexon's live feed is every 15 s and about 1.5 min late, so
+  on a 9 Aug 2019-style event the live gauge turns red after the disconnection has started. The replay is one event.
 - Next: a pilot with one health team and one network operator, a small real sensor fleet whose data becomes local
   outage labels, a learned combined risk score once one grid has all three data types, and audit checkpoints published
   off the box.
