@@ -235,6 +235,9 @@ curl -s localhost:8000/api/health
 
 # tests
 sudo docker compose -f backend/compose.backend.yml run --rm --no-deps app pytest --cov=app
+
+# public-alert demo, on the laptop the Android phone is plugged into (Git Bash, USB debugging on)
+python alerting/relay.py   # each operator-approved CAP alert whose ML-DSA signature verifies goes to the phone
 ```
 
 API docs live at `/api/docs`. The API binds to `127.0.0.1`; the public entry point is the nginx edge.
