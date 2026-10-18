@@ -592,3 +592,10 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
     3. restart (say so in Discord).
     - Caveat: it also scores NPg and SSEN outages, which have no history of their own. Grades will show `m1-km-ukpn` separately from `m1-km-enwl`, side by side.
 - Conflict status: open
+
+### 2026-10-18 06:14 — two-houses card (brief task 4) — @rama — done
+- Shipped: the demo centrepiece floats bottom-left of the map. It picks the highest-ranked fault where one patient escalates and another only gets an SMS check (concentrator and ventilator first) and shows both: backup left, expected case, the range the decision used, verdict and `why` lines, all SIMULATED. "Show on map" flies to the fault. With no such pair it says so rather than faking one.
+- Touched: `frontend/` only (`twoHouses.ts`, `devices.ts`, `main.ts`, styles). Reads `/api/triage`.
+- ⚠️ Conflicts:
+  - @sali: 📨 Rama needs the two-houses pair seeded on a fresh live fault (`python -m app.seed --two-houses <outage_id>`). Live triage right now has 45 patients on 3 faults, and every one escalates, so the card shows its empty state.
+- Conflict status: open
