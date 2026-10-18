@@ -352,3 +352,13 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @ahmed: the zDNN plugin adds **no TF device** (`list_physical_devices()` shows only CPU); check for `_z_ops.so` instead. No NNPA benchmark run, pending your #helpdesk answer (ToU §5).
 - Conflict status: open
 
+
+### 2026-10-18 05:07 — event contract frozen (task 6) — @ahmed
+- Shipped: ✅ `contracts/events.schema.json` as it stands. All seven kinds are there, plus `source_state`; the `sim` and `accra_replay` sources and the `SIMULATED` / `REPLAY` labels cover the simulator and the Accra replay.
+  - Decision (Ahmed): a sensor's type (home, anchor or control) and the link from a home sensor to its enrolled household go in a new `sensors` table, not in event payloads. Heartbeats stay small (about 5k a minute), and the home link is stored once.
+- Touched: nothing (the contract is unchanged)
+- ⚠️ Conflicts:
+  - @sali: 📨 Ahmed needs a `sensors` table in `/db` before F2 (the simulator): `sensor_id` (PK), `type` (home, anchor or control), `household_id` (null for anchors and controls), `cell_l1`. Your migration and naming; tell Ahmed if you'd shape it differently.
+  - @nate: event payloads don't change; read a sensor's type from that table.
+- Conflict status: open
+
