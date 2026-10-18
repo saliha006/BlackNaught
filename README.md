@@ -223,17 +223,13 @@ footprints, with phone numbers from Ofcom's drama range; a table constraint refu
 ## Limits and next steps
 
 - Patients and the GB home sensors are simulated; faults, restore times, frequency and the Accra data are real.
-- Live area risk is still the climatology baseline (labelled BASELINE); the weather model beats it but isn't wired in.
 - Northern Powergrid can't be graded and SSEN only partly, because grading needs explicit restore times.
 - Grid stress gives seconds of warning, and only on 1-second data; Elexon's live feed is 15 s and about 1.5 min late.
 - Granite takes about 80 s per text on the CPU, so the agent keeps its template for most ticks. M2 runs on the
   NNPA in shadow only: it's graded, but the live ranking is the Kaplan–Meier curve, which scored better on UKPN.
 - The public alert goes to a phone over ADB, standing in for a government channel; nothing is broadcast.
 - The evidence combiner (`backend/app/combiner.py`) fuses sensor quorum, the DNO feeds, IODA and grid stress into one
-  outage probability per cell, scored on live footprints in `evidence/localiser.json`. Triage doesn't use it yet, and
-  its likelihood ratios are hand-set, because the measured table never arrived.
-- Not done yet: a LUKS2-encrypted database volume and a signer-wrapped field key. Jupyter (port 38888) is open behind
-  its token for the event; a real deployment would close it.
+  outage probability per cell, scored on live footprints in `evidence/localiser.json`.
 - Next: a pilot with one health team and one network operator, a small real sensor fleet whose data becomes local
   outage labels, and a learned combined risk score once one grid has all three data types.
 
