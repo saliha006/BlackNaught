@@ -6,6 +6,9 @@ name: audit-checkpoints
 on:
   schedule:
     - cron: "*/10 * * * *"
+  # GitHub's cron is best effort and can lag for hours, so every push to main publishes too
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

@@ -997,6 +997,21 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Conflict status: open
 
 
+### 2026-10-18 11:26 — the GitHub Action now runs the off-box checkpoints; the laptop loop is off — @ahmed
+- Why it hadn't run: the workflow was active, but GitHub's scheduled trigger hadn't fired once in 2.5 h. It's best effort, and no workflow had ever run in this repo. So a push to main now runs the publisher too, and the cron stays as a backup.
+- Proof: the first push started a run straight away, and it passed all steps in 20 s (https://github.com/saliha006/BlackNaught/actions/runs/39119212985). It committed nothing because the laptop loop had published checkpoints 466–467 seconds earlier; the publisher only commits new ones.
+- The laptop loop is stopped, so from now on only GitHub publishes, until 28 Oct, with nobody at a laptop.
+- Touched: `.github/workflows/audit-checkpoints.yml` (adds the `push` trigger)
+- ⚠️ Conflicts: @sali @nate @rama: each push to main also runs a short (about 20 s) checkpoint job in Actions. It never touches main; it only commits to `audit-checkpoints`.
+- Conflict status: open
+
+### 2026-10-18 11:35 — fix: decisions waiting for approval no longer drop out of the dashboard — @ahmed
+- Bug: the UI loads `/api/agent/decisions?limit=50`, newest first, and the agent makes several decisions a minute. So the DA12 CAP draft, still waiting for approval, had sunk to 100th and vanished from the dashboard. Any pending approval older than the last 50 decisions was invisible to the operator.
+- Fix: the route now sorts `state = 'awaiting_approval'` first, then newest first. The response shape is the same. A regression test was red before the fix and is green after. Full suite 268 on s390x. Deployed with `restart app`.
+- Live: DA12 is 1st in the feed, and all 27 waiting decisions are in the UI's first 50.
+- Touched: `backend/app/main.py` (`agent_decisions`, the ORDER BY), `backend/tests/test_auth_decisions.py`
+- ⚠️ Conflicts: @sali: your route; one ORDER BY line plus a WHY comment. If waiting decisions ever pass 50 (escalations add up), a "Waiting for approval" section in the dashboard would be the full fix. That's your call.
+
 ### 2026-10-18 11:39 — live map in a macOS-style window on the landing page — @sali — done
 - Shipped: replaces the glance panel. The control room's map moves into a 93%-wide window (traffic-light title bar) between the navbar and the bolt, with fog, pins and radar; the location is asked on load (Sali's call); a small card says Checking your area, then You're safe (green) / Not safe (amber or red), and the map flies to the person. Refused location shows Location is off, never safe. Two-finger move on touch so one finger scrolls the page. Checked in headless Chromium: allowed (Manchester), refused, phone; 152 frontend tests.
 - Revert point: git tag `pre-terminal-map` (and `frontend/dist.pre-terminal` on the VM).
