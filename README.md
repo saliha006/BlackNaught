@@ -79,9 +79,9 @@ flowchart LR
     subgraph VM["LinuxONE VM, z17, s390x, Docker Compose"]
         APP["app: one asyncio process<br/>ingest, scorer, grader, FastAPI"]
         DB[("Postgres 17<br/>least-privilege roles")]
-        EDGE["nginx edge, post-quantum TLS (in progress)"]
+        EDGE["nginx edge, post-quantum TLS"]
         SIGN["Signer, ML-DSA-65"]
-        AGENT["Agent loop and Granite (in progress)"]
+        AGENT["Agent loop (Granite in progress)"]
     end
     UI["Control-room UI (in progress)"]
     F1 --> APP
