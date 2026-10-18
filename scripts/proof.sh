@@ -7,6 +7,7 @@ cd "$(dirname "$0")/.."
 OUT=evidence
 mkdir -p "$OUT"
 COMPOSE="sudo docker compose -f backend/compose.backend.yml"
+STACK="sudo docker compose -f infra/docker-compose.yml"  # the live stack: backend plus signer, edge, agent, Granite
 RUN="$COMPOSE run --rm --no-deps -e BN_WORKERS=0 app"
 
 section() { echo; echo "=== $1 ($(date -u +%FT%TZ)) ==="; }
@@ -21,8 +22,9 @@ section() { echo; echo "=== $1 ($(date -u +%FT%TZ)) ==="; }
 
 {
   section "Containers (all s390x)"
-  $COMPOSE ps
-  for img in bn-app:latest postgres:17 registry.linuxone.cloud.marist.edu/l1cc/jupyterlab-image-s390x:latest; do
+  $STACK ps
+  for img in bn-app:latest bn-signer:latest bn-edge:latest postgres:17 \
+             registry.linuxone.cloud.marist.edu/l1cc/jupyterlab-image-s390x:latest; do
     echo "$img → $(sudo docker image inspect -f '{{.Architecture}}' "$img")"
   done
 } | tee "$OUT/02_containers.txt"
@@ -59,3 +61,18 @@ section() { echo; echo "=== $1 ($(date -u +%FT%TZ)) ==="; }
   sudo docker exec bn-backend-db-1 psql -U postgres -d blacknaught -c "\du" | grep bn_
   echo "Firewall:"; sudo iptables -L INPUT -n | head -6
 } | tee "$OUT/06_security.txt"
+
+{
+  section "Platform: stack boundaries, signer, post-quantum edge, agent, Granite"
+  bash infra/test-compose.sh
+  echo "Signer: $(sudo docker exec bn-backend-signer-1 python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8100/health').read().decode())")"
+  # the host's OpenSSL is 3.0, which has no ML-KEM, so the client is the signer image's OpenSSL 3.5 (no key in it)
+  echo "Edge, offered only the hybrid post-quantum group:"
+  echo | sudo docker run --rm -i --network host --entrypoint openssl bn-signer:latest s_client -connect 127.0.0.1:8443 \
+    -servername 148-100-78-95.sslip.io -groups X25519MLKEM768 -verify_return_error 2>/dev/null \
+    | grep -E "Negotiated TLS1.3 group|Verify return code|issuer="
+  echo "Agent decisions by tool and state:"
+  curl -s "localhost:8000/api/agent/decisions?limit=500" | python3 -c "import collections, json, sys; print(dict(collections.Counter((d['tool'], d['state']) for d in json.load(sys.stdin))))"
+  echo "Signed agent tool calls in the audit chain: $(sudo docker exec bn-backend-db-1 psql -U postgres -d blacknaught -tAc "SELECT count(*) FROM bn.audit_log WHERE kind = 'tool_call_signature'")"
+  echo "Granite, from inside the agent's network: $(sudo docker exec bn-backend-agent-1 /opt/venv/bin/python -c "import urllib.request; print(urllib.request.urlopen('http://granite:8200/health', timeout=5).read().decode())")"
+} | tee "$OUT/12_platform.txt"

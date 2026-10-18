@@ -81,18 +81,23 @@ flowchart LR
         DB[("Postgres 17<br/>least-privilege roles")]
         EDGE["nginx edge, post-quantum TLS"]
         SIGN["Signer, ML-DSA-65"]
-        AGENT["Agent loop (Granite in progress)"]
+        AGENT["Agent loop, every 60 s"]
+        GRAN["Granite 3.3 2B, words only"]
     end
     UI["Control-room UI (in progress)"]
+    PHONE["Phone relay on a laptop<br/>checks the signature, then ADB"]
     F1 --> APP
     F2 --> APP
     F3 --> APP
     APP --> DB
     DB --> APP
     AGENT --> DB
-    SIGN --> DB
+    APP --> SIGN
+    AGENT --> SIGN
+    AGENT --> GRAN
     APP --> EDGE
     EDGE --> UI
+    EDGE --> PHONE
 ```
 
 Some choices worth knowing:
@@ -106,6 +111,62 @@ Some choices worth knowing:
 - **Contracts first.** `contracts/openapi.yaml`, `contracts/events.schema.json` and `contracts/model.md` were frozen
   early so four people could build in parallel.
 
+## Platform, agent and proof
+
+Everything runs on the LinuxONE VM (z17, s390x, 3 vCPUs, 8 GB) as one Compose project, `infra/docker-compose.yml`:
+`db`, `app`, `signer`, `edge`, `agent` and `granite`. `bash infra/test-compose.sh` checks 17 boundaries in the rendered
+config. For example: the signer and Granite publish no port, only the app and the agent can reach the signer, only the
+agent can reach Granite, and the app answers only on the VM itself.
+
+- **Post-quantum TLS at the edge.** nginx 1.26.3 on Debian trixie's OpenSSL 3.5.7 serves the UI and proxies `/api`
+  and `/stream`. It offers the hybrid X25519MLKEM768 key exchange, with a trusted Let's Encrypt certificate for
+  `148-100-78-95.sslip.io`. Checked from outside the VM: `Negotiated TLS1.3 group: X25519MLKEM768` and
+  `Verify return code: 0 (ok)` (`evidence/09_edge_pq_tls.txt`).
+- **ML-DSA-65 signatures.** A small signer service holds the only private key, and the key never leaves its container.
+  Each caller needs its own token, and the signer sits on an internal network that only `app` and the agent join. It
+  signs the audit chain's checkpoints, each approved CAP alert and every tool call the agent makes. The public key is
+  `contracts/signer_pub.pem` (key_id `bda7ac1f8fd6c9d2`), so anyone with OpenSSL 3.5 can check a signature
+  (`contracts/signer.md`).
+- **The agent.** `backend/app/agent.py` runs every 60 s as its own service and database role.
+  - It reads the live triage and the feeds' health.
+  - It fills five responders' rounds with a greedy knapsack on harm-hours avoided per minute. Whoever runs out
+    before power is likely back goes first.
+  - It acts only through its tools: `assign_visit`, `notify_carer`, `request_supplier`, `escalate`,
+    `draft_cap_alert`, `bulk_sms`, `mark_source_stale`, `write_sitrep`, `field_briefing` and `recalibrate`.
+  - Every call is signed before it's made, so no signature means no action.
+  - 999 escalations, CAP drafts and texts to more than 10 carers wait for an operator.
+  - A feed with no good poll for three intervals is marked stale. Its patients are then judged on the pessimistic 90th
+    percentile and re-ranked.
+  - Its memory is a Postgres table, so a restart repeats nothing.
+  - Every hour it checks itself against the overnight grades: a monotone correction fitted on the older GB grades is
+    kept only if it lowers the Brier score on the newer ones, and it's logged with both scores. The triage scorer
+    doesn't apply it yet.
+- **Sensor simulator.** `backend/app/simulator.py` puts fuse-box sensors at synthetic homes, plus street anchors and
+  controls, on the footprints of real live faults: about 2,200 sensors. Affected sensors send a last gasp at the fault's
+  real start and stay silent until its real restoration. On top of that comes noise:
+  - about 75% comms uptime;
+  - some sensors fitted behind a backup;
+  - partial faults where only one home in three loses power.
+
+  Every event is labelled SIMULATED.
+- **Granite on the box.** IBM Granite 3.3 2B Instruct, in the big-endian Q4_K_M build, runs in its own container
+  through the lab image's `llama_cpp`. It won't load unless the model file matches its pinned SHA-256. It sits on an
+  internal network that only the agent joins, with no route out.
+  - It only words things: the sitrep, field briefings and the CAP alert text.
+  - If its text has a number that isn't in the decision's own facts, the text is rejected and the template kept.
+  - Without Granite the decisions are identical (tested).
+  - A fresh text takes about 80 s on the CPU, so the agent asks for one per tick.
+- **Public alert, mocked.** Blacknaught drafts standard CAP 1.2 alerts that a government alerting service can
+  broadcast; in the demo a phone stands in for that channel.
+  - `alerting/relay.py` runs on a laptop with an Android phone on USB, and polls for operator-approved alerts.
+  - It checks each alert's ML-DSA-65 signature against the pinned public key. Unsigned or tampered alerts are refused.
+  - Only then does it show the alert on the phone over ADB, as an "EXERCISE" notification.
+- **Evidence.**
+  - `scripts/proof.sh` reruns the evidence pack into `evidence/`, including these platform checks
+    (`evidence/12_platform.txt`).
+  - NNPA timing on and off is in `evidence/nnpa_timing.csv`.
+  - The firewall and the app image's scan are in `evidence/10_firewall.txt` and `evidence/11_trivy_app.txt`.
+
 ## Tech stack
 
 | Layer | Choice | Why |
@@ -115,7 +176,9 @@ Some choices worth knowing:
 | DB driver | pg8000 | psycopg2 has no s390x wheel |
 | Database | PostgreSQL 17 | Roles, views and `SECURITY DEFINER` give least privilege with no extra services |
 | Crypto | AES-256-GCM via libcrypto (`ctypes`), argon2id sessions, ML-DSA-65 signer for audit checkpoints (OpenSSL 3.5) | Uses CPACF. `cryptography` isn't available on s390x |
+| Edge | nginx 1.26.3 on Debian trixie, OpenSSL 3.5.7 | Offers X25519MLKEM768, the hybrid post-quantum key exchange |
 | Alerts | CAP 1.2 XML, XSD-validated in tests | The OASIS standard for public warnings |
+| Agent text | IBM Granite 3.3 2B Instruct (big-endian GGUF, Q4_K_M) via `llama_cpp` | IBM's own model, run on the box, with no cloud AI |
 | Frontend | Vite, TypeScript, MapLibre GL (in progress) | Built on a laptop, served as static files |
 | Tests | pytest, pytest-cov, httpx, xmlschema | Run on the VM against a separate test database |
 
@@ -127,8 +190,9 @@ Some choices worth knowing:
   s390x.
 - **Encryption uses the hardware.** Patient fields are AES-256-GCM through the system libcrypto, which uses CPACF,
   tested against NIST vectors.
-- **Telum's NNPA is there.** The zDNN TensorFlow plugin loads on the VM. The served Keras duration model is meant to
-  score every at-risk patient and outage as one batch per tick on it.
+- **Telum's NNPA is there.** The zDNN TensorFlow plugin loads on the VM, and we time the trained Keras duration model
+  with NNPA on and off (`evidence/nnpa_timing.csv`). That model isn't the live one: Kaplan–Meier scored better on UKPN
+  (see Results), and it needs no accelerator.
 - **Security a regulator would expect.** Least-privilege roles, a hash-chained audit log, operator login for approvals,
   a blind index for encrypted lookups, and nothing under a count of 11 shown on a map.
 
@@ -223,10 +287,13 @@ for s in pg_super_pw db_migrator_pw db_ingest_pw db_api_pw db_agent_pw bidx_key 
   openssl rand -hex 32 > secrets/$s
 done
 
-# the full stack: the backend, the ML-DSA signer, the post-quantum TLS edge and the agent loop
+# the full stack: the backend, the ML-DSA signer, the post-quantum TLS edge, the agent loop and Granite
 sudo docker compose -f infra/docker-compose.yml build signer
 bash scripts/make-signer-secrets.sh   # once, as a docker-group user (not sudo), so the signer can read its key
 bash scripts/make-edge-cert.sh        # once: a self-signed edge certificate until a trusted one replaces it
+# Granite's model lives next to the repo, in ../models; infra/granite.yml pins its SHA-256
+mkdir -p ../models && curl -L -o ../models/granite-3.3-2b-instruct-be.Q4_K_M.gguf \
+  https://huggingface.co/taronaeo/Granite-3.3-2B-Instruct-BE-GGUF/resolve/main/granite-3.3-2b-instruct-be.Q4_K_M.gguf
 sudo docker compose -f infra/docker-compose.yml up -d --build
 sudo docker compose -f infra/docker-compose.yml exec app python -m app.migrate
 sudo docker compose -f infra/docker-compose.yml exec app python -m app.auth bootstrap   # operator login
@@ -241,8 +308,8 @@ python alerting/relay.py   # each operator-approved CAP alert whose ML-DSA signa
 ```
 
 API docs live at `/api/docs`. The API binds to `127.0.0.1`; the public entry point is the nginx edge.
-`scripts/proof.sh` reruns the whole evidence pack (platform, containers, training, tests, live service, security) into
-`evidence/` without printing secrets.
+`scripts/proof.sh` reruns the whole evidence pack (platform, containers, training, tests, live service, security,
+and the stack's signer, edge, agent and Granite checks) into `evidence/` without printing secrets.
 
 Main endpoints: `/api/outages`, `/api/triage`, `/api/agent/grades`, `/api/areas/risk`, `/api/grids/{grid}/stress`,
 `/api/cells`, `/api/decisions/{id}/approve`, `/api/alerts/cap/{id}`, `/api/me/home`, `/api/audit/verify`, and the
@@ -286,6 +353,17 @@ footprints, with phone numbers from Ofcom's range reserved for drama. A table co
 - Northern Powergrid can't be graded and SSEN only partly, because grading needs explicit restore times.
 - Grid stress warning is seconds, and only on 1-second data. Elexon's live feed is every 15 s and about 1.5 min late, so
   on a 9 Aug 2019-style event the live gauge turns red after the disconnection has started. The replay is one event.
+- The agent's words come from Granite on the CPU. A fresh text takes about 80 s, so the agent asks for one per tick and
+  keeps its template for the rest. The brief's zDNN route needs the 2.7 GB Q8_0 build; we run Q4_K_M on the CPU instead.
+- NNPA is timed, not used live: the live duration model is the Kaplan–Meier curve.
+- The public alert goes to a phone over ADB, standing in for a government alerting service. Nothing is broadcast to the
+  public.
+- The database volume isn't LUKS2-encrypted yet. The field-encryption key isn't wrapped by the signer either; it's a file
+  under `secrets/`, like the other secrets.
+- There's no evidence combiner yet: sensor quorum and the operator feeds aren't fused into one probability per postcode.
+- Jupyter (port 38888) is open to the internet behind its token, so the team can reach its notebooks during the event.
+  Everything else public is SSH and the edge (`evidence/10_firewall.txt`). A real deployment would close it.
+- The edge's Let's Encrypt certificate lasts until 16 Jan 2027 and won't renew itself, because port 80 stays closed.
 - Next: a pilot with one health team and one network operator, a small real sensor fleet whose data becomes local
   outage labels, a learned combined risk score once one grid has all three data types, and audit checkpoints published
   off the box.
@@ -295,7 +373,7 @@ footprints, with phone numbers from Ofcom's range reserved for drama. A table co
 | Who | GitHub | Built |
 |---|---|---|
 | Sali | `saliha006` | Backend: ingest, schema and roles, triage, grading, audit chain, auth, SSE, map cells, CAP, "my home", encryption, the sensor probe, evidence scripts |
-| Ahmed | `meep-boop` | Platform: VM, post-quantum edge, model signer, agent loop, sensor simulator, Accra replay, public alert demo, IBM labs |
+| Ahmed | `meep-boop` | Platform: VM and Compose stack, post-quantum edge, ML-DSA signer, agent loop, Granite, sensor simulator, Accra replay, public alert relay, IBM labs |
 | Nate | `aldrichbanas07` | Data and ML: survival model, home-sensor model, weather area risk, grid stress validation, s390x ML checks |
 | Rama | `rama0623` | Frontend: control-room UI, map, triage and approval views, video |
 
