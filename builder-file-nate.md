@@ -116,12 +116,6 @@
 
 9. ⬜ **M5 LR table** (hand-set and documented; only the GB DNO-feed weight is learnable), plus household distributions (device, reserve, backup) for Ahmed's simulator. `[⚠ @ahmed]`
 10. ⬜ **`grids/gb.yaml`** plus the target-grid YAMLs (§5, once countries are confirmed). Fields per PRD §5, including `labels_source`.
-11. ⬜ **M8 area fault risk (P1, first in)**
-    - Aggregate ENWL to district-day counts.
-    - Join to Open-Meteo archive daily weather (max gust, precipitation, min/max temperature) at each district centroid.
-    - Fit XGBoost Poisson; compute Brier skill against climatology on the time split.
-    - `area_risk()` uses tomorrow's Open-Meteo forecast.
-    - `[⚠ @sali /areas/risk; @rama map layer]`
 12. ⬜ **M4 stress rule (P1).** `t_to_rung × fragility`. NESO 1-s replay of 9 Aug 2019: lead time to 48.8 Hz, plus false alarms per month over 12 normal months. `[⚠ @ahmed replay hook]`
 13. ⬜ **M9 target-grid replay (P1)**
     - Request a key through the nLine form; fall back to the bucket with credit.
@@ -138,6 +132,7 @@
 17. ⬜ **Video:** your segment (model + risk map) and one line.
 
 ## 4. Done log (newest first)
+- ✅ **11. M8 area fault risk** (done 2026-10-18 06:50): `ml/m8.py`, XGBoost Poisson on Open-Meteo ERA5 × training-years climatology, 2010–22 train / 2024–26 test. Brier skill **+5.1%** on P(≥3); Storm Éowyn Cumbria expected 27 vs 7.6 (actual 226). ENWL's 2024 district split merged into "Cumbria" (7 areas). `area_risk()` uses tomorrow's forecast; not wired into `/api/areas/risk` yet (Sali).
 - ✅ **Layer 2, home-sensor early warning (served)** (done 2026-10-18 06:32): `ml/home_sensor.py` on the Accra week (train days 1–4, calibrate day 5, test 6–7, 5-run bootstrap). Flags 0.96% of windows; 18.8% ± 1.1% come true, 8.9× the 2.1% base; AUC 0.666 ± 0.005. Artifact `~/shared/nate-runs/models/home_sensor_accra_v1.json`. Not yet: more Accra days, 15/60-min horizons, scoring the live Accra replay (F13). Task 9 deferred (time).
 - ✅ **8. The real `predict()`** (done 2026-10-18 06:00): `ml/m2_serve.py`, closed-form conditional survival + quantiles from the AFT log-normal, recalibrated on UKPN 2021–24. Artifact `~/shared/nate-runs/models/m2_aft_ukpncal_v1.json`. Still worse than KM on UKPN 2024–25 (IBS 0.143 vs 0.131; C 0.50), so **not live**. Harm-hours stay in Sali's `harm.py`, which integrates `surv`.
 - ✅ **7. Keras hazard MLP** (done 2026-10-18 05:58): 24 bins, trained on the VM; `~/shared/nate-runs/models/m2_hazard.keras` offered to Ahmed for signing/NNPA (not to be served yet).
