@@ -324,6 +324,10 @@ body {
   gap: var(--space-3);
 }
 
+.two-houses__grid[hidden] {
+  display: none;
+}
+
 .house {
   display: grid;
   align-content: start;
@@ -1566,7 +1570,11 @@ body {
 
 .dash__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    'predict panel'
+    'charts panel'
+    'houses houses';
   gap: var(--space-6);
   align-items: start;
 }
@@ -1581,21 +1589,48 @@ body {
 }
 
 .dash .predict {
-  grid-column: 1;
+  grid-area: predict;
 }
 
-.dash .two-houses {
-  grid-column: 1;
+.dash .predict__tiles {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* The charts leave the power-cuts tab for the left column, so neither side is a wall of panels */
+.dash .analysis {
+  grid-area: charts;
+  padding: 0;
+  border-top: 0;
 }
 
 .dash .panel {
-  grid-column: 2;
-  grid-row: 1 / span 2;
+  grid-area: panel;
   overflow: visible;
 }
 
-.dash .two-houses[data-expanded='true'] {
-  width: auto;
+/* The right column stays in view while the charts on the left scroll, and its lists use the full height */
+@media (min-width: 721px) {
+  .dash .panel {
+    position: sticky;
+    top: var(--space-6);
+  }
+
+  .dash .panel__list {
+    max-height: calc(100vh - 280px);
+  }
+}
+
+/* Two houses runs the full width at the bottom, open: on the dashboard there's room for both cards side by side */
+.dash .two-houses {
+  grid-area: houses;
+}
+
+.dash .two-houses__bar {
+  display: none;
+}
+
+.dash .two-houses__grid[hidden] {
+  display: grid;
 }
 
 @media (max-width: 720px) {
@@ -1620,13 +1655,11 @@ body {
 
   .dash__grid {
     grid-template-columns: 1fr;
+    grid-template-areas: 'predict' 'panel' 'charts' 'houses';
   }
 
-  .dash .predict,
-  .dash .two-houses,
-  .dash .panel {
-    grid-column: 1;
-    grid-row: auto;
+  .dash .predict__tiles {
+    grid-template-columns: 1fr;
   }
 
   .dash .two-houses:not([data-expanded]) {

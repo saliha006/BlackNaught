@@ -60,7 +60,7 @@ const list = $<HTMLUListElement>('#outage-list');
 const count = $('#outage-count');
 const status = $('#data-mode');
 const dashboard = $('#dashboard');
-$('#dash-grid').append($('#predict'), $('#two-houses'), $('.panel'));
+$('#dash-grid').append($('#predict'), $('#analysis'), $('.panel'), $('#two-houses'));
 let here: LatLon | null = null;
 
 status.textContent = isLive ? 'Live API' : 'Fixture data';
@@ -381,12 +381,13 @@ const landing = setupLanding($('#landing'), [$('.topbar'), $('#controls'), $('#f
   dive();
 });
 
+// Map and dashboard swap in place (replaceState), so Back from either goes to the landing page, not to the other view
 $('#open-dashboard').addEventListener('click', () => {
-  history.pushState({ view: 'dashboard' }, '');
+  history.replaceState({ view: 'dashboard' }, '');
   showDashboard(true);
 });
 $('#dash-to-map').addEventListener('click', () => {
-  history.pushState({ view: 'map' }, '');
+  history.replaceState({ view: 'map' }, '');
   showDashboard(false);
 });
 $('#use-location').addEventListener('click', () => {
