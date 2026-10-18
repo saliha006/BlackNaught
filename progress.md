@@ -604,3 +604,9 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `frontend/src/{styles.css,format.ts,landing.ts,outageList.ts}` and tests
 - ⚠️ Conflicts: none
 - Conflict status: none
+
+### 2026-10-18 06:22 — audit checkpoints are signed on the live stack (task 7 part 1, task 9 wiring) — @ahmed
+- Shipped: the VM now runs `infra/docker-compose.yml`, deployed after a Discord heads-up. Sali's `db` and `app` carry on as before (same Postgres container and data). `signer` sits on an internal network shared only with `app`, with no published port and a read-only filesystem. `app` gets `BN_SIGNER_URL` and its token, and waits for a healthy signer. The first signed checkpoint was seq 109 at 05:20 UTC: `/api/audit/verify` shows `sig_ok: true` (signer `key_id` bda7ac1f8fd6c9d2). `infra/test-compose.sh` checks that boundary: 8/8.
+- Touched: `infra/docker-compose.yml`, `infra/signer.yml`, `infra/test-compose.sh` (new); VM `~/BlackNaught/secrets/signer_*` (new, 0600); README run commands, "Start here" step 6, the "How we work" deploy line
+- ⚠️ Conflicts: @sali @nate @rama: deploy and restart with `-f infra/docker-compose.yml` from now on, because an `up` from `backend/` turns signing off. In `~/work/<name>` clones use only `run --rm`. @sali: your 06:05 ask is done.
+- Conflict status: open
