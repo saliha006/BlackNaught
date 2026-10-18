@@ -29,5 +29,32 @@
   "grid_context": {
     "hz": 50.02,
     "note": "grid health: the same for everyone"
+  },
+  "risk": {
+    "level": "high",
+    "reason": "this home's sensor pattern is flagged for the next 30 min",
+    "layers": [
+      {
+        "layer": "home",
+        "value": "elevated",
+        "horizon": "next 30 min",
+        "source": "home-sensor model",
+        "updated": "2026-10-17T20:51:00+00:00"
+      },
+      {
+        "layer": "area",
+        "value": null,
+        "horizon": "tomorrow",
+        "source": "ENWL fault climatology",
+        "updated": null
+      },
+      {
+        "layer": "grid",
+        "value": "NORMAL",
+        "horizon": "now",
+        "source": "Elexon frequency",
+        "updated": "2026-10-17T20:52:00+00:00"
+      }
+    ]
   }
 }
