@@ -43,7 +43,7 @@ class Runtime:
         self.scorer = Scorer(Db("bn_agent"), load(settings().model_path), bytes.fromhex(read_secret("bidx_key")))
         self.grader = Grader(Db("bn_agent"))
         url = settings().signer_url
-        self.signer = audit.HttpSigner(self.client, url) if url else None
+        self.signer = audit.HttpSigner(self.client, url, read_secret("signer_token_app")) if url else None
         self.checkpointer = audit.Checkpointer(self.grader.db, self.signer)
         self.scorer.on_ranked = lambda summary: self.broadcaster.publish("triage", summary)
         self.grader.on_graded = lambda n: self.broadcaster.publish("grade", {"graded": n})

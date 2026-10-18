@@ -27,6 +27,7 @@
    git clone https://github.com/saliha006/BlackNaught.git && cd BlackNaught
    git config user.email "<the email on YOUR GitHub account>"   # judges read who committed
    git config core.hooksPath scripts/git-hooks                   # blocks AI co-author trailers on commits
+   git config blacknaught.builder <sali|ahmed|nate|rama>         # who you are; publish-context.sh refuses without it
    ```
 2. **Shared docs, kept in sync automatically:** from your clone's root run `bash scripts/sync-context.sh`.
    - It unpacks the team docs from the `context` branch (never committed to `main`):
@@ -108,8 +109,8 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 05:15:**
-  - `main`: full backend live on the VM + home-sensor probe; 198 tests green on s390x, 96% coverage (proof.sh re-run 05:10). README for judges is live.
+- **As of 2026-10-18 05:42:**
+  - `main`: full backend live on the VM + home-sensor probe; 208 tests green on s390x, 96% coverage (proof.sh re-run 05:10). README for judges is live.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
 
@@ -350,7 +351,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
       - My brief's `predict()` return (`p_exceeds_reserve, eta_h, interval`) differs from `contracts/model.md` (`quantiles, surv[24]`). I'm following `model.md`.
       - My brief §5 "waiting on" lines are all done.
   - @ahmed: the zDNN plugin adds **no TF device** (`list_physical_devices()` shows only CPU); check for `_z_ops.so` instead. No NNPA benchmark run, pending your #helpdesk answer (ToU §5).
-- Conflict status: open
+- Conflict status: resolved by @sali 2026-10-18 (Sali's part)
 
 
 ### 2026-10-18 05:07 — event contract frozen (task 6) — @ahmed
@@ -360,14 +361,14 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts:
   - @sali: 📨 Ahmed needs a `sensors` table in `/db` before F2 (the simulator): `sensor_id` (PK), `type` (home, anchor or control), `household_id` (null for anchors and controls), `cell_l1`. Your migration and naming; tell Ahmed if you'd shape it differently.
   - @nate: event payloads don't change; read a sensor's type from that table.
-- Conflict status: open
+- Conflict status: resolved by @sali 2026-10-18 (Sali's part)
 
 
 ### 2026-10-18 05:10 — compose layout chosen (task 7) — @ahmed
 - Shipped: decision (Ahmed): `infra/docker-compose.yml` will `include:` `backend/compose.backend.yml`, keep the project name `bn-backend`, and add `edge`, `signer` and `granite`. The running db, app and `pgdata` volume carry on as they are: no second Postgres, and your compose file stays yours. Nothing gets built until you agree.
 - Touched: nothing yet
 - ⚠️ Conflicts: @sali: 📨 please OK this layout (your 02:36 ask). Once it lands, the VM deploy becomes `cd ~/BlackNaught && sudo docker compose -f infra/docker-compose.yml up -d`, and `restart app` takes the same `-f`.
-- Conflict status: open
+- Conflict status: resolved by @sali 2026-10-18 (Sali's part)
 
 ### 2026-10-18 05:12 — commit-msg hook now runs on Mac and Linux — @ahmed
 - Shipped: `scripts/git-hooks/commit-msg` was committed without its executable bit (mode 100644), so git on Mac and Linux skipped it silently and AI trailers got through there. It's 100755 now; Windows behaves as before.
@@ -388,7 +389,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @sali: 📨 please add this to Ahmed's brief and NOW. It reuses your CAP 1.2 export and the operator approval (CAP alerts already need a human OK).
   - @rama: the phone receiving the alert could be a shot in the video.
   - Pitch wording: "Blacknaught drafts standard CAP 1.2 alerts that a government alerting service can broadcast; in the demo a phone stands in for that channel." Not "we send alerts to the public".
-- Conflict status: open
+- Conflict status: resolved by @sali 2026-10-18 (Sali's part)
 
 ### 2026-10-18 05:15 — README for judges + fresh evidence — @sali
 - Shipped:
@@ -411,4 +412,134 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts:
   - @sali: 📨 it's your script. OK for Ahmed to make that fix, or would you rather? Until then Ahmed syncs right before each publish and checks the published commit against its parent.
   - @nate @rama: same risk on your publishes until it's fixed; sync just before you publish.
+- Conflict status: resolved by @sali 2026-10-18 (Sali's part)
+
+### 2026-10-18 05:31 — signer design chosen (task 9) — @ahmed
+- Shipped: decisions (Ahmed), now being built on `ahmed-platform`:
+  - The ML-DSA-65 key is a file in `secrets/`, like the stack's other secrets, made once by a script that never overwrites it. It never goes in git, an image or an env var.
+  - `/sign` needs a per-caller token, and the signer sits on a private network shared only with `app` and the agent. `/verify` stays open, since checking a signature can't forge one.
+- Touched: nothing yet
+- ⚠️ Conflicts: @sali: 📨 `HttpSigner` will need to send `Authorization: Bearer <token>`, read from a new secret `signer_token_app`, and `app` needs `BN_SIGNER_URL=http://signer:8100`. Nothing changes before then: `BN_SIGNER_URL` is unset, so checkpoints stay unsigned as today. The exact contract lands in `contracts/signer.md` with the signer.
+- Conflict status: open
+
+### 2026-10-18 05:31 — mock alert channel chosen — @ahmed
+- Shipped: decision (Ahmed): the mock public alert reaches Ahmed's phone over ADB from his laptop (USB debugging on), not by SMS. No third-party app, no texts from a SIM, no real phone numbers.
+- Touched: nothing yet
+- ⚠️ Conflicts: @sali: 📨 for Ahmed's brief, with the alert task (05:15 entry).
+- Conflict status: resolved by @sali 2026-10-18 (Sali's part)
+
+### 2026-10-18 05:34 — context publish can no longer undo teammates' edits (fix on `nate-ml`) — @nate
+- Shipped:
+  - **Found:** Ahmed's 05:08 publish (`683d4e9`) silently restored an old copy of Nate's brief, undoing Nate's 05:06 Done-log move.
+    - Not Ahmed's fault. `publish-context.sh` uploads **every** shared doc from the publisher's local copy, and only refuses when both sides edited the same file. So any stale copy overwrites newer work.
+    - Nate's move is re-applied and republished (`65983dd`, Nate's brief only).
+  - **Fix on `nate-ml` (`5f4f727`), for @sali to review and merge:**
+    - Publish starts from what's on `context` and sends only the files you changed since your last sync. Stale copies can't overwrite anything, and docs added after your sync are kept.
+    - Unless `git config blacknaught.builder` is `sali`, publish refuses any change except your own `builder-file-<name>.md`.
+    - Sync copies an unpublished local edit to `.git/context-backup/` before replacing it, instead of silently overwriting it.
+    - Both scripts set `MSYS_NO_PATHCONV=1`, because Git Bash on Windows mangles `rev:.claude/...` arguments.
+    - `scripts/test-context-scripts.sh` replays tonight's clobber on a throwaway remote: the current scripts **fail** it, the fixed ones **pass**.
+  - **Proposed CLAUDE.md rule (§2a).** CLAUDE.md is Sali's, so please publish it if you agree:
+    > **Only Sali edits more than one brief, and nobody wipes another builder's entries.** `scripts/publish-context.sh` enforces the first part: unless `git config blacknaught.builder` is `sali`, it refuses any change except your own `builder-file-<name>.md`. For the second part, anyone tidying a brief for consistency (Sali included) syncs first, then only adds, annotates or moves items. Never delete or reword another builder's task, Done-log line or status note; superseded items go to Archived with the reason. If publish refuses because a file changed on both sides, re-sync (your copy is saved in `.git/context-backup/`), re-apply your edit on top and publish again, keeping every line from the other side.
+- Touched: `scripts/publish-context.sh`, `scripts/sync-context.sh`, `scripts/test-context-scripts.sh` (on `nate-ml`); `builder-file-nate.md` on `context`
+- ⚠️ Conflicts:
+  - @sali:
+    - **Your scripts:** please review and merge `5f4f727`. After the merge, everyone runs `git config blacknaught.builder <name>` once (publish refuses until it's set); please add that line to "Start here" step 1.
+    - **Security:** the credential guard in `publish-context.sh` (unchanged by me) seems to contain fragments of real credentials, in a public repo. Rotate those or match on shape instead.
+  - @ahmed: your 05:08 publish restored an old copy of Nate's brief. That's the script bug, not you. Until the fix lands, sync right before you publish.
+- Conflict status: resolved by @sali 2026-10-18 (Sali's part)
+
+### 2026-10-18 05:42 — Elexon 0 Hz readings dropped — @sali
+- Shipped: `parse_elexon` drops readings outside 45–55 Hz, so a repeat of the 6 Aug run of 0 Hz can't show a fake GB emergency. Test added. Found by @nate.
+- Touched: `backend/app/ingest/feeds.py`, `backend/tests/test_ingest.py`
+- ⚠️ Conflicts: none
+- Conflict status: resolved
+
+### 2026-10-18 05:42 — `sensor` table for the simulator — @sali
+- Shipped: migration `0010_sensor.sql`, applied on the VM. `sensor_id` PK, `type` (home / anchor / control), `household_id` (required for home sensors only, CHECK), `cell_l1`. Named `sensor` to match `patient`, `freq_reading`. `bn_ingest` reads + writes, `bn_agent` reads.
+- Touched: `db/migrations/0010_sensor.sql`
+- ⚠️ Conflicts: @ahmed: this is the table you asked for (05:07), singular name. @nate: read a sensor's type from it.
+- Conflict status: resolved by @ahmed 2026-10-18
+
+### 2026-10-18 05:42 — home risk level in `/api/me/home` (option C) — @sali
+- Shipped: a `risk` block: `level` (low / elevated / high / unknown), `reason`, and three `layers` (home 30 min, area tomorrow, grid now) with source, horizon and updated time. Rules: High = home flagged or grid EMERGENCY; Elevated = area in the top third or grid STRESSED; Low only when all three layers report; otherwise unknown. Grid older than 5 min counts as no data. Live on the VM; reads "unknown" until the home model is served. 208 tests green on s390x.
+- Touched: `backend/app/home.py`, `backend/app/schemas.py`, `contracts/openapi.yaml` (`MyHome.risk`), `backend/tests/test_home.py`
+- ⚠️ Conflicts: @rama: new field in `/api/me/home`, spec in your brief (task 12). @nate: your home-sensor model fills the home layer.
+- Conflict status: open
+
+### 2026-10-18 05:42 — context publish fix adopted + credential guard cleaned — @sali
+- Shipped: merged @nate's context scripts (only files you changed are published; teammates can publish only their own brief; sync backs up unpublished edits). The credential guard now matches the shape of a secret; it used to contain fragments of real ones in this public repo.
+- Touched: `scripts/publish-context.sh`, `scripts/sync-context.sh`, `scripts/test-context-scripts.sh`; "Start here" step 1
+- ⚠️ Conflicts:
+  - @ahmed @nate @rama: run `git config blacknaught.builder <name>` once, or publish refuses.
+  - @ahmed: **urgent:** the fragments are still in git history. Change the portal password and turn off the Drive link.
+- Conflict status: open
+
+### 2026-10-18 05:42 — README tightened, diagrams fixed — @sali
+- Shipped: README is about a third shorter; both Mermaid diagrams validated with mermaid-cli, so they render on GitHub.
+- Touched: `README.md`
+- ⚠️ Conflicts: none
+- Conflict status: resolved
+
+### 2026-10-18 05:42 — briefs synced with progress — @sali
+- Shipped: Ahmed's brief gets the mocked public alert task, the compose OK and the `sensor` table. Nate's brief gets the Elexon and publish-fix outcomes. **Rama's brief is reorganised by backend coverage:** 13 features he must show, each with its endpoint, and his own design choices kept. CLAUDE.md now says every logged task is also marked ✅ in its brief.
+- Touched: all four briefs, `BLACKNAUGHT.md` NOW, CLAUDE.md on `context` (d87b07b)
+- ⚠️ Conflicts: @rama: please push your frontend work to `Rama-Frontend` and mark what's done in your brief; right now nobody can see it.
+- Conflict status: open
+
+### 2026-10-18 05:46 — M2 contract settled + ENWL/UKPN prep (brief tasks 2 and 4) — @nate
+- Shipped:
+  - **`contracts/model.md`: M2 features final (option A1).**
+    - Inputs: start hour, weekday and month (Europe/London); log(1 + customers); voltage LV/HV/unknown.
+    - Trained on ENWL only; UKPN is the cross-operator test, never trained on.
+    - Voltage is hidden on a third of training rows, so UKPN's missing voltage gets a trained answer.
+    - The backend passes `{started_at, customers, feeder}` straight from the `outage` row; the model maps them.
+    - Training-data facts corrected: UKPN's rows are restoration stages, and ENWL's label caveat is written down.
+  - **`ml/prep.py`, run on the VM** (`evidence/train_log_prep.txt`):
+    - Both sources cut at 5 min. UKPN stages are rolled into incidents. ENWL is split 2000–22 / 2023 / 2024–26, with storms kept whole.
+    - ENWL: 306,251 kept (train 269,170 · validate 9,828 · test 27,253; median 3.5 h). UKPN: 178,864 kept (median 2.8 h).
+    - 5 tests pass on s390x, 83% coverage (the rest is the CLI entry).
+- Touched: `contracts/model.md`, `ml/prep.py`, `ml/tests/test_prep.py`, `evidence/train_log_prep.txt`; VM `~/shared/nate/data/prepared/`
+- ⚠️ Conflicts: @sali: the M2 feature list in `contracts/model.md` is final. When M2 lands, `Scorer` needs to pass `{started_at, customers, feeder}` into `predict(features, elapsed_h)`. I'll ping again when the model itself is ready.
+- Conflict status: open
+
+
+### 2026-10-18 05:55 — ML-DSA-65 signer on main, not wired yet (task 9, part 1) — @ahmed
+- Shipped: `signer/` (Python standard library + OpenSSL 3.5 on `python:3.13-slim-trixie`): `POST /sign` with a per-caller token, `POST /verify`, `GET /health`, as `contracts/signer.md` describes. 29 tests, 97% coverage, green on s390x (OpenSSL 3.5.7). On the VM the production container signed, verified, and refused a request without a token. `scripts/make-signer-secrets.sh` makes the key and the two tokens once and never overwrites them.
+  - The first push to `main` (30fdbc9) went out with a test failing about 1 run in 3 on Windows, because a check was skipped. Cause: some requests were refused before their body was read, so the OS reset the connection and the caller saw an error instead of the 401 or 404. Fixed in 19e4cdf with a regression test; 0 failures in 10 runs since.
+- Touched: `signer/` (new), `contracts/signer.md` (new), `scripts/make-signer-secrets.sh` (new)
+- ⚠️ Conflicts: @sali: 📨 the signer contract you were waiting for is `contracts/signer.md`.
+  - For the app: `HttpSigner` sends `Authorization: Bearer <secrets/signer_token_app>`, and `app` gets `BN_SIGNER_URL=http://signer:8100` plus that secret. Land both together: `Checkpointer.maybe_checkpoint` raises today if signing fails, so a missing token would stop checkpoints. Your call whether a failed signing should store the checkpoint unsigned instead.
+  - `HttpSigner.sign` labels CAP signatures `purpose: "audit_checkpoint"` too. Only the log label is off, since purpose isn't signed.
+- Conflict status: open
+
+### 2026-10-18 05:58 — M1 baselines and both M2 models trained on the VM (brief tasks 5–7) — @nate
+- Shipped:
+  - `ml/m2.py`, plus `ml/notebooks/m2_duration.ipynb` executed in Jupyter on the VM (also at Jupyter → `shared/nate-runs/m2_duration.ipynb`). Scores are in `evidence/m2_metrics.json`.
+  - **ENWL 2024–26** (27,253 outages). Integrated Brier over 24 h (lower is better), against the live KM stand-in's 0.121:
+    - KM per cause: 0.109, C-index 0.64. Best, but cause isn't live.
+    - XGBoost AFT: 0.114, C 0.60 (Brier at 2 h 0.223 vs 0.233).
+    - Hazard MLP: 0.117.
+    - Log-linear: 0.122 (no gain).
+  - **UKPN cross-check** (178,864 outages, never trained on), against KM's 0.138: AFT 0.149 (7% worse), MLP 0.141 (2% worse), log-linear 0.139.
+  - **What it means:** the live fields carry little signal and cause carries the most. Trained on ENWL, M2 doesn't transfer to UKPN without recalibration.
+  - README "Results" and "Limits" updated to say exactly this.
+  - Artifacts stay on the VM (not in git): `~/shared/nate-runs/models/m2_aft.json` and `m2_hazard.keras`.
+  - **Not done yet:** the brief's 5-prediction laptop spot-check (this laptop has no XGBoost/TF), and NNPA timing (waiting on #helpdesk, ToU §5).
+- Touched: `ml/m2.py`, `ml/tests/test_m2.py` (10 tests pass on s390x), `ml/make_m2_notebook.py`, `ml/notebooks/m2_duration.ipynb`, `evidence/m2_metrics.json`, `README.md` (my rows)
+- ⚠️ Conflicts:
+  - @sali: **don't wire M2 into triage yet.** On UKPN, where most live grades come from, it scores worse than KM. Nate is choosing the next step. README edits are limited to the M2 results block and the duration limit line.
+  - @ahmed: the Keras hazard model is at `~/shared/nate-runs/models/m2_hazard.keras` for signing and NNPA, but it isn't meant to be served yet (see above).
+- Conflict status: open
+
+
+### 2026-10-18 06:00 — M2 served behind the contract, recalibrated on UKPN (brief task 8) — @nate
+- Shipped:
+  - `ml/m2_serve.py`: `M2Model.predict(features, elapsed_h)` → `{quantiles, surv[24]}`, worked out in closed form from the AFT model's log-normal (conditional on time already off). `label = REAL`; one JSON artifact (`load()` hashes it for `sha256`). 6 tests, 16 in all pass on s390x.
+  - Recalibrated on UKPN Apr 2021–Mar 2024 (134,193 outages), tested on Apr 2024–Mar 2025 (44,671). Log: `evidence/train_log_m2_serve.txt`.
+  - **Result: still not better than KM on UKPN.** Integrated Brier: calibrated M2 0.143, KM (live) 0.131. The live fields can't rank UKPN outages (C-index 0.50), so recalibration can't fix it. On ENWL 2024–26 M2 still wins (0.116 vs 0.121).
+  - Side finding: KM refitted on UKPN 2021–24 beats today's ENWL KM on that holdout year (0.130 vs 0.131; Brier at 2 h 0.249 vs 0.256).
+  - Artifact on the VM: `~/shared/nate-runs/models/m2_aft_ukpncal_v1.json` (not in git). README "Results" updated.
+- Touched: `ml/m2_serve.py`, `ml/tests/test_m2_serve.py`, `evidence/train_log_m2_serve.txt`, `README.md` (M2 results line)
+- ⚠️ Conflicts: @sali: M2 is ready to load but **still shouldn't replace KM live**. Nate is deciding what (if anything) changes in triage. If it's wired later, `ml/` isn't mounted in the app container (only `backend/`), so loading it needs a mount or a copy; to agree first.
 - Conflict status: open

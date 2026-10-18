@@ -271,6 +271,7 @@ paths:
         required: true
         schema:
           type: string
+          format: uuid
           title: Decision Id
       responses:
         '200':
@@ -318,6 +319,8 @@ paths:
   /api/me/home:
     get:
       summary: Me Home
+      description: 'No id parameter on purpose: the household comes from the session,
+        so one home can''t ask for another.'
       operationId: me_home_api_me_home_get
       responses:
         '200':
@@ -819,6 +822,8 @@ components:
           title: Next Action
         grid_context:
           $ref: '#/components/schemas/GridContext'
+        risk:
+          $ref: '#/components/schemas/Risk'
       type: object
       required:
       - household
@@ -830,6 +835,7 @@ components:
       - bands
       - next_action
       - grid_context
+      - risk
       title: MyHome
     Outage:
       properties:
@@ -963,6 +969,64 @@ components:
       - ends_at
       - hours_left
       title: Reserve
+    Risk:
+      properties:
+        level:
+          type: string
+          enum:
+          - low
+          - elevated
+          - high
+          - unknown
+          title: Level
+        reason:
+          type: string
+          title: Reason
+        layers:
+          items:
+            $ref: '#/components/schemas/RiskLayer'
+          type: array
+          title: Layers
+      type: object
+      required:
+      - level
+      - reason
+      - layers
+      title: Risk
+    RiskLayer:
+      properties:
+        layer:
+          type: string
+          enum:
+          - home
+          - area
+          - grid
+          title: Layer
+        value:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Value
+        horizon:
+          type: string
+          title: Horizon
+        source:
+          type: string
+          title: Source
+        updated:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updated
+      type: object
+      required:
+      - layer
+      - value
+      - horizon
+      - source
+      - updated
+      title: RiskLayer
     SourceState:
       properties:
         source:

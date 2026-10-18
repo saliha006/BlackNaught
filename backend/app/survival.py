@@ -58,7 +58,8 @@ class KmModel:
                 hi = mid
         return round(hi, 2)
 
-    def predict(self, elapsed_h: float) -> dict:
+    def predict(self, features: dict, elapsed_h: float) -> dict:
+        # KM is one curve for every outage; it takes features only so M2 can replace it behind the same call
         return {
             "quantiles": {f"q{int(q * 100)}": self.remaining_quantile(elapsed_h, q) for q in (0.5, 0.75, 0.9)},
             "surv": [round(self.conditional(elapsed_h, h), 6) for h in range(1, HORIZON_BINS + 1)],

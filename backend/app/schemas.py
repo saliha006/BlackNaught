@@ -167,6 +167,20 @@ class GridContext(BaseModel):
     note: str
 
 
+class RiskLayer(BaseModel):
+    layer: Literal["home", "area", "grid"]
+    value: str | None
+    horizon: str
+    source: str
+    updated: datetime | None
+
+
+class Risk(BaseModel):
+    level: Literal["low", "elevated", "high", "unknown"]
+    reason: str
+    layers: list[RiskLayer]
+
+
 class MyHome(BaseModel):
     household: str
     label: Label
@@ -177,6 +191,7 @@ class MyHome(BaseModel):
     bands: dict[str, float]
     next_action: str
     grid_context: GridContext
+    risk: Risk
 
 
 class CheckpointStatus(BaseModel):
