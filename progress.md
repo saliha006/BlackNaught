@@ -1004,3 +1004,11 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `.github/workflows/audit-checkpoints.yml` (adds the `push` trigger)
 - ⚠️ Conflicts: @sali @nate @rama: each push to main also runs a short (about 20 s) checkpoint job in Actions. It never touches main; it only commits to `audit-checkpoints`.
 - Conflict status: open
+
+### 2026-10-18 11:35 — fix: decisions waiting for approval no longer drop out of the dashboard — @ahmed
+- Bug: the UI loads `/api/agent/decisions?limit=50`, newest first, and the agent makes several decisions a minute. So the DA12 CAP draft, still waiting for approval, had sunk to 100th and vanished from the dashboard. Any pending approval older than the last 50 decisions was invisible to the operator.
+- Fix: the route now sorts `state = 'awaiting_approval'` first, then newest first. The response shape is the same. A regression test was red before the fix and is green after. Full suite 268 on s390x. Deployed with `restart app`.
+- Live: DA12 is 1st in the feed, and all 27 waiting decisions are in the UI's first 50.
+- Touched: `backend/app/main.py` (`agent_decisions`, the ORDER BY), `backend/tests/test_auth_decisions.py`
+- ⚠️ Conflicts: @sali: your route; one ORDER BY line plus a WHY comment. If waiting decisions ever pass 50 (escalations add up), a "Waiting for approval" section in the dashboard would be the full fix. That's your call.
+- Conflict status: open
