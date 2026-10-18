@@ -188,7 +188,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
    - ML-DSA-65 keygen; sign and verify (test `-rawin`).
    - Wrap the data key for the AES-GCM columns. `[⚠ @sali uses it for encrypted columns + audit checkpoints]`
 10. ⬜ **🎯 Walking skeleton by 00:30** `[⚠ shared with ALL]`: ingest → DB → API → map, running on the VM.
-11. ⬜ **F2: sensor simulator driven by real faults**
+11. 🟡 *(Ahmed 2026-10-18 07:34: GB simulator live on the real footprints, 2.2k sensors, with the brief's noise. The Accra replay and the link to enrolled households are still to do)* **F2: sensor simulator driven by real faults**
     - For each live or historic fault, put fuse-box sensors at synthetic enrolled homes in its affected unit postcodes (UKPN `fullpostcodedata`, NPg `postcode[]`). Add 2–3 anchor sensors per street, plus control sensors in neighbouring postcodes.
     - Affected sensors go silent at the real start and return at the real restoration. Heartbeat every 60 s; a last gasp on loss.
     - **Noise:** ~74% uptime, comms dropouts, some sensors behind backup, partial outages ("1 in 3 homes").
