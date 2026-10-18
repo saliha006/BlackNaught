@@ -933,3 +933,18 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `backend/app/combiner.py`, `backend/app/localiser.py`, `backend/tests/test_combiner.py`, `evidence/localiser.json` (all new)
 - ⚠️ Conflicts: @nate: if you have measured LRs, the constants are at the top of `combiner.py`. @sali: no file of yours changed. Wiring it into triage or the API would be your call after submission.
 - Conflict status: open
+
+### 2026-10-18 08:50 — Nate's signed M2 is served on the NNPA, in shadow beside KM (task 13) — @ahmed
+- Shipped: `backend/app/nnpa.py`, running as its own `nnpa` service (`infra/nnpa.yml`, role `bn_agent`, no published port, **no signer token**: checking a signature needs none).
+  - Every minute it builds **one batch** of every at-risk patient × active outage with Nate's own feature code (`ml.m2.features`, option A1), and runs `model.predict` on the Telum NNPA.
+  - The zDNN precheck showed 3 `zdnn_matmul_transpose_op` and 1 `zdnn_softmax` per batch on the NNPA.
+  - It logs outage predictions as `m2-hazard-nnpa-shadow`, so Sali's Grader grades M2 beside KM. **Triage keeps KM**, as Nate decided; it never writes `triage_snapshot`.
+- Signed model: `scripts/sign-model.sh` had our ML-DSA signer sign the model's `{file, sha256, customers_median}` (purpose `model_release`). The service won't load the model if the signature file is missing, the hash differs, or the signer says no or can't be reached; it then idles with a log line.
+- Live first batch: 48 rows (18 outages, 30 pairs) in **77 ms**. Escalations: M2 30, KM 30. 36 predictions logged for grading. The container uses 298 MiB.
+- Tests: 8 (module 70%; the TF, signing and loop path ran for real), full suite 252, 19 compose checks.
+- Deployed: `up -d nnpa` from `~/BlackNaught` after a dry run. Only the new container was created; the app wasn't restarted.
+- Touched: `backend/app/nnpa.py`, `backend/tests/test_nnpa.py`, `infra/nnpa.yml`, `scripts/sign-model.sh` (new); `infra/docker-compose.yml`, `infra/test-compose.sh`. On the VM: `~/models/m2_hazard.keras` (a read-only copy of Nate's) and its `.sig.json`.
+- ⚠️ Conflicts:
+  - @nate: your model and feature code are used read-only. If you want M2 live instead of KM, that's your call; the grades will show both.
+  - @sali: `/api/agent/grades` will gain `m2-hazard-nnpa-shadow` rows as they're graded (+2 h, +4 h).
+- Conflict status: open
