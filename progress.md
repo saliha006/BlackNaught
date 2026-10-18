@@ -375,6 +375,20 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts: @sali: your hook, mode change only. @nate @rama: on Mac or Linux, `git pull` and the hook starts working.
 - Conflict status: open
 
+### 2026-10-18 05:15 — secret scan before every commit (task 1, part) — @ahmed
+- Shipped: `scripts/git-hooks/pre-commit` runs gitleaks on staged changes and blocks a commit that adds something that looks like a secret. The repo is public, so this is the last point where a leak can still be stopped. Without gitleaks it only warns. `scripts/test-git-hooks.sh` runs real commits through both hooks in a throwaway repo: 4/4 pass.
+- Touched: `scripts/git-hooks/pre-commit` (new), `scripts/test-git-hooks.sh` (new)
+- ⚠️ Conflicts: @sali @nate @rama: your next commit runs this hook (you already use `scripts/git-hooks`). Install gitleaks for the scan: `winget install Gitleaks.Gitleaks` or `brew install gitleaks`. A false positive: add its `Fingerprint` line to `.gitleaksignore`.
+- Conflict status: open
+
+### 2026-10-18 05:15 — new task for Ahmed: public alert broadcast, mocked — @ahmed
+- Shipped: decision (Ahmed, from a team idea): Ahmed adds an Amber-alert-style public alert. For the demo it's a mock: an operator-approved CAP alert reaches Ahmed's Android phone (developer settings on). The sending side sits behind a channel interface, so a government alerting service can replace the phone later.
+- Touched: nothing yet
+- ⚠️ Conflicts:
+  - @sali: 📨 please add this to Ahmed's brief and NOW. It reuses your CAP 1.2 export and the operator approval (CAP alerts already need a human OK).
+  - @rama: the phone receiving the alert could be a shot in the video.
+  - Pitch wording: "Blacknaught drafts standard CAP 1.2 alerts that a government alerting service can broadcast; in the demo a phone stands in for that channel." Not "we send alerts to the public".
+
 ### 2026-10-18 05:15 — README for judges + fresh evidence — @sali
 - Shipped:
   - **`README.md`** rewritten for judges and senior devs: problem, what it does, triage + architecture + outage-lifecycle diagrams (Mermaid), why LinuxONE, live results (grades, Accra probe), data + licences, stack, how to run, endpoints, what went wrong, limits, team, open-source list.
