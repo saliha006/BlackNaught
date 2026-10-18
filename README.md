@@ -366,7 +366,9 @@ footprints, with phone numbers from Ofcom's range reserved for drama. A table co
   public.
 - The database volume isn't LUKS2-encrypted yet. The field-encryption key isn't wrapped by the signer either; it's a file
   under `secrets/`, like the other secrets.
-- There's no evidence combiner yet: sensor quorum and the operator feeds aren't fused into one probability per postcode.
+- The evidence combiner (`backend/app/combiner.py`) fuses sensor quorum, the DNO feeds, IODA and grid stress into one
+  outage probability per cell, and `evidence/localiser.json` scores it on the live footprints. Triage doesn't use it
+  yet, and its likelihood ratios are hand-set, because the measured table never arrived.
 - Jupyter (port 38888) is open to the internet behind its token, so the team can reach its notebooks during the event.
   Everything else public is SSH and the edge (`evidence/10_firewall.txt`). A real deployment would close it.
 - The edge's Let's Encrypt certificate lasts until 16 Jan 2027 and won't renew itself, because port 80 stays closed.
