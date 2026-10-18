@@ -1,0 +1,9 @@
+mode,batch,predict_median_ms,predict_rows_per_s,graph_median_ms,tf,machine,nnpa_devices,runs
+nnpa_on,1,33.851,30,0.338,2.18.1,s390x,(unset),15
+nnpa_on,256,33.873,7558,0.413,2.18.1,s390x,(unset),15
+nnpa_on,4096,35.062,116820,1.465,2.18.1,s390x,(unset),15
+nnpa_on,65536,67.71,967899,28.847,2.18.1,s390x,(unset),15
+nnpa_off,1,32.356,31,0.346,2.18.1,s390x,0,15
+nnpa_off,256,32.376,7907,0.485,2.18.1,s390x,0,15
+nnpa_off,4096,33.706,121520,1.82,2.18.1,s390x,0,15
+nnpa_off,65536,48.448,1352706,13.244,2.18.1,s390x,0,15
