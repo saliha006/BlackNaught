@@ -28,6 +28,10 @@ ARCHIVE = "https://archive-api.open-meteo.com/v1/archive"
 FORECAST = "https://api.open-meteo.com/v1/forecast"
 # from 2010, not 2000: Open-Meteo weighs long history requests as many calls, and 13 training years is plenty
 FIRST_DAY, TRAIN_LAST_YEAR, VALIDATE_YEAR = "2010-01-01", 2022, 2023
+# ENWL redrew its northern districts in 2024: Penrith, Workington, Barrow and Lancaster appeared, taking territory
+# from Carlisle and Kendal (Carlisle fell from 1,437 faults in 2023 to 7 in 2025). Merged, the area's history is
+# continuous (2,989 / 3,142 / 3,458 faults in 2023-25), so the model trains and scores on one stable "Cumbria".
+CUMBRIA = {"Carlisle", "Kendal", "Penrith", "Workington", "Barrow", "Lancaster"}
 PARAMS = {"objective": "count:poisson", "max_depth": 4, "learning_rate": 0.05, "subsample": 0.8,
           "colsample_bytree": 0.8, "nthread": 3, "seed": 7}
 
@@ -35,7 +39,7 @@ PARAMS = {"objective": "count:poisson", "max_depth": 4, "learning_rate": 0.05, "
 def load_faults(path: Path) -> tuple[pd.DataFrame, dict[str, list[float]]]:
     """District-day fault counts, zero days included, plus each district's centre from its outages' coordinates."""
     raw = pd.read_csv(path, sep=";", usecols=["incident_date_time", "district_name", "geometry"], low_memory=False)
-    raw["district"] = raw["district_name"].str.strip()
+    raw["district"] = raw["district_name"].str.strip().map(lambda d: "Cumbria" if d in CUMBRIA else d)
     raw["day"] = pd.to_datetime(raw["incident_date_time"], utc=True, format="ISO8601").dt.tz_convert("Europe/London") \
         .dt.normalize().dt.tz_localize(None)
     coords = raw["geometry"].str.split(",", expand=True).astype(float)

@@ -52,3 +52,14 @@ def test_fault_counts_include_zero_days_and_district_centres(tmp_path):
     counts, centres = m8.load_faults(path)
     assert counts["faults"].tolist() == [2, 0, 1]
     assert centres == {"Bolton": [53.6, -2.5]}
+
+
+def test_redrawn_northern_districts_merge_into_cumbria(tmp_path):
+    path = tmp_path / "enwl.csv"
+    path.write_text("incident_date_time;district_name;geometry\n"
+                    "2023-01-01T10:00:00+00:00;Carlisle;54.9, -2.9\n"
+                    "2024-01-01T10:00:00+00:00;Penrith;54.7, -2.8\n"
+                    "2024-01-01T11:00:00+00:00;Workington;54.6, -3.5\n", encoding="utf-8")
+    counts, centres = m8.load_faults(path)
+    assert list(centres) == ["Cumbria"]
+    assert counts.loc[counts["day"] == "2024-01-01", "faults"].tolist() == [2]
