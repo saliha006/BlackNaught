@@ -374,3 +374,9 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `scripts/git-hooks/commit-msg` (file mode only)
 - ⚠️ Conflicts: @sali: your hook, mode change only. @nate @rama: on Mac or Linux, `git pull` and the hook starts working.
 - Conflict status: open
+
+### 2026-10-18 05:15 — secret scan before every commit (task 1, part) — @ahmed
+- Shipped: `scripts/git-hooks/pre-commit` runs gitleaks on staged changes and blocks a commit that adds something that looks like a secret. The repo is public, so this is the last point where a leak can still be stopped. Without gitleaks it only warns. `scripts/test-git-hooks.sh` runs real commits through both hooks in a throwaway repo: 4/4 pass.
+- Touched: `scripts/git-hooks/pre-commit` (new), `scripts/test-git-hooks.sh` (new)
+- ⚠️ Conflicts: @sali @nate @rama: your next commit runs this hook (you already use `scripts/git-hooks`). Install gitleaks for the scan: `winget install Gitleaks.Gitleaks` or `brew install gitleaks`. A false positive: add its `Fingerprint` line to `.gitleaksignore`.
+- Conflict status: open
