@@ -1,6 +1,7 @@
 #!/bin/bash
 # Checks that the rendered stack keeps the signer's boundary (decisions 2026-10-18: no published port, a private
-# internal network shared only with app and the agent, each with its own token) and that db keeps its data volume.
+# internal network shared only with app and the agent, each with its own token, plus the NNPA shadow, which only
+# verifies) and that db keeps its data volume.
 # Usage, on the VM from the repo root: bash infra/test-compose.sh
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -13,12 +14,14 @@ checks = {
     "signer publishes no port": not services["signer"].get("ports"),
     "signer is only on the signing network": set(services["signer"]["networks"]) == {"signing"},
     "the signing network is internal": config["networks"]["signing"].get("internal") is True,
-    "only app and the agent join the signer there": {n for n, s in services.items() if "signing" in s.get("networks", {})} == {"app", "agent", "signer"},
+    "only app, the agent and the NNPA shadow join the signer there": {n for n, s in services.items() if "signing" in s.get("networks", {})} == {"app", "agent", "nnpa", "signer"},
     "app has the signer URL": app["environment"].get("BN_SIGNER_URL") == "http://signer:8100",
     "app has its token": any(s["source"] == "signer_token_app" for s in app["secrets"]),
     "the agent signs with its own token, not the app token": {s["source"] for s in agent["secrets"]} == {"db_agent_pw", "signer_token_agent"},
     "the agent publishes no port": not agent.get("ports"),
     "granite publishes no port": not services["granite"].get("ports"),
+    "nnpa publishes no port": not services["nnpa"].get("ports"),
+    "nnpa holds no signer token": not any(s["source"].startswith("signer_token") for s in services["nnpa"].get("secrets", [])),
     "granite is only on the writing network": set(services["granite"]["networks"]) == {"writing"},
     "the writing network is internal": config["networks"]["writing"].get("internal") is True,
     "only the agent joins granite there": {n for n, s in services.items() if "writing" in s.get("networks", {})} == {"agent", "granite"},
