@@ -14,8 +14,8 @@
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-17 22:58:**
-  - `main`: every task in Sali's brief (1–20) live on the VM. 194 tests green on s390x, 98% coverage.
+- **As of 2026-10-18 02:01:**
+  - `main`: full backend live on the VM, evidence captured in `evidence/`. 194 tests green on s390x, 98% coverage.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - All other docs stay local and are never pushed: the PRD, briefs, decisions and research.
 
@@ -139,4 +139,10 @@
 - Shipped: `backend/app/ingest/ioda.py`: ping-slash24 dip detector (latest 2 windows below 0.9× the trailing 2 h median; calibrated on the real Sri Lanka 9 Feb 2025 blackout, recorded as a fixture), control countries FR/DE/US to discard IODA-wide artifacts (≥3 countries at once), polled every 10 min; dips go to the bus (`ioda_signal`) and SSE (`ioda`). 194 tests on s390x.
 - Touched: `backend/app/ingest/{ioda,sources}.py`, `backend/app/runtime.py`, `fixtures/feeds/ioda_lk_blackout.json`
 - ⚠️ Conflicts: @ahmed: `ioda_signal` events (region = ISO country, value = ratio) are the wide-area input for your evidence combiner's region/system scale.
+- Conflict status: open
+
+### 2026-10-18 02:01 — LinuxONE evidence + training notebook — @sali
+- Shipped: `scripts/proof.sh` writes `evidence/01–06_*.txt` (platform s390x/9175/NNPA, all containers s390x, training logs, 194 tests on s390x, live service incl. 150 graded UKPN predictions with Brier 0.186 at 2 h, audit verify, 401 without login, NIST AES-GCM, roles, firewall); `notebooks/train_on_linuxone.ipynb` executed in Jupyter on the VM. Triage reason wording fix.
+- Touched: `evidence/`, `scripts/proof.sh`, `notebooks/`, `backend/app/harm.py`
+- ⚠️ Conflicts: @ahmed @rama: `bash ~/BlackNaught/scripts/proof.sh` re-captures everything for the proof slide; the notebook is at Jupyter → `shared/blacknaught/train_on_linuxone.ipynb`.
 - Conflict status: open
