@@ -12,6 +12,41 @@
 - Conflict status: open | resolved by @<Name> <date>
 ```
 
+## Start here (teammates, first 15 minutes)
+1. **GitHub:** accept the collaborator invite for `saliha006/BlackNaught` (check your email or github.com/notifications). Then:
+   ```bash
+   git clone https://github.com/saliha006/BlackNaught.git && cd BlackNaught
+   git config user.email "<the email on YOUR GitHub account>"   # judges read who committed
+   git config core.hooksPath scripts/git-hooks                   # blocks AI co-author trailers on commits
+   ```
+2. **Docs bundle** (from Sali on Discord/Drive; never on GitHub): unzip into your clone's root. You get:
+   - `CLAUDE.md` (our working rules, which your Claude Code reads automatically);
+   - your `builder-file-<name>.md` (your task list);
+   - `BLACKNAUGHT-PRD.md`, `system-design-choices.md`;
+   - `.claude/skills/` (`no-slop`, `debug`, the frontend skills);
+   - `DATATHON INFO/` (research ledger + IBM handoff).
+3. **VM access:** run `ssh-keygen -t ed25519` if you have no key, and send **only** `~/.ssh/id_ed25519.pub` to Sali. Then connect with `ssh linux1@148.100.78.95`.
+4. **Things that live only on the VM** (read them there; never paste them in chat or commit them):
+
+   | What | Where on the VM |
+   |---|---|
+   | Jupyter token | `~/.secrets/jupyter_token` |
+   | Operator login password | `~/BlackNaught/secrets/operator_pw` |
+   | Demo household logins | `~/BlackNaught/backend/secrets/households.txt` |
+   | Training data | `~/data/raw/` |
+
+5. **Rama, live API on your laptop:** the API listens only inside the VM until Ahmed's nginx edge is up, so tunnel to it:
+   ```bash
+   ssh -N -L 8000:localhost:8000 linux1@148.100.78.95
+   ```
+   Then use `http://localhost:8000/api/docs` and `http://localhost:8000/stream`.
+   - Without VM access, mock from `fixtures/api/*.json`. These are validated against the live response models; they include `cap_alert_sample.xml` and `stream_sample.txt`.
+6. **Ahmed, one stack only:** the backend already runs `postgres:17` + `app` from `backend/compose.backend.yml` (project `bn-backend`).
+   - **Don't start a second Postgres.** Add edge, signer and granite as services to that stack, or `include:` it from `/infra`.
+   - Reuse the `secrets/` names.
+   - Agree it with Sali first.
+7. **Nate:** the model interface the backend calls is `contracts/model.md`. ⚠ The feature list for M2 is an open item to agree with Sali.
+
 ## Who owns what
 Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if you touch it. Full task lists are in each person's brief (`builder-file-<name>.md`, shared on Discord), not on GitHub.
 

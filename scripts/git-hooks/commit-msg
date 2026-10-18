@@ -1,0 +1,6 @@
+#!/bin/sh
+# Commits are the user's own work for judging: refuse any AI co-author / attribution trailer.
+if grep -qiE '^(co-authored-by|generated[- ]with|signed-off-by):.*(claude|anthropic|openai|copilot|gpt)|noreply@anthropic\.com|Generated with \[Claude' "$1"; then
+  echo "commit-msg: AI attribution trailer found; remove it (CLAUDE.md §7)." >&2
+  exit 1
+fi

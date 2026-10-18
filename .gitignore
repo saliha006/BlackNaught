@@ -2,6 +2,8 @@
 *.md
 !progress.md
 !README.md
+# shared contracts are meant to be on GitHub
+!contracts/*.md
 
 # Research bundle, raw data, models
 DATATHON INFO/
@@ -36,3 +38,10 @@ secrets/
 .coverage
 htmlcov/
 .pytest_cache/
+
+# API keys and other secret text files
+*apikey*
+*.key.txt
+
+# docs bundles for teammates (sent on Discord/Drive, never committed)
+share/

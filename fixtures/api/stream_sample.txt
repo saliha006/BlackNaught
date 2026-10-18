@@ -1,0 +1,32 @@
+id: 41
+event: stats
+data: {"events_per_s": 0.0, "critical_q": 0, "bulk_q": 0, "writer_lag": 0, "dropped": 0}
+
+id: 42
+event: outage
+data: {"id": 101, "source": "ukpn", "status": "active"}
+
+id: 43
+event: triage
+data: {"tick_at": "2026-10-17 21:44:24.309259+00:00", "ranked": 232, "escalate": 188, "model": "m1-km-enwl"}
+
+id: 44
+event: grade
+data: {"graded": 3}
+
+id: 45
+event: source_health
+data: {"source": "npg", "status": "stale", "interval_s": 120, "staleness_s": 410, "records_last": 92, "consecutive_failures": 3, "label": "LIVE"}
+
+id: 46
+event: ioda
+data: {"country": "LK", "ratio": 0.881, "at": "2025-02-09 06:10:00+00:00"}
+
+id: 47
+event: audit_checkpoint
+data: {"seq": 500}
+
+id: 48
+event: resync
+data: {}
+
