@@ -11,6 +11,7 @@ import hashlib
 import json
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import date
@@ -25,7 +26,8 @@ K = 3                     # "3 or more faults in a district tomorrow", as in the
 DAILY = ["wind_gusts_10m_max", "precipitation_sum", "temperature_2m_min", "temperature_2m_max", "snowfall_sum"]
 ARCHIVE = "https://archive-api.open-meteo.com/v1/archive"
 FORECAST = "https://api.open-meteo.com/v1/forecast"
-FIRST_DAY, TRAIN_LAST_YEAR, VALIDATE_YEAR = "2000-01-01", 2022, 2023
+# from 2010, not 2000: Open-Meteo weighs long history requests as many calls, and 13 training years is plenty
+FIRST_DAY, TRAIN_LAST_YEAR, VALIDATE_YEAR = "2010-01-01", 2022, 2023
 PARAMS = {"objective": "count:poisson", "max_depth": 4, "learning_rate": 0.05, "subsample": 0.8,
           "colsample_bytree": 0.8, "nthread": 3, "seed": 7}
 
@@ -48,8 +50,16 @@ def load_faults(path: Path) -> tuple[pd.DataFrame, dict[str, list[float]]]:
 
 def fetch(url: str, lat: float, lon: float, **extra) -> pd.DataFrame:
     query = {"latitude": lat, "longitude": lon, "daily": ",".join(DAILY), "timezone": "Europe/London", **extra}
-    with urllib.request.urlopen(f"{url}?{urllib.parse.urlencode(query)}", timeout=120) as response:
-        daily = json.load(response)["daily"]
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(f"{url}?{urllib.parse.urlencode(query)}", timeout=120) as response:
+                daily = json.load(response)["daily"]
+            break
+        except urllib.error.HTTPError as e:
+            # 429 = the free tier's per-minute budget; it resets within a minute
+            if e.code != 429 or attempt == 3:
+                raise
+            time.sleep(65)
     return pd.DataFrame(daily).rename(columns={"time": "day"}).assign(day=lambda f: pd.to_datetime(f["day"]))
 
 
@@ -57,11 +67,13 @@ def weather_history(centres: dict, start: str, end: str, cache: Path) -> pd.Data
     cache.mkdir(parents=True, exist_ok=True)
     frames = []
     for district, (lat, lon) in centres.items():
-        path = cache / f"{district.replace(' ', '_')}_{start}_{end}.csv"
-        if not path.exists():
-            fetch(ARCHIVE, lat, lon, start_date=start, end_date=end).to_csv(path, index=False)
-            time.sleep(1)   # Open-Meteo's free tier asks for gentle use
-        frames.append(pd.read_csv(path, parse_dates=["day"]).assign(district=district))
+        for year in range(int(start[:4]), int(end[:4]) + 1):
+            path = cache / f"{district.replace(' ', '_')}_{year}.csv"
+            if not path.exists():
+                first, last = max(start, f"{year}-01-01"), min(end, f"{year}-12-31")
+                fetch(ARCHIVE, lat, lon, start_date=first, end_date=last).to_csv(path, index=False)
+                time.sleep(1)   # Open-Meteo's free tier asks for gentle use
+            frames.append(pd.read_csv(path, parse_dates=["day"]).assign(district=district))
     return pd.concat(frames, ignore_index=True)
 
 

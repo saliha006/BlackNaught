@@ -46,9 +46,9 @@ def test_climatology_is_the_district_month_mean():
 def test_fault_counts_include_zero_days_and_district_centres(tmp_path):
     path = tmp_path / "enwl.csv"
     path.write_text("incident_date_time;district_name;geometry\n"
-                    "2000-01-01T10:00:00+00:00;Bolton ;53.5, -2.4\n"
-                    "2000-01-01T23:30:00+00:00;Bolton;53.7, -2.6\n"
-                    "2000-01-03T09:00:00+00:00;Bolton;53.6, -2.5\n", encoding="utf-8")
+                    "2010-01-01T10:00:00+00:00;Bolton ;53.5, -2.4\n"
+                    "2010-01-01T23:30:00+00:00;Bolton;53.7, -2.6\n"
+                    "2010-01-03T09:00:00+00:00;Bolton;53.6, -2.5\n", encoding="utf-8")
     counts, centres = m8.load_faults(path)
     assert counts["faults"].tolist() == [2, 0, 1]
     assert centres == {"Bolton": [53.6, -2.5]}
