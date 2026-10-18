@@ -37,7 +37,8 @@ class Scorer:
 
     async def _at_risk(self) -> tuple[list[dict], list[dict]]:
         outages = await self.db.rows(
-            "SELECT outage_id, started_at, postcodes FROM outage WHERE status = 'active' AND cardinality(postcodes) > 0"
+            "SELECT outage_id, started_at, postcodes, customers, feeder FROM outage"
+            " WHERE status = 'active' AND cardinality(postcodes) > 0"
         )
         index: dict[bytes, list[dict]] = {}
         for o in outages:
@@ -56,15 +57,17 @@ class Scorer:
                 pairs.append({"patient": p, "outage": o})
         return outages, pairs
 
-    def _predict(self, elapsed: dict[int, float]) -> dict[int, dict]:
-        return {outage_id: self.model.predict(h) for outage_id, h in elapsed.items()}
+    def _predict(self, elapsed: dict[int, float], features: dict[int, dict]) -> dict[int, dict]:
+        return {outage_id: self.model.predict(features[outage_id], h) for outage_id, h in elapsed.items()}
 
     async def tick(self, now: datetime | None = None) -> int:
         now = now or datetime.now(UTC)
         outages, pairs = await self._at_risk()
         elapsed = {o["outage_id"]: max(0.0, (now - o["started_at"]).total_seconds() / 3600) for o in outages}
         loop = asyncio.get_running_loop()
-        predictions = await loop.run_in_executor(self._model_thread, self._predict, elapsed)
+        features = {o["outage_id"]: {"started_at": o["started_at"], "customers": o["customers"], "feeder": o["feeder"]}
+                    for o in outages}
+        predictions = await loop.run_in_executor(self._model_thread, self._predict, elapsed, features)
 
         scored = []
         for pair in pairs:
