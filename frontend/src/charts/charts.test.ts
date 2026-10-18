@@ -72,7 +72,7 @@ describe('outage length vs history', () => {
     expect(tones).toEqual(['escalate', 'ink']);
     expect(card.plot.querySelector('.dot-hit')!.getAttribute('aria-label')).toContain('has an escalation');
     expect(card.table.querySelectorAll('tbody tr')).toHaveLength(2);
-    expect(text('.legend__item')).toEqual(['ENWL history', 'Live cut', 'Has an escalation']);
+    expect(text('.legend__item')).toEqual(['UKPN history', 'Live cut', 'Has an escalation']);
   });
 
   it('tracks the pointer with a crosshair that snaps to the half hour', () => {
@@ -84,7 +84,7 @@ describe('outage length vs history', () => {
     expect(cross.getAttribute('visibility')).toBe('visible');
     expect(document.querySelector('.chart-tip strong')!.textContent).toBe(`${Math.round(km.curve[6] * 100)}% still off`);
     hit.dispatchEvent(new PointerEvent('pointermove', { clientX: 5000, clientY: 50 }));
-    expect(document.querySelector('.chart-tip span')!.textContent).toBe('after 6 h, ENWL history');
+    expect(document.querySelector('.chart-tip span')!.textContent).toBe('after 6 h, UKPN history');
     hit.dispatchEvent(new PointerEvent('pointerleave'));
     expect(cross.getAttribute('visibility')).toBe('hidden');
   });

@@ -108,8 +108,8 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 06:39:**
-  - `main`: full backend live on the VM + home-sensor probe; 210 backend tests green on s390x, 96% coverage; frontend 111 tests, 89.7% (proof.sh re-run 05:10). README for judges is live.
+- **As of 2026-10-18 07:25:**
+  - `main`: full backend live on the VM + home-sensor probe; 222 backend tests green on s390x, 96% coverage; frontend 137 tests, 92%. Live UI: https://148-100-78-95.sslip.io:8443 (proof.sh re-run 05:10). README for judges is live.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
 
@@ -690,4 +690,56 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - `BLACKNAUGHT.md` NOW, the layer table: M8 is trained (+5.1%, not wired in), the home-sensor model is served in `ml/home_sensor.py`, and M4 is done (74 s, band rule stays). The Pending list still says "M2 live-feature list, waiting on Nate"; that closed at 05:46 (`contracts/model.md`, A1).
   - README: line 32 says the home risk level "is being built now" (live per NOW 06:00), and the mermaid diagram plus the stack table still mark the edge (live with a trusted cert), agent and frontend "(in progress)".
   - Demo risk: GB demo homes have no sensor window, so the headline level reads "unknown" under the 06:00 rules (Low needs all three layers). Worth checking before recording.
+- Conflict status: open
+
+### 2026-10-18 07:17 — agent loop v1 is live (task 14, F6) — @ahmed
+- Shipped: `backend/app/agent.py`, running as its own `agent` service (`infra/agent.yml`). It runs as role `bn_agent`, signs with its own signer token, and publishes no port. Every 60 s it does this:
+  - It reads the latest triage and the feeds' health.
+  - It fills 5 responders' 120-min rounds with a greedy knapsack on harm-hours avoided per minute. Visits take 45 min without backup and 20 min with it. Whoever runs out before power is likely back goes first.
+  - It acts only through `decisions.create()`. Every tool call is ML-DSA-signed first, so no signature means no action (retried next tick). The signature is added to the audit chain under the decision's id.
+  - Escalations, CAP drafts and texts to more than 10 carers (`bulk_sms`) wait for an operator. A feed with no good poll for 3 intervals gets `mark_source_stale`; its patients are judged on q90 and re-ranked.
+  - Memory lives in `agent_memory`, so a restart repeats nothing (tested).
+- First live tick: 47 signed decisions. That's 5 rounds covering 15 visits, and 17 patients waiting, so 1 `bulk_sms`, 13 supply requests, 25 escalations and 2 CAP drafts. The `bulk_sms`, escalations and drafts are awaiting approval. Plus 1 sitrep. 12 tests (93% of the module), full suite 222 passed on s390x.
+- Not yet: `field_briefing` and the Granite text (task 15), `recalibrate` (task 16).
+- Deployed with `sudo docker compose -f infra/docker-compose.yml up -d agent` from `~/BlackNaught`. A dry run first showed it only creates the agent container; app, db, signer and edge weren't touched.
+- Touched: `backend/app/agent.py` (new), `backend/tests/test_agent.py` (new), `infra/agent.yml` (new), `infra/docker-compose.yml`, `infra/test-compose.sh`, README run commands (also the missing `make-edge-cert.sh` line).
+- ⚠️ Conflicts:
+  - @sali: a new module in `backend/app/`; no file of yours changed. `bn_agent` can't read `v_triage_latest`, so the agent reads `triage_snapshot`, `patient` and `outage` and repeats the view's `P-xxxxxx` expression to show the same ref. Keep them in step, or grant the view to `bn_agent` and I'll switch. 28 decisions now wait in the control room.
+  - @sali (covering frontend): `/api/agent/decisions` has real rows now. Two CAP drafts are ready to approve: outages 35 (TN26, TN30) and 53 (DA12).
+- Conflict status: open
+
+### 2026-10-18 07:25 — frontend: triage + approvals, agent & audit, previews, my home (Rama's rows 5, 6, 8, 10–13) — @sali — done
+- Shipped (on `Rama-Frontend`, merged to `main`, live behind Ahmed's nginx):
+  - Side panel tabs: **Power cuts** (Rama's view, unchanged) / **Triage** / **Agent & audit**; **My home** in the top bar.
+  - Triage: rank, expected case then the q50–q90 range, rule used, harm-hours, reasons; Approve / Reject behind the operator sign-in; SMS template preview on a phone.
+  - Agent & audit: Ahmed's decision feed with Approve / Reject, CAP alert phone preview once approved, audit verify (red + first bad row on tamper, checkpoint signature state).
+  - My home: household sign-in, option C level over the three layer gauges, reserve clock, next action, never an ETA.
+  - New-fault ping (outline pulse + "new", none under reduced motion); SIMULATED labels on cells, triage and SMS.
+- Review: ui-audit + an independent review agent with a research ledger (`## Frontend accessibility + dialog pass` in the research doc). Applied: native `<dialog>` (focus, inert background, Escape), a single status line instead of list-wide live regions, top-bar sign-out, landing Brier fetched live, the UKPN curve in the charts, re-renders that keep open rows and focus, 409 shown as "already decided".
+- Tests: 137 frontend (92% lines), build OK; backend 222 green.
+- Touched: `frontend/src/*` (new: `triage`, `agent`, `preview`, `myHome`, `modal`, `tabs`, `dom`), `frontend/index.html`, `frontend/src/styles.css`, `fixtures/api/me_home.json`, `fixtures/api/agent_decisions.json`; VM `frontend/dist`
+- ⚠️ Conflicts: @rama: your list is done up to row 13 and your own views are untouched; row 14 still needs the performance pass and a real-browser look. @ahmed: the UI reads your decisions' `args.patient` / `args.outage_id`; keep those names.
+- Conflict status: open
+
+### 2026-10-18 07:25 — triage rows link the agent's escalate decisions — @sali
+- Shipped: `/api/triage` fills `decision_id` with the newest `escalate` decision for that patient and fault (it was still hard-coded null from before the agent existed). 25 of 32 live rows linked. Test added.
+- Touched: `backend/app/main.py`, `backend/tests/test_triage.py`
+- ⚠️ Conflicts: @ahmed: relies on `args.patient` + `args.outage_id` in escalate decisions.
+- Conflict status: open
+
+
+### 2026-10-18 07:34 — sensor simulator live on the real fault footprints (task 11, F2) — @ahmed
+- Shipped: `backend/app/simulator.py`, one more worker inside the app (4 lines in `runtime.py`).
+  - Each live DNO fault with geocoded postcodes gets 3 home fuse-box sensors and 2 anchors per postcode, plus 2 controls one cell away. Capped at 5,000.
+  - An affected sensor sends a last gasp at the fault's real start and stays silent until the real restoration. Heartbeats come every 60 s.
+  - Noise: about 75% comms uptime, with ~7 min gaps that the tracker marks `dropout`, never `down`. 8% of sensors are fitted behind a backup. 1 fault in 4 is partial, where only 1 home in 3 loses power.
+  - Events go on the bus as source `sim`, label `SIMULATED`.
+- Live: 2,199 sensors on 17 faults (1,299 home, 866 anchor, 34 control). 1,952 last gasps are stamped at the real fault starts, and 238 sensors are reporting. 5 tests (95% of the module), full suite 227 passed on s390x.
+- Not yet: the Accra replay (real GridWatch sensors), linking home sensors to enrolled households, and feeding `/api/me/home`'s `voltage` (still `[]`).
+- Deployed with `restart app` from `~/BlackNaught`, about 5 s of API downtime.
+- Touched: `backend/app/simulator.py` (new), `backend/tests/test_simulator.py` (new), `backend/app/runtime.py` (+4 lines), `backend/tests/test_runtime.py` (the worker set now includes `sim`).
+- ⚠️ Conflicts: @sali:
+  - `runtime.py` and `test_runtime.py` are yours: 4 lines start and stop the simulator, and the worker-set assertion gains `"sim"`. The first round waits one heartbeat (60 s), so it can't race that test.
+  - The simulator writes `sensor` as `bn_ingest` (as 0010 intended). The tracker writes its transitions as usual.
+  - FYI: the app log had 4 "ASGI callable returned without completing response" errors in the 10 min before my restart and none after. Probably SSE viewers dropping.
 - Conflict status: open

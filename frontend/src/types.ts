@@ -94,3 +94,58 @@ export interface Cell {
   outage_scale: Scale | null;
   risk_tomorrow: number | null;
 }
+
+export type DecisionStateName = 'auto_done' | 'awaiting_approval' | 'approved' | 'rejected' | 'exported' | 'expired';
+
+export interface AgentDecision {
+  id: string;
+  tool: string;
+  state: DecisionStateName;
+  created_at: string;
+  args_summary: string;
+  rationale: string[];
+}
+
+export interface DecisionState {
+  decision_id: string;
+  state: DecisionStateName;
+  audit_seq: number | null;
+}
+
+export interface AuditVerify {
+  ok: boolean;
+  rows: number;
+  first_bad_seq: number | null;
+  reason: string | null;
+  // sig_ok is null when the checkpoint was written before the signer existed: unknown, not failed.
+  last_checkpoint: { seq: number; sig_ok: boolean | null; head_matches: boolean } | null;
+  took_ms: number;
+}
+
+export interface RiskLayer {
+  layer: 'home' | 'area' | 'grid';
+  // Null means the layer has no data; it must never be read as "low".
+  value: string | null;
+  horizon: string;
+  source: string;
+  updated: string | null;
+}
+
+export interface HomeRisk {
+  level: 'low' | 'elevated' | 'high' | 'unknown';
+  reason: string;
+  layers: RiskLayer[];
+}
+
+export interface MyHome {
+  household: string;
+  label: Label;
+  power: 'on' | 'off' | 'unknown';
+  since: string | null;
+  reserve: { device: string; ends_at: string | null; hours_left: number | null };
+  voltage: { t: string; pu: number }[];
+  bands: Record<string, number>;
+  next_action: string;
+  grid_context: { hz: number | null; note: string };
+  risk: HomeRisk;
+}

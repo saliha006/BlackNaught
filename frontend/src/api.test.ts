@@ -47,3 +47,38 @@ describe('live mode', () => {
     await expect(failed).rejects.toThrow('/api/triage?limit=3: Failed to fetch');
   });
 });
+
+describe('decisions, audit, my home and login', () => {
+  it('serves every new view from fixtures', async () => {
+    const api = await import('./api');
+    expect((await api.getDecisions())[0].state).toBe('awaiting_approval');
+    expect((await api.getAudit()).ok).toBe(true);
+    expect((await api.getMyHome()).risk.layers).toHaveLength(3);
+    expect(await api.login('home-ama', 'x')).toBe('household');
+    expect(await api.login('operator', 'x')).toBe('operator');
+    expect((await api.decide('d-1', false)).state).toBe('rejected');
+    expect(await api.getCapXml('d-1')).toContain('urn:oasis:names:tc:emergency:cap:1.2');
+    await expect(api.logout()).resolves.toBeUndefined();
+  });
+
+  it('posts approvals with JSON and treats 401 as a login problem', async () => {
+    vi.stubEnv('MODE', 'live');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('{"role":"operator"}', { status: 200 }))
+      .mockResolvedValueOnce(new Response('{"decision_id":"a b","state":"approved","audit_seq":7}', { status: 200 }))
+      .mockResolvedValueOnce(new Response('', { status: 401 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response('<alert/>', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const api = await import('./api');
+
+    expect(await api.login('operator', 'pw')).toBe('operator');
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ login: 'operator', passphrase: 'pw' });
+    expect((await api.decide('a b', true)).state).toBe('approved');
+    expect(fetchMock.mock.calls[1][0]).toBe('/api/decisions/a%20b/approve');
+    await expect(api.getMyHome()).rejects.toBeInstanceOf(api.AuthError);
+    await expect(api.logout()).resolves.toBeUndefined();
+    expect(await api.getCapXml('d')).toBe('<alert/>');
+  });
+});

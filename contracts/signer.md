@@ -46,8 +46,8 @@ All are JSON: `{"error": "..."}`.
 | 500 | OpenSSL failed for a reason other than a bad signature (details in the signer's log) |
 
 ## Checking a signature without the service
-In the signer image (its OpenSSL is 3.5; the VM host's is 3.0, which has no ML-DSA):
+The public key is published as `contracts/signer_pub.pem` (key_id `bda7ac1f8fd6c9d2`). Any OpenSSL 3.5 can check a
+signature with it: the signer image's, or Git Bash's on Windows. The VM host's is 3.0, which has no ML-DSA.
 ```bash
-openssl pkey -in secrets/signer_key -pubout -out signer_pub.pem
-openssl pkeyutl -verify -rawin -pubin -inkey signer_pub.pem -sigfile sig.bin -in payload.bin
+openssl pkeyutl -verify -rawin -pubin -inkey contracts/signer_pub.pem -sigfile sig.bin -in payload.bin
 ```

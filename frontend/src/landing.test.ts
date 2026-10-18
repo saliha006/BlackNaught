@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import km from '../../backend/models/km_enwl.json';
 import triage from '../../fixtures/api/triage.json';
 import health from '../../fixtures/api/sources_health.json';
-import { percentStillOff, sourceRow, survivalPath, triageRow } from './landing';
+import { percentStillOff, sourceRow, survivalPath, triageRow, ukpnBrier } from './landing';
 import type { SourceHealth, TriageItem } from './types';
 
 describe('survivalPath', () => {
@@ -19,6 +19,20 @@ describe('survivalPath', () => {
 it('reads the share still off from the hourly curve', () => {
   expect(percentStillOff(km.curve, 0)).toBe('100%');
   expect(percentStillOff(km.curve, 4)).toBe('45%');
+});
+
+describe('ukpnBrier', () => {
+  it('weights UKPN +2 h by graded count across models and ignores other rows', () => {
+    const row = (model_id: string, brier: number | null, n: number, source = 'ukpn', h = 2) => ({
+      h, model_id, source, brier, n, n_censored: 0, bound: null,
+    });
+    const grades = {
+      by_horizon: [row('a', 0.2, 100), row('b', 0.1, 300), row('a', 0.9, 50, 'ssen'), row('a', 0.9, 50, 'ukpn', 4), row('c', null, 0)],
+      trend: [],
+    };
+    expect(ukpnBrier(grades)).toEqual({ brier: 0.125, n: 400 });
+    expect(ukpnBrier({ by_horizon: [], trend: [] })).toBeNull();
+  });
 });
 
 describe('triageRow', () => {

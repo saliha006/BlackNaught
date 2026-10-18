@@ -7,6 +7,8 @@ export interface LiveHandlers {
   feed(row: SourceHealth): void;
   stats(eventsPerSecond: number): void;
   status(state: 'live' | 'reconnecting'): void;
+  /** A fault the feeds just reported as active, so the list can flag it before the refetch lands. */
+  ping?(outageId: number): void;
 }
 
 // Events arrive in bursts (a poll can re-rank dozens of patients); at most one refetch per kind per second.
@@ -37,6 +39,10 @@ export function connectLive(on: LiveHandlers, url = '/stream', Source: typeof Ev
       );
     });
   }
+  source.addEventListener('outage', (e) => {
+    const { id, status } = JSON.parse((e as MessageEvent).data);
+    if (status === 'active') on.ping?.(id);
+  });
   // A health event carries the whole row, so it patches in place without a refetch.
   source.addEventListener('source_health', (e) => on.feed(JSON.parse((e as MessageEvent).data)));
   source.addEventListener('stats', (e) => on.stats(JSON.parse((e as MessageEvent).data).events_per_s));

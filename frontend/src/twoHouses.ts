@@ -1,4 +1,5 @@
 import { deviceName } from './devices';
+import { el } from './dom';
 import { formatElapsed } from './format';
 import type { Outage, TriageItem } from './types';
 
@@ -27,12 +28,6 @@ export function findPair(items: TriageItem[]): Pair | null {
   return null;
 }
 
-function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text?: string) {
-  const node = document.createElement(tag);
-  node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
 
 function house(name: string, item: TriageItem): HTMLElement {
   const box = el('article', 'house');

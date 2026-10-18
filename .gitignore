@@ -22,6 +22,8 @@ DATATHON INFO/
 !.env.example
 *.pem
 *.key
+# a public key, published so anyone can check the signer's signatures
+!contracts/signer_pub.pem
 id_*
 
 # Tooling
@@ -48,3 +50,6 @@ share/
 
 # superseded docs, kept locally for reference (never shared or committed)
 _archive/
+
+# the public-alert relay remembers what it has sent
+alerting/.sent

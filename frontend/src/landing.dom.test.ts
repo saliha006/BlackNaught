@@ -21,12 +21,13 @@ function mount(reducedMotion: boolean) {
 beforeEach(() => stopBolt.mockClear());
 
 describe('setupLanding', () => {
-  it('opens over an inert app and draws the ENWL curves', () => {
+  it('opens over an inert app and draws the live UKPN curve', () => {
     const { root, app } = mount(true);
     expect(root.hidden).toBe(false);
     expect(app[0].inert).toBe(true);
     expect(root.querySelector('svg[data-curve="24"] .curve-line')!.getAttribute('d')).toMatch(/^M0\.0,0\.0 /);
-    expect(root.querySelector('[data-still-off="4"]')!.textContent).toBe('45%');
+    // UKPN restores faster than ENWL: 40% still off at 4 h, against ENWL's 45%
+    expect(root.querySelector('[data-still-off="4"]')!.textContent).toBe('40%');
   });
 
   it('fills triage and feed health from the API', async () => {

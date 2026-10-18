@@ -19,7 +19,8 @@ describe('renderControls', () => {
   it('starts with every operator and layer on and escalations off', () => {
     const { root } = setup();
     const pressed = [...root.querySelectorAll('[aria-pressed="true"]')].map((b) => b.textContent);
-    expect(pressed).toEqual(['UKPN', 'SSEN', 'NPg', 'Beams', 'Sweep', 'Cells', 'Live']);
+    expect(pressed).toEqual(['UKPN', 'SSEN', 'NPg', 'Beams', 'Sweep', 'CellsSIMULATED', 'Live']);
+    expect(root.querySelector('[data-label="SIMULATED"]')!.closest('button')!.textContent).toContain('Cells');
     expect(root.querySelectorAll('[role="group"]')).toHaveLength(4);
   });
 

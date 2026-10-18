@@ -79,9 +79,9 @@ flowchart LR
     subgraph VM["LinuxONE VM, z17, s390x, Docker Compose"]
         APP["app: one asyncio process<br/>ingest, scorer, grader, FastAPI"]
         DB[("Postgres 17<br/>least-privilege roles")]
-        EDGE["nginx edge, post-quantum TLS (in progress)"]
+        EDGE["nginx edge, post-quantum TLS"]
         SIGN["Signer, ML-DSA-65"]
-        AGENT["Agent loop and Granite (in progress)"]
+        AGENT["Agent loop (Granite in progress)"]
     end
     UI["Control-room UI (in progress)"]
     F1 --> APP
@@ -235,6 +235,9 @@ curl -s localhost:8000/api/health
 
 # tests
 sudo docker compose -f backend/compose.backend.yml run --rm --no-deps app pytest --cov=app
+
+# public-alert demo, on the laptop the Android phone is plugged into (Git Bash, USB debugging on)
+python alerting/relay.py   # each operator-approved CAP alert whose ML-DSA signature verifies goes to the phone
 ```
 
 API docs live at `/api/docs`. The API binds to `127.0.0.1`; the public entry point is the nginx edge.

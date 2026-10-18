@@ -1,9 +1,9 @@
-import km from '../../backend/models/km_enwl.json';
-import { getSourcesHealth, getTriage } from './api';
+import km from '../../backend/models/km_ukpn.json';
+import { getGrades, getSourcesHealth, getTriage } from './api';
 import { mountAsciiBolt } from './asciiBolt';
 import { deviceName } from './devices';
 import { escapeHtml, formatAgo, formatElapsed } from './format';
-import type { SourceHealth, TriageItem } from './types';
+import type { Grades, SourceHealth, TriageItem } from './types';
 
 const SOURCE_NAMES: Record<string, string> = {
   ukpn: 'UK Power Networks',
@@ -23,6 +23,13 @@ export function survivalPath(curve: number[], hours: number, w: number, h: numbe
 }
 
 export const percentStillOff = (curve: number[], hour: number) => `${Math.round(curve[hour] * 100)}%`;
+
+/** UKPN at +2 h, weighted by how many predictions each model has graded: the figure the landing card quotes. */
+export function ukpnBrier(grades: Grades): { brier: number; n: number } | null {
+  const rows = grades.by_horizon.filter((g) => g.source === 'ukpn' && g.h === 2 && g.brier !== null && g.n > 0);
+  const n = rows.reduce((sum, g) => sum + g.n, 0);
+  return n ? { brier: rows.reduce((sum, g) => sum + g.brier! * g.n, 0) / n, n } : null;
+}
 
 export function triageRow(item: TriageItem): string {
   const action = item.escalate
@@ -110,7 +117,13 @@ function fillCurves(root: HTMLElement) {
 async function fillLiveBits(root: HTMLElement) {
   const triageList = root.querySelector<HTMLElement>('#l-triage')!;
   const sourceBody = root.querySelector<HTMLElement>('#l-sources')!;
-  const [triage, health] = await Promise.allSettled([getTriage(), getSourcesHealth()]);
+  const [triage, health, grades] = await Promise.allSettled([getTriage(), getSourcesHealth(), getGrades()]);
+  const graded = grades.status === 'fulfilled' ? ukpnBrier(grades.value) : null;
+  // Fetched, not typed in, so the landing figure can't drift from the accuracy chart mid-recording
+  root.querySelector('#l-brier')!.textContent = graded ? graded.brier.toFixed(3) : '–';
+  root.querySelector('#l-brier-sub')!.textContent = graded
+    ? `Brier score at 2 h over ${graded.n.toLocaleString('en-GB')} predictions (0 is perfect)`
+    : 'Brier score at 2 h (0 is perfect); grading data unavailable right now';
   triageList.innerHTML =
     triage.status === 'fulfilled'
       ? triage.value.items.slice(0, 3).map(triageRow).join('')

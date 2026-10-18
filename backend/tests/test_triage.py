@@ -7,7 +7,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from app import harm, survival
+from app import decisions, harm, survival
 from app.config import settings
 from app.crypto import blind_index
 from app.ingest import feeds, store
@@ -165,11 +165,16 @@ async def test_no_faults_means_empty_snapshot(db_factory, superuser):
 
 
 @pytest.mark.anyio
-async def test_triage_api_serves_latest_snapshot(world):
+async def test_triage_api_serves_latest_snapshot(world, db_factory):
     await world.tick(NOW)
     async with app.router.lifespan_context(app):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t") as c:
+            first = (await c.get("/api/triage?limit=1")).json()["items"][0]
+            assert first["decision_id"] is None
+            decision_id, _ = await decisions.create(db_factory("bn_agent"), "escalate", {
+                "patient": first["patient_ref"], "outage_id": first["outage_id"], "service": "ambulance"}, [])
             body = (await c.get("/api/triage?limit=1")).json()
+            assert body["items"][0]["decision_id"] == decision_id
             assert body["items"][0]["device"] == "o2_concentrator" and body["items"][0]["escalate"]
             assert body["next_cursor"] == 1 and body["items"][0]["scale"] in ("street", "unresolved")
             page2 = (await c.get("/api/triage?limit=1&cursor=1")).json()

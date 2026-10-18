@@ -20,5 +20,16 @@
       "greedy knapsack on harm-hours avoided",
       "waiting: lowest harm, all have ≥ 10 h reserve"
     ]
+  },
+  {
+    "id": "6f1c2d3e-0000-4000-8000-000000000003",
+    "tool": "draft_cap_alert",
+    "state": "approved",
+    "created_at": "2026-10-17T22:05:00+00:00",
+    "args_summary": "street-scale fault, 3 electricity-dependent households inside",
+    "rationale": [
+      "area-scale outage with vulnerable people inside",
+      "needs a human OK before broadcast"
+    ]
   }
 ]

@@ -4,8 +4,26 @@ import '@fontsource/ibm-plex-sans/500.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import './styles.css';
 import './landing.css';
-import km from '../../backend/models/km_enwl.json';
-import { ApiError, getAreaRisk, getCells, getGrades, getOutages, getSourcesHealth, getStress, getTriage, isLive } from './api';
+import km from '../../backend/models/km_ukpn.json';
+import {
+  ApiError,
+  AuthError,
+  decide,
+  logout,
+  getAreaRisk,
+  getAudit,
+  getCapXml,
+  getCells,
+  getDecisions,
+  getGrades,
+  getMyHome,
+  getOutages,
+  getSourcesHealth,
+  getStress,
+  getTriage,
+  isLive,
+} from './api';
+import { renderAudit, renderDecisions } from './agent';
 import { renderAccuracy } from './charts/accuracy';
 import { chartCard, setBadge, showUnavailable } from './charts/card';
 import { renderFeeds } from './charts/feeds';
@@ -16,14 +34,21 @@ import { isLocated } from './geo';
 import { setupLanding } from './landing';
 import { connectLive, formatRate, type Refetch } from './live';
 import { createMap, type LayerGroup, type OutageMap, type Padding } from './map';
+import { askLogin, openModal } from './modal';
+import { renderMyHome } from './myHome';
 import { markSelected, renderOutageList, sortOutages } from './outageList';
 import { renderPredict } from './predict';
+import { capPhone, parseCap, smsPhone } from './preview';
 import { allOperators, escalatedOutages, type Filters, filterOutages, showsSource } from './state';
+import { setupTabs } from './tabs';
+import { renderTriage } from './triage';
 import { findPair, renderTwoHouses } from './twoHouses';
-import type { AreaRisk, Cell, Grades, GridStress, Outage, SourceHealth, Triage, TriageItem } from './types';
+import type { AgentDecision, AreaRisk, Cell, Grades, GridStress, Outage, SourceHealth, Triage, TriageItem } from './types';
 
 // The opening dive is slower than a click-to-fly so the city has time to build up around the beam.
 const DIVE_MS = 5200;
+// Long enough to notice on a recording, short enough that the list doesn't stay noisy.
+const NEW_FLAG_MS = 8000;
 // The contract caps triage pages at 200; escalations need every ranked patient, not the top few.
 const TRIAGE_LIMIT = 200;
 
@@ -51,6 +76,31 @@ let stress: GridStress | null = null;
 let selected: number | null = null;
 let triageItems: TriageItem[] = [];
 let stopLive: (() => void) | null = null;
+let decisions: AgentDecision[] | null = null;
+let openTab = 'tab-outages';
+const fresh = new Set<number>();
+const modalRoot = $('#modal-root');
+let auditChecked = false;
+let newSinceAnnounce = 0;
+let announceTimer = 0;
+
+/** One polite status line for what a screen reader should hear: decisions, audit verdicts, new faults. */
+const announce = (text: string) => {
+  $('#status').textContent = text;
+};
+
+function setSignedIn(name: string | null) {
+  $('#signed-in').hidden = name === null;
+  $('#signed-in-name').textContent = name ?? '';
+}
+
+// The session cookie is HttpOnly and there's no "who am I" endpoint, so the bar only knows sign-ins made on this page
+$('#sign-out').addEventListener('click', async () => {
+  modalRoot.querySelector('dialog')?.close();
+  await logout().catch(() => undefined);
+  setSignedIn(null);
+  announce('Signed out');
+});
 
 const filters: Filters = { operators: allOperators(), escalationsOnly: false };
 const layers: Record<LayerGroup, boolean> = { beams: true, sweep: true, cells: true };
@@ -63,7 +113,12 @@ const controls = renderControls($('#controls'), filters, layers, {
 
 const analysis = $('#analysis');
 const cards = {
-  length: chartCard(analysis, 'Outage length vs history', 'Live cuts on the survival curve of 312,936 ENWL outages', 'LIVE'),
+  length: chartCard(
+    analysis,
+    'Outage length vs history',
+    `Live cuts on the survival curve of ${km.n.toLocaleString('en-GB')} UKPN outages`,
+    'LIVE',
+  ),
   accuracy: chartCard(analysis, 'Prediction accuracy', 'Brier score of predictions graded against real GB restorations', 'LIVE'),
   risk: chartCard(analysis, "Tomorrow's risk", 'Chance of 3 or more faults per ENWL district; not filtered by operator', null),
   feeds: chartCard(analysis, 'Feed health', 'Time since each feed last delivered; the tick marks stale (2× its polling interval)', 'LIVE'),
@@ -102,11 +157,107 @@ function render() {
   const filtered = visible.length < active.length;
   renderOutageList(list, visible, (o) => pick(o.id), filtered ? 'No power cuts match these filters.' : undefined);
   if (selected !== null) markSelected(list, selected, false);
+  for (const id of fresh) list.querySelector(`button.outage[data-id="${id}"]`)?.classList.add('is-new');
   renderCharts();
   // The demo pair ignores the filters: it's the centrepiece, and hiding it behind a chip would lose it mid-recording.
   const pair = findPair(triageItems);
   renderTwoHouses($('#two-houses'), pair, active.find((o) => o.id === pair?.outageId), (id) => pick(id, undefined, active));
+  renderTriageTab();
 }
+
+const awaiting = () => new Set((decisions ?? []).filter((d) => d.state === 'awaiting_approval').map((d) => d.id));
+
+function renderTriageTab() {
+  const toEscalate = triageItems.filter((i) => i.escalate).length;
+  $('#triage-count').textContent = toEscalate ? String(toEscalate) : '';
+  if (openTab !== 'tab-triage') return;
+  renderTriage($<HTMLUListElement>('#triage-list'), triageItems, awaiting(), {
+    show: (id) => pick(id, undefined, active),
+    sms: (item) => openModal(modalRoot, 'SMS preview').body.append(smsPhone(item)),
+    decide: decideAndRefresh,
+  });
+}
+
+function renderAgentTab() {
+  if (openTab !== 'tab-agent') return;
+  renderDecisions($<HTMLUListElement>('#decision-list'), decisions, { decide: decideAndRefresh, previewCap });
+}
+
+async function loadDecisions() {
+  decisions = await getDecisions().catch(() => null);
+  renderTriageTab();
+  renderAgentTab();
+}
+
+async function verifyAudit() {
+  const result = await getAudit().catch(() => 'failed' as const);
+  renderAudit($('#audit'), result, verifyAudit);
+  if (result === 'failed') announce("Couldn't verify the audit chain");
+  else announce(result.ok ? 'Audit chain intact' : `Audit chain tampered at row ${result.first_bad_seq}`);
+}
+
+/** A 401/403 means the wrong person (or nobody) is signed in: ask for the role's login once, then retry. */
+async function withLogin<T>(role: 'operator' | 'household', run: () => Promise<T>): Promise<T | null> {
+  try {
+    return await run();
+  } catch (err) {
+    if (!(err instanceof AuthError)) throw err;
+    const who = await askLogin(modalRoot, role);
+    if (who === null) return null;
+    setSignedIn(who);
+    return run();
+  }
+}
+
+async function decideAndRefresh(id: string, approve: boolean) {
+  try {
+    const result = await withLogin('operator', () => decide(id, approve));
+    if (!result) return;
+    announce(`${approve ? 'Approved' : 'Rejected'}${result.audit_seq ? `, audit row ${result.audit_seq}` : ''}`);
+    // reload('triage') refreshes the decisions too, so the decided row loses its buttons
+    await reload('triage');
+  } catch (err) {
+    // 409 means another operator decided first: a normal outcome with two people on shift, not a fault
+    const message = (err as Error).message;
+    const text = message.endsWith('409') ? 'Already decided by another operator.' : `The decision wasn't recorded: ${message}`;
+    openModal(modalRoot, 'Not sent').body.append(text);
+  }
+}
+
+async function previewCap(id: string) {
+  const modal = openModal(modalRoot, 'Public alert preview');
+  try {
+    modal.body.append(capPhone(parseCap(await getCapXml(id))));
+  } catch (err) {
+    modal.body.append(`The alert isn't available: ${(err as Error).message}`);
+  }
+}
+
+async function openMyHome() {
+  try {
+    const home = await withLogin('household', getMyHome);
+    if (!home) return;
+    const modal = openModal(modalRoot, 'My home');
+    renderMyHome(modal.body, home);
+  } catch (err) {
+    openModal(modalRoot, 'My home').body.append(`Couldn't load your home: ${(err as Error).message}`);
+  }
+}
+
+$('#open-my-home').addEventListener('click', openMyHome);
+
+setupTabs($('.tabs'), (panel) => {
+  openTab = panel;
+  if (panel === 'tab-triage') renderTriageTab();
+  if (panel === 'tab-agent') {
+    renderAgentTab();
+    // Verify walks the whole chain on the server, so arrowing past the tab mustn't re-run it; the button does
+    if (!auditChecked) {
+      auditChecked = true;
+      void verifyAudit();
+    }
+  }
+});
 
 function pick(id: number, duration?: number, from: Outage[] = visible) {
   const o = from.find((x) => x.id === id);
@@ -128,7 +279,11 @@ async function reload(what: Refetch) {
   analysis.classList.add('is-refreshing');
   try {
     if (all || what === 'outages') active = (await getOutages()).filter((o) => o.status === 'active');
-    if (all || what === 'triage') applyTriage(await getTriage(TRIAGE_LIMIT));
+    if (all || what === 'triage') {
+      applyTriage(await getTriage(TRIAGE_LIMIT));
+      // The agent acts on each triage tick, so its decisions are refreshed alongside.
+      void loadDecisions();
+    }
     if (all || what === 'grades') grades = await getGrades();
     if (all) {
       [risk, stress, feeds] = await Promise.all([getAreaRisk(), getStress(), getSourcesHealth().then((h) => h.sources)]);
@@ -158,6 +313,20 @@ function setLiveUpdates(on: boolean) {
       renderCharts();
     },
     stats: (rate) => controls.setLive('live', formatRate(rate)),
+    ping(id) {
+      fresh.add(id);
+      // Batched, so a burst of new faults is one sentence rather than a run of interruptions
+      newSinceAnnounce += 1;
+      clearTimeout(announceTimer);
+      announceTimer = window.setTimeout(() => {
+        announce(`${newSinceAnnounce} new power cut${newSinceAnnounce === 1 ? '' : 's'}`);
+        newSinceAnnounce = 0;
+      }, 5000);
+      setTimeout(() => {
+        fresh.delete(id);
+        list.querySelector(`button.outage[data-id="${id}"]`)?.classList.remove('is-new');
+      }, NEW_FLAG_MS);
+    },
     status: (state) => controls.setLive(state),
   });
 }
@@ -214,6 +383,7 @@ async function start() {
   cells = cellData;
   outagesLoaded = true;
   applyTriage(triage);
+  void loadDecisions();
 
   render();
   map.onSelect((id) => pick(id));
