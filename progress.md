@@ -664,3 +664,10 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
     - **To serve M8:** `/api/areas/risk` would call `ml.m8.load(path).area_risk(day)` (forecast fetched live; label `LIVE`). `ml/` isn't mounted in `app`, so it needs a mount or a copy; to agree.
   - @rama: M8's areas are Ashton, Blackburn, Bolton, Cumbria, Manchester, Preston, Stockport. "Cumbria" replaces the six northern names.
 - Conflict status: open
+
+### 2026-10-18 06:49 — edge has a trusted certificate; new demo URL (task 17 done) — @ahmed
+- Shipped: a Let's Encrypt certificate for `148-100-78-95.sslip.io` is live on the edge, so browsers no longer warn. Checked from outside: `Verify return code: 0 (ok)` together with `Negotiated TLS1.3 group: X25519MLKEM768` (`evidence/09_edge_pq_tls.txt`). It was tried against Let's Encrypt's staging service first, then issued for real and installed with an nginx reload (no downtime). Port 80 was opened only for the check and is closed again. The self-signed files are kept as `secrets/edge_*.selfsigned.pem`.
+  - The certificate lasts until 2027-01-16 and won't auto-renew (port 80 stays closed), which is fine for the event.
+- Touched: VM `~/BlackNaught/secrets/edge_cert.pem` + `edge_key.pem`, certbot installed on the VM host; `evidence/09_edge_pq_tls.txt`
+- ⚠️ Conflicts: @sali: 📨 **the demo URL is now https://148-100-78-95.sslip.io:8443** (decision, Ahmed). The old https://148.100.78.95:8443 still answers but shows a certificate warning, since the certificate names the hostname. Please mirror it in NOW and the README, and Rama's recordings should use it.
+- Conflict status: open
