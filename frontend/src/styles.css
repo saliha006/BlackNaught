@@ -181,6 +181,25 @@ body {
   font-weight: 400;
 }
 
+/* Hollow dot while paused or retrying, filled while the stream is flowing; the word says which */
+.chip--live::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+}
+
+.chip--live[data-state='live']::before {
+  background: currentColor;
+}
+
+/* Refetch keeps the frame: the last good charts stay up, dimmed, until new data lands */
+.analysis.is-refreshing {
+  opacity: 0.6;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
 /* Predict strip: the three layers, left of the outage panel and level with its top */
 .predict {
   position: fixed;

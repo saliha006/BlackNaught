@@ -14,11 +14,12 @@ import { renderRisk } from './charts/risk';
 import { renderControls } from './controls';
 import { isLocated } from './geo';
 import { setupLanding } from './landing';
+import { connectLive, formatRate, type Refetch } from './live';
 import { createMap, type LayerGroup, type OutageMap, type Padding } from './map';
 import { markSelected, renderOutageList, sortOutages } from './outageList';
 import { renderPredict } from './predict';
 import { allOperators, escalatedOutages, type Filters, filterOutages, showsSource } from './state';
-import type { AreaRisk, Cell, Grades, Outage, SourceHealth } from './types';
+import type { AreaRisk, Cell, Grades, GridStress, Outage, SourceHealth, Triage } from './types';
 
 // The opening dive is slower than a click-to-fly so the city has time to build up around the beam.
 const DIVE_MS = 5200;
@@ -45,6 +46,9 @@ let panelsLoaded = false;
 let grades: Grades | null = null;
 let risk: AreaRisk[] | null = null;
 let feeds: SourceHealth[] | null = null;
+let stress: GridStress | null = null;
+let selected: number | null = null;
+let stopLive: (() => void) | null = null;
 
 const filters: Filters = { operators: allOperators(), escalationsOnly: false };
 const layers: Record<LayerGroup, boolean> = { beams: true, sweep: true, cells: true };
@@ -52,6 +56,7 @@ const layers: Record<LayerGroup, boolean> = { beams: true, sweep: true, cells: t
 const controls = renderControls($('#controls'), filters, layers, {
   filters: render,
   layer: (group, on) => map?.setLayerVisible(group, on),
+  live: setLiveUpdates,
 });
 
 const analysis = $('#analysis');
@@ -93,14 +98,61 @@ function render() {
   count.textContent = String(visible.length);
   const filtered = visible.length < active.length;
   renderOutageList(list, visible, (o) => pick(o.id), filtered ? 'No power cuts match these filters.' : undefined);
+  if (selected !== null) markSelected(list, selected, false);
   renderCharts();
 }
 
 function pick(id: number, duration?: number) {
   const o = visible.find((x) => x.id === id);
   if (!map || !o || !isLocated(o)) return;
+  selected = id;
   map.focus(o, duration);
   markSelected(list, id);
+}
+
+function applyTriage(triage: Triage | null) {
+  escalated = escalatedOutages(triage);
+  controls.setEscalations(triage ? escalated.size : null);
+}
+
+/** Refetch what a stream event says changed. The panel keeps its last good frame, dimmed, until new data lands. */
+async function reload(what: Refetch) {
+  const all = what === 'all';
+  analysis.classList.add('is-refreshing');
+  try {
+    if (all || what === 'outages') active = (await getOutages()).filter((o) => o.status === 'active');
+    if (all || what === 'triage') applyTriage(await getTriage(TRIAGE_LIMIT));
+    if (all || what === 'grades') grades = await getGrades();
+    if (all) {
+      [risk, stress, feeds] = await Promise.all([getAreaRisk(), getStress(), getSourcesHealth().then((h) => h.sources)]);
+      renderPredict($('#predict-tiles'), risk, stress);
+    }
+    render();
+  } catch {
+    // A failed refresh leaves the last good data up; the toggle says the link is struggling.
+    controls.setLive('reconnecting');
+  } finally {
+    analysis.classList.remove('is-refreshing');
+  }
+}
+
+function setLiveUpdates(on: boolean) {
+  stopLive?.();
+  stopLive = null;
+  if (!on) {
+    controls.setLive('paused');
+    return;
+  }
+  controls.setLive('reconnecting');
+  stopLive = connectLive({
+    refetch: reload,
+    feed(row) {
+      feeds = feeds ? feeds.map((f) => (f.source === row.source ? row : f)) : [row];
+      renderCharts();
+    },
+    stats: (rate) => controls.setLive('live', formatRate(rate)),
+    status: (state) => controls.setLive(state),
+  });
 }
 
 /** Zoom straight into the outage at the top of the list, the same one a person would check first. */
@@ -154,13 +206,14 @@ async function start() {
   active = outages.filter((o) => o.status === 'active');
   cells = cellData;
   outagesLoaded = true;
-  escalated = escalatedOutages(triage);
-  controls.setEscalations(triage ? escalated.size : null);
+  applyTriage(triage);
 
   render();
   map.onSelect((id) => pick(id));
   // The map can finish loading after the visitor has already left the landing page.
   if (onMap) dive();
+  if (isLive) setLiveUpdates(true);
+  else controls.setLive('unavailable');
 }
 
 // Each panel fails on its own: a missing forecast shows "No data" without holding up the map.
@@ -169,8 +222,9 @@ Promise.all([
   getStress().catch(() => null),
   getGrades().catch(() => null),
   getSourcesHealth().catch(() => null),
-]).then(([riskData, stress, gradeData, health]) => {
+]).then(([riskData, stressData, gradeData, health]) => {
   risk = riskData;
+  stress = stressData;
   grades = gradeData;
   feeds = health?.sources ?? null;
   panelsLoaded = true;

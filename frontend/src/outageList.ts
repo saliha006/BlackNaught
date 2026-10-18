@@ -59,10 +59,11 @@ export function renderOutageList(
   };
 }
 
-export function markSelected(list: HTMLElement, id: number) {
+/** `reveal` scrolls the row into view; off for live refreshes, which must not yank the list away from the reader. */
+export function markSelected(list: HTMLElement, id: number, reveal = true) {
   for (const btn of list.querySelectorAll<HTMLButtonElement>('button.outage')) {
     const on = Number(btn.dataset.id) === id;
     btn.setAttribute('aria-pressed', String(on));
-    if (on) btn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (on && reveal) btn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 }

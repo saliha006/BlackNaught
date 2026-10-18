@@ -10,12 +10,24 @@ export const LAYERS: { id: LayerGroup; name: string }[] = [
 export interface ControlHandlers {
   filters(): void;
   layer(group: LayerGroup, visible: boolean): void;
+  live(on: boolean): void;
 }
+
+export type LiveState = 'live' | 'reconnecting' | 'paused' | 'unavailable';
 
 export interface Controls {
   /** Outages with an escalated patient; null when triage couldn't be loaded, which disables the toggle. */
   setEscalations(count: number | null): void;
+  /** `rate` is the backend's events per second, shown while the stream is live. */
+  setLive(state: LiveState, rate?: string): void;
 }
+
+const LIVE_WORDS: Record<LiveState, string> = {
+  live: 'Live',
+  reconnecting: 'Reconnecting…',
+  paused: 'Paused',
+  unavailable: 'No live stream',
+};
 
 function chip(label: string, pressed: boolean, onToggle: (pressed: boolean) => void): HTMLButtonElement {
   const b = document.createElement('button');
@@ -74,13 +86,31 @@ export function renderControls(
     }),
   );
 
-  root.replaceChildren(group('Operators', operators), group('Show', [escalations]), group('Map', mapLayers));
+  const live = chip(LIVE_WORDS.live, true, on.live);
+  live.classList.add('chip--live');
+  const liveRate = document.createElement('span');
+  liveRate.className = 'chip__count num';
+
+  root.replaceChildren(
+    group('Operators', operators),
+    group('Show', [escalations]),
+    group('Map', mapLayers),
+    group('Updates', [live]),
+  );
 
   return {
     setEscalations(count) {
       escalations.disabled = count === null;
       escalations.title = count === null ? 'Triage is unavailable right now' : '';
       escalationCount.textContent = count === null ? '–' : String(count);
+    },
+    setLive(state, rate) {
+      live.dataset.state = state;
+      live.disabled = state === 'unavailable';
+      live.title = state === 'unavailable' ? 'Fixture data has no live stream' : '';
+      live.setAttribute('aria-pressed', String(state === 'live' || state === 'reconnecting'));
+      liveRate.textContent = state === 'live' && rate ? rate : '';
+      live.replaceChildren(LIVE_WORDS[state], liveRate);
     },
   };
 }
