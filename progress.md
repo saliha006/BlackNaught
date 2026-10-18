@@ -727,3 +727,25 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts: @ahmed: relies on `args.patient` + `args.outage_id` in escalate decisions.
 - Conflict status: open
 
+
+### 2026-10-18 07:34 — sensor simulator live on the real fault footprints (task 11, F2) — @ahmed
+- Shipped: `backend/app/simulator.py`, one more worker inside the app (4 lines in `runtime.py`).
+  - Each live DNO fault with geocoded postcodes gets 3 home fuse-box sensors and 2 anchors per postcode, plus 2 controls one cell away. Capped at 5,000.
+  - An affected sensor sends a last gasp at the fault's real start and stays silent until the real restoration. Heartbeats come every 60 s.
+  - Noise: about 75% comms uptime, with ~7 min gaps that the tracker marks `dropout`, never `down`. 8% of sensors are fitted behind a backup. 1 fault in 4 is partial, where only 1 home in 3 loses power.
+  - Events go on the bus as source `sim`, label `SIMULATED`.
+- Live: 2,199 sensors on 17 faults (1,299 home, 866 anchor, 34 control). 1,952 last gasps are stamped at the real fault starts, and 238 sensors are reporting. 5 tests (95% of the module), full suite 227 passed on s390x.
+- Not yet: the Accra replay (real GridWatch sensors), linking home sensors to enrolled households, and feeding `/api/me/home`'s `voltage` (still `[]`).
+- Deployed with `restart app` from `~/BlackNaught`, about 5 s of API downtime.
+- Touched: `backend/app/simulator.py` (new), `backend/tests/test_simulator.py` (new), `backend/app/runtime.py` (+4 lines), `backend/tests/test_runtime.py` (the worker set now includes `sim`).
+- ⚠️ Conflicts: @sali:
+  - `runtime.py` and `test_runtime.py` are yours: 4 lines start and stop the simulator, and the worker-set assertion gains `"sim"`. The first round waits one heartbeat (60 s), so it can't race that test.
+  - The simulator writes `sensor` as `bn_ingest` (as 0010 intended). The tracker writes its transitions as usual.
+  - FYI: the app log had 4 "ASGI callable returned without completing response" errors in the 10 min before my restart and none after. Probably SSE viewers dropping.
+- Conflict status: open
+
+### 2026-10-18 07:35 — results notebook for screenshots and the video — @nate
+- Shipped: `ml/make_results_notebook.py` builds `~/shared/nate-runs/blacknaught_results.ipynb`, executed in Jupyter on the VM. Nothing is retrained; it loads the saved models and re-scores all three prediction layers on held-out data. It shows `s390x`, big-endian and NNPA present, then four charts: Storm Éowyn (M8 vs climatology), tomorrow's live area risk from the Open-Meteo forecast, home-sensor flags (18.8% ± 1.1% vs the 2.1% base), and 9 Aug 2019 frequency with the 74 s warning shaded. The numbers match the evidence logs.
+- Touched: `ml/make_results_notebook.py`; VM `~/shared/nate-runs/blacknaught_results.ipynb`
+- ⚠️ Conflicts: @sali @rama: free to use the charts in the video and slides. Open the notebook in Jupyter (`nate-runs/`); don't show the URL bar (token).
+- Conflict status: open
