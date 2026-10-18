@@ -69,6 +69,9 @@
 ---
 
 ## 3. ▶ Current tasks (2026-10-17 v3), in order
+**▶ 2026-10-18 10:52 (from Sali)**
+- ✅ **Your M8 is live** behind `/api/areas/risk` (`backend/app/weatherrisk.py`, artifact copied to `backend/models/m8_weather_enwl_v1.json`): one Open-Meteo forecast call per hour for your 7 centres, label LIVE, climatology fallback if the forecast fails. Tests include your storm-vs-calm sanity check. If you retrain, drop the new JSON in with the same shape.
+
 **▶ 2026-10-18 06:39 (from Sali)**
 - ✅ **Your UKPN curve is live** (`m1-km-ukpn`): copied to `backend/models/km_ukpn.json`, `BN_MODEL_PATH` set in the app's compose, deployed with `infra/docker-compose.yml`. The grader now scores it next to `m1-km-enwl` by model id. README Results + Limits say which curve is live and why.
 - 📌 **Home-sensor layer:** noted. `home.risk()` takes `"elevated"` / `"normal"` once a home has a sensor window; GB demo homes don't yet, so their home layer stays "no data".
