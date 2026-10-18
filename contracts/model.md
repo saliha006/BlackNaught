@@ -14,7 +14,7 @@
 | `model_id` | `str` | e.g. `m2-hazard-v1`; stored on every prediction and grade |
 | `sha256` | `str` | hash of the artifact file. The scorer refuses unsigned or tampered models once Ahmed's signer is in |
 | `label` | `str` | `REAL` for M2, `FALLBACK_KM` for the stand-in; shown in the UI |
-| `predict(elapsed_h: float) -> dict` | method | see below |
+| `predict(features: dict, elapsed_h: float) -> dict` | method | see below |
 
 **`predict` returns:**
 ```json
@@ -29,18 +29,25 @@
 
 **Reference implementation:** `backend/app/survival.py` (`KmModel`), fitted on all 312,936 ENWL outages. The artifact is `backend/models/km_enwl.json`.
 
-**⚠ Open item: features (Nate + Sali to agree).** Today `predict` gets only `elapsed_h`, because KM ignores features. M2 needs outage features, so the call becomes `predict(features: dict, elapsed_h: float)`. Only fields available **live** can be used:
+**Features (decided 2026-10-18 by Nate: live fields only, option A1).** The call is `predict(features, elapsed_h)`. The backend passes three columns of the `outage` row as they are, and the model does all the mapping:
+```python
+features = {"started_at": row["started_at"],  # tz-aware datetime
+            "customers": row["customers"],    # int | None (NPg falls back to the predicted count)
+            "feeder": row["feeder"]}          # the jsonb dict | None
+```
 
-| Live field (`outage` table) | Sources | Notes |
+| Model input | From | Mapping |
 |---|---|---|
-| `started_at` → hour, weekday, month/season | all | UTC; convert with Europe/London |
-| `customers` | all | NPg falls back to the predicted count |
-| `cardinality(postcodes)` | all | footprint size |
-| `lat`, `lon` → nearest ENWL district | all | for the district effect |
-| `feeder.type` | NPg (`LV`/`HV_N`/`HV_S`), SSEN (`LV`/`HV`) | maps to ENWL `voltage` |
-| `source` | all | the DNO itself |
+| hour, weekday, month | `started_at` | Europe/London local time |
+| log(1 + customers) | `customers` | missing → 11, the ENWL training median |
+| voltage: LV / HV / unknown | `feeder.type` | NPg `LV` → LV, `HV_N`/`HV_S` → HV; SSEN `LV`/`HV` as is; UKPN (no voltage) and anything else → unknown |
 
-ENWL columns that **don't** exist live (`direct_cause`, `main_equipment_involved_*`) can't be model inputs. Never use `total_customer_minutes_lost` or the restoration columns: they leak the answer.
+- **Trained on ENWL only:** 2000–22 train, 2023 validate, 2024–26 test, with each storm (`exceptional_event_id`) kept in one split. ENWL 6.6/11 kV → HV; 33/132 kV (0.3% of rows) also → HV, because no live feed reports EHV.
+- **Voltage is hidden on a random third of training rows**, so "unknown" (every UKPN outage) gets a trained answer, not an extrapolation.
+- **No operator feature.** UKPN, NPg and SSEN outages are scored by the ENWL-trained model. The UKPN cross-check (Apr 2021–Mar 2025, never trained on) measures how well that transfers; M3 recalibration from live grades corrects the rest.
+- **Not inputs:** `cardinality(postcodes)` (ENWL has no equivalent), the nearest ENWL district (meaningless outside the North West), cause and equipment (not live). Never `total_customer_minutes_lost` or the restoration columns: they leak the answer.
+- **Offline benchmark only, if time allows:** the full ENWL whitelist (adds cause, primary substation, district). Never served.
+- **Backend change (Sali):** `Scorer._at_risk` also selects `customers` and `feeder`; `Scorer._predict` passes the dict above.
 
 **Artifact format:**
 - XGBoost JSON or `.keras`, **never pickle** (s390x is big-endian).
@@ -59,8 +66,12 @@ ENWL columns that **don't** exist live (`direct_cause`, `main_equipment_involved
 **Reference:** `backend/app/arearisk.py` (per-district monthly climatology, ENWL 1997–2026), artifact `backend/models/climatology_enwl.json`. M8's Brier skill should be reported against this baseline.
 
 ## Training data on the VM
-- `~/data/raw/enwl_unplanned-outages.csv` (312,936 rows; `;`-separated; `incident_duration` is in minutes)
-- `~/data/raw/ukpn_ukpn-iis.csv` (316,435 rows)
+- `~/data/raw/enwl_unplanned-outages.csv`: 312,936 outages, 2000–2026 plus 3 stray rows from 1997–98; `;`-separated.
+  - The label is `incident_duration` (minutes), as in the KM stand-in. It appears to run to the last customer restored: for staged restorations, customer-minutes are below customers × duration.
+  - In 19% of rows `restoration_date_time` is later than start + `incident_duration`; the label still follows `incident_duration`.
+- `~/data/raw/ukpn_ukpn-iis.csv`: 316,435 **restoration-stage** rows = 180,059 incidents, Apr 2021–Mar 2025; `;`-separated.
+  - Rolled up per `incident_reference`: first stage start → last stage end; customers summed over stages that aren't re-interruptions.
 - `~/data/raw/SHA256SUMS`
+- Both sources are cut at 5 minutes (brief). `python -m ml.prep ~/data/raw <out>` writes the prepared tables.
 
 Train on the VM (Jupyter on :38888, or `docker compose run app`), so the training is evidence.
