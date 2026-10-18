@@ -28,12 +28,17 @@
    git config user.email "<the email on YOUR GitHub account>"   # judges read who committed
    git config core.hooksPath scripts/git-hooks                   # blocks AI co-author trailers on commits
    ```
-2. **Docs bundle** (from Sali on Discord/Drive; never on GitHub): unzip into your clone's root. You get:
-   - `CLAUDE.md` (our working rules, which your Claude Code reads automatically);
-   - your `builder-file-<name>.md` (your task list);
-   - `BLACKNAUGHT-PRD.md`, `system-design-choices.md`;
-   - `.claude/skills/` (`no-slop`, `debug`, the frontend skills);
-   - `DATATHON INFO/` (research ledger + IBM handoff).
+2. **Shared docs, kept in sync automatically:** from your clone's root run `bash scripts/sync-context.sh`.
+   - It unpacks the team docs from the `context` branch (never committed to `main`):
+     - `CLAUDE.md`;
+     - `BLACKNAUGHT.md` (NOW, spec, backend design, Parked);
+     - `DATATHON-CONTEXT.md`;
+     - your `builder-file-<name>.md`;
+     - `.claude/skills/`;
+     - the research ledger + IBM handoff.
+   - From then on, **your Claude re-syncs at the start of every prompt** (a CLAUDE.md rule) and tells you what changed.
+   - Only Sali publishes doc changes, except your own finished-task move: `bash scripts/publish-context.sh "what changed"`.
+   - ⚠ The repo is public; `context` is deleted before submission.
 3. **VM access:** run `ssh-keygen -t ed25519` if you have no key, and send **only** `~/.ssh/id_ed25519.pub` to Sali. Then connect with `ssh linux1@148.100.78.95`.
 4. **Things that live only on the VM** (read them there; never paste them in chat or commit them):
 
@@ -280,4 +285,16 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Shipped: `backend/app/probe_precursor.py` run on the VM over a real Accra GridWatch week: own-sensor model ROC AUC 0.668, PR AUC 0.089 (4.2× base), top-1% alerts 19.7% true (9.3× the 2.1% base); district context adds a little (0.684); low voltage alone ≈ chance (0.514). Evidence in `evidence/07_precursor_probe.txt`; no-leakage tests. 198 tests on s390x.
 - Touched: `backend/app/probe_precursor.py`, `backend/tests/test_probe_precursor.py`, `evidence/07_precursor_probe.txt`; VM `~/data/raw/accra/` (7 days, identifying columns removed)
 - ⚠️ Conflicts: @nate: this is the starting point for the home-sensor layer of the new headline (see your brief); stripped Accra data is in `~/data/raw/accra/` on the VM. @rama @ahmed: the headline is now 'predict blackouts before they happen + protect the most vulnerable'. Pitch layer 2 as 'flags the homes most likely to lose power in the next 30 min (1 in 5 top alerts, 9× chance)', never 'predicts every blackout'.
+- Conflict status: open
+
+### 2026-10-18 04:24 — docs merged + `context` branch auto-sync — @sali
+- Shipped:
+  - **Docs consolidated:**
+    - `BLACKNAUGHT.md` = NOW (decisions in force, pending, active tasks) + Part A spec (was the PRD) + Part B backend design (§B1–§B21) + Parked + History;
+    - `DATATHON-CONTEXT.md` = rules, judging, what wins, why Blacknaught.
+  - **Archived (local `_archive/`):** off-vision material, i.e. other ideas' plans and research §7–§8.
+  - **New `context` branch** (docs only) + `scripts/sync-context.sh` (pull, report changes) + `scripts/publish-context.sh` (publish, refuses to clobber newer edits or credentials).
+  - **CLAUDE.md** now makes every agent sync at the start of every prompt.
+- Touched: `scripts/sync-context.sh`, `scripts/publish-context.sh`, `progress.md`; new branch `context`
+- ⚠️ Conflicts: @ahmed @nate @rama: run `bash scripts/sync-context.sh` once in your clone (after `git pull` on `main`). Your briefs now point at `BLACKNAUGHT.md`; old `BLACKNAUGHT-PRD.md` / `system-design-choices.md` copies on your machine are stale, so delete them.
 - Conflict status: open
