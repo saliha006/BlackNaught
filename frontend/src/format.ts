@@ -6,4 +6,4 @@ export function formatElapsed(hours: number): string {
   return m === 0 ? `${h} h` : `${h} h ${m} min`;
 }
 
-export const formatCount = (n: number) => n.toLocaleString('en-GB');
+export const formatCount = (n: number | null) => (n === null ? '–' : n.toLocaleString('en-GB'));

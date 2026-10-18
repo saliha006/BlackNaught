@@ -4,7 +4,8 @@ import '@fontsource/ibm-plex-sans/500.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import './styles.css';
 import './landing.css';
-import { getCells, getOutages, isLive } from './api';
+import { ApiError, getCells, getOutages, isLive } from './api';
+import { isLocated } from './geo';
 import { setupLanding } from './landing';
 import { createMap, type OutageMap } from './map';
 import { markSelected, renderOutageList, sortOutages } from './outageList';
@@ -28,7 +29,7 @@ let onMap = false;
 
 function pick(id: number, duration?: number) {
   const o = active.find((x) => x.id === id);
-  if (!map || !o) return;
+  if (!map || !o || !isLocated(o)) return;
   map.focus(o, duration);
   markSelected(list, id);
 }
@@ -37,7 +38,7 @@ function pick(id: number, duration?: number) {
 function dive() {
   if (!map) return;
   map.setLive(true);
-  const top = sortOutages(active)[0];
+  const top = sortOutages(active.filter(isLocated))[0];
   if (top) pick(top.id, DIVE_MS);
   else map.overview();
 }
@@ -89,8 +90,9 @@ start().catch((err: Error) => {
   list.replaceChildren();
   const msg = document.createElement('li');
   msg.className = 'panel__error';
-  msg.textContent = isLive
-    ? `Couldn't reach the API (${err.message}). Is the SSH tunnel to the VM open?`
-    : `Couldn't load fixtures: ${err.message}`;
+  msg.textContent =
+    err instanceof ApiError
+      ? `Couldn't reach the API (${err.message}). Is the SSH tunnel to the VM open?`
+      : `Couldn't show power cuts: ${err.message}`;
   list.append(msg);
 });

@@ -14,6 +14,8 @@ describe('formatElapsed', () => {
   });
 });
 
-it('formatCount groups thousands', () => {
+it('formatCount groups thousands and shows a dash for a count the operator does not publish', () => {
   expect(formatCount(12345)).toBe('12,345');
+  expect(formatCount(0)).toBe('0');
+  expect(formatCount(null)).toBe('–');
 });

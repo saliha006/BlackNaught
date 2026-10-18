@@ -1,8 +1,13 @@
 import type { FeatureCollection, Point, Polygon } from 'geojson';
-import type { Cell, Outage, Scale } from './types';
+import type { Cell, LatLon, Outage, Scale } from './types';
 
 // The API speaks [lat, lon]; GeoJSON and MapLibre want [lon, lat]. Every swap happens here.
 const toLonLat = ([lat, lon]: [number, number]): [number, number] => [lon, lat];
+
+export type Located = Outage & { centroid: LatLon };
+
+// Outages arrive before their postcodes are geocoded; they stay in the list but can't be placed on the map.
+export const isLocated = (o: Outage): o is Located => o.centroid !== null;
 
 // Marker radius grows with footprint so scale reads without colour (colour is reserved for severity).
 export const SCALE_RADIUS: Record<Scale, number> = {
@@ -18,7 +23,7 @@ export const SCALE_RADIUS: Record<Scale, number> = {
 export function outagesToGeoJSON(outages: Outage[]): FeatureCollection<Point> {
   return {
     type: 'FeatureCollection',
-    features: outages.map((o) => ({
+    features: outages.filter(isLocated).map((o) => ({
       type: 'Feature',
       id: o.id,
       geometry: { type: 'Point', coordinates: toLonLat(o.centroid) },
@@ -60,7 +65,7 @@ export const BEAM_GLOW_M = 24;
 export function beamsToGeoJSON(outages: Outage[]): FeatureCollection<Polygon> {
   return {
     type: 'FeatureCollection',
-    features: outages.flatMap((o) => {
+    features: outages.filter(isLocated).flatMap((o) => {
       const [lat, lon] = o.centroid;
       const height = SCALE_BEAM_M[o.scale];
       return (['core', 'glow'] as const).map((kind) => ({

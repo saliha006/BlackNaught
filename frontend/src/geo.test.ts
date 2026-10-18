@@ -7,6 +7,7 @@ import {
   beamsToGeoJSON,
   cellsToGeoJSON,
   circleRing,
+  isLocated,
   offsetLonLat,
   outagesToGeoJSON,
   SCALE_BEAM_M,
@@ -31,6 +32,15 @@ describe('outagesToGeoJSON', () => {
 
   it('returns an empty collection for no outages', () => {
     expect(outagesToGeoJSON([]).features).toEqual([]);
+  });
+
+  it('leaves out outages the backend has not located yet, as the live feed sends them', () => {
+    const unplaced = { ...(outages as Outage[])[1], id: 999, centroid: null };
+    expect(isLocated(unplaced)).toBe(false);
+    expect(isLocated((outages as Outage[])[0])).toBe(true);
+    const mixed = [(outages as Outage[])[0], unplaced];
+    expect(outagesToGeoJSON(mixed).features.map((f) => f.id)).toEqual([101]);
+    expect(beamsToGeoJSON(mixed).features.map((f) => f.properties!.id)).toEqual([101, 101]);
   });
 });
 

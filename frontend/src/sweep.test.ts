@@ -1,10 +1,10 @@
 import type { LineString, Polygon } from 'geojson';
 import { describe, expect, it } from 'vitest';
 import outages from '../../fixtures/api/outages.json';
+import type { Located } from './geo';
 import { PULSE_PERIOD_S, SWEEP_PERIOD_S, SWEEP_RADIUS_M, sweepFeatures, TRAIL_WEDGES } from './sweep';
-import type { Outage } from './types';
 
-const street = (outages as Outage[])[0];
+const street = (outages as Located[])[0];
 const [lat, lon] = street.centroid;
 const metres = ([x, y]: number[]) =>
   Math.hypot((x - lon) * 111_320 * Math.cos((lat * Math.PI) / 180), (y - lat) * 111_320);

@@ -29,6 +29,18 @@ describe('live mode', () => {
 
     expect(await api.getOutages()).toEqual([]);
     expect(fetchMock.mock.calls[0][0]).toBe('/api/outages?status=active');
-    await expect(api.getCells()).rejects.toThrow('/api/cells?level=1 returned 502');
+    const failed = api.getCells();
+    await expect(failed).rejects.toThrow('/api/cells?level=1 returned 502');
+    await expect(failed).rejects.toBeInstanceOf(api.ApiError);
+  });
+
+  it('marks a dropped connection as an API failure, naming the path', async () => {
+    vi.stubEnv('MODE', 'live');
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    const api = await import('./api');
+
+    const failed = api.getTriage();
+    await expect(failed).rejects.toBeInstanceOf(api.ApiError);
+    await expect(failed).rejects.toThrow('/api/triage?limit=3: Failed to fetch');
   });
 });

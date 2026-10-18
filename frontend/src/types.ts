@@ -14,11 +14,13 @@ export interface Outage {
   started_at: string;
   restored_at: string | null;
   elapsed_h: number;
-  customers: number;
-  priority_customers: number;
+  customers: number | null;
+  // Northern Powergrid publishes no priority-customer count, so this is null for its faults.
+  priority_customers: number | null;
   scale: Scale;
-  cell_l1: string;
-  centroid: LatLon;
+  cell_l1: string | null;
+  // Null until the operator's postcodes are geocoded (contract: anyOf [lat, lon] | null).
+  centroid: LatLon | null;
   postcode_count: number;
 }
 

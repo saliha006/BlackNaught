@@ -9,7 +9,7 @@ import {
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
-import { beamsToGeoJSON, cellsToGeoJSON, outagesToGeoJSON } from './geo';
+import { beamsToGeoJSON, cellsToGeoJSON, isLocated, type Located, outagesToGeoJSON } from './geo';
 import { sweepFeatures } from './sweep';
 import type { Cell, Outage } from './types';
 
@@ -50,7 +50,7 @@ const BEAM_GLOW_OPACITY = 0.14;
 export interface OutageMap {
   setData(outages: Outage[], cells: Cell[]): void;
   /** Fly down to street level over an outage. `duration` in ms; longer for the opening dive. */
-  focus(outage: Outage, duration?: number): void;
+  focus(outage: Located, duration?: number): void;
   onSelect(handler: (id: number) => void): void;
   /** Ease to the tilted whole-GB view, for when there is no outage to dive into. */
   overview(): void;
@@ -288,15 +288,14 @@ export async function createMap(container: HTMLElement): Promise<OutageMap> {
   };
 
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let shown: Outage[] = [];
+  let located: Located[] = [];
   let live = false;
   let sweeping = false;
   let raf = 0;
 
   const drawSensors = (t: number) => {
     const bounds = map.getBounds();
-    const visible =
-      map.getZoom() >= SWEEP_MINZOOM ? shown.filter((o) => bounds.contains([o.centroid[1], o.centroid[0]])) : [];
+    const visible = map.getZoom() >= SWEEP_MINZOOM ? located.filter((o) => bounds.contains([o.centroid[1], o.centroid[0]])) : [];
     // Nothing to sweep and nothing left on screen: leave the map idle instead of re-rendering every frame.
     if (visible.length === 0 && !sweeping) return;
     sweeping = visible.length > 0;
@@ -314,7 +313,7 @@ export async function createMap(container: HTMLElement): Promise<OutageMap> {
 
   return {
     setData(outages, cells) {
-      shown = outages;
+      located = outages.filter(isLocated);
       (map.getSource('outages') as GeoJSONSource).setData(outagesToGeoJSON(outages));
       (map.getSource('beams') as GeoJSONSource).setData(beamsToGeoJSON(outages));
       (map.getSource('cells') as GeoJSONSource).setData(cellsToGeoJSON(cells));

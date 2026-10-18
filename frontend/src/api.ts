@@ -11,9 +11,14 @@ async function fixture<T>(name: string): Promise<T> {
   return (await load()).default as T;
 }
 
+/** A failure talking to the backend, kept apart from bugs in this app so only these get the "check the tunnel" hint. */
+export class ApiError extends Error {}
+
 async function live<T>(path: string): Promise<T> {
-  const res = await fetch(path, { headers: { Accept: 'application/json' } });
-  if (!res.ok) throw new Error(`${path} returned ${res.status}`);
+  const res = await fetch(path, { headers: { Accept: 'application/json' } }).catch((e: Error) => {
+    throw new ApiError(`${path}: ${e.message}`);
+  });
+  if (!res.ok) throw new ApiError(`${path} returned ${res.status}`);
   return res.json() as Promise<T>;
 }
 

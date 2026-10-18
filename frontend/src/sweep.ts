@@ -1,6 +1,6 @@
 import type { Feature, FeatureCollection, LineString, Polygon } from 'geojson';
-import { circleRing, offsetLonLat } from './geo';
-import type { Outage, Scale } from './types';
+import { circleRing, type Located, offsetLonLat } from './geo';
+import type { Scale } from './types';
 
 // How far the sensor sweep reaches around an outage, in metres: roughly the footprint its scale implies.
 export const SWEEP_RADIUS_M: Record<Scale, number> = {
@@ -25,7 +25,7 @@ type SweepFeature = Feature<Polygon | LineString, { kind: 'wedge' | 'edge' | 'ri
  * trail of wedges, the range ring, and two pulses expanding outward half a period apart.
  * Centred on the outage centroid from the operator's public feed, never on a home.
  */
-export function sweepFeatures(outages: Outage[], t: number): FeatureCollection<Polygon | LineString> {
+export function sweepFeatures(outages: Located[], t: number): FeatureCollection<Polygon | LineString> {
   const heading = ((t % SWEEP_PERIOD_S) / SWEEP_PERIOD_S) * 2 * Math.PI;
   const features: SweepFeature[] = [];
 

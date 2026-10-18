@@ -224,8 +224,17 @@ body {
   transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
 }
 
-.outage:hover {
+.outage:hover:not(:disabled) {
   background: rgb(255 255 255 / 0.04);
+}
+
+.outage:disabled {
+  cursor: default;
+}
+
+.outage__note {
+  font-size: var(--fs-small);
+  color: var(--text-faint);
 }
 
 .outage[aria-pressed='true'] {
