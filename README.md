@@ -127,6 +127,9 @@ agent can reach Granite, and the app answers only on the VM itself.
   signs the audit chain's checkpoints, each approved CAP alert and every tool call the agent makes. The public key is
   `contracts/signer_pub.pem` (key_id `bda7ac1f8fd6c9d2`), so anyone with OpenSSL 3.5 can check a signature
   (`contracts/signer.md`).
+- **Off-box audit checkpoints.** Every 10 minutes the laptop (`offbox/publish.py`) checks each new signed checkpoint
+  against the pinned key and commits it to the `audit-checkpoints` branch on GitHub. A chain rewritten on the VM
+  would no longer match the heads published there, and the VM never holds GitHub credentials.
 - **The agent.** `backend/app/agent.py` runs every 60 s as its own service and database role.
   - It reads the live triage and the feeds' health.
   - It fills five responders' rounds with a greedy knapsack on harm-hours avoided per minute. Whoever runs out
