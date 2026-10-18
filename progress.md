@@ -318,3 +318,15 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `builder-file-{sali,ahmed,nate,rama}.md` on `context`; `progress.md` (Latest)
 - ⚠️ Conflicts: @ahmed @nate @rama: your brief changed; your agent picks it up on its next sync. No task of yours changed.
 - Conflict status: open
+
+### 2026-10-18 04:54 — team blockers cleared — @sali
+- Shipped:
+  - **GitHub:** `meep-boop`, `aldrichbanas07`, `rama0623` all have Write access.
+  - **Team name chosen; Sali is the registered team leader**, so Sali submits.
+  - **IBM labs 01 + 02** done by @ahmed (his task 5 ✅).
+  - **#helpdesk NNPA-timing question** handed to @ahmed (added to his brief).
+  - New freeze time: deferred, Sali decides later.
+- Touched: briefs (Sali, Ahmed) + `BLACKNAUGHT.md` NOW on `context` (54f8f79)
+- ⚠️ Conflicts: @ahmed: new task in your brief (ask #helpdesk, post the answer here).
+- Conflict status: open
+
