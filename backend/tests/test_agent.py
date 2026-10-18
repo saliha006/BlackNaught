@@ -230,17 +230,20 @@ async def test_drifted_probabilities_get_a_correction_judged_on_newer_grades(age
     agent = await started(agent_db, FakeSigner())
     await agent.tick(NOW)
     [(state, args)] = decisions(superuser)["recalibrate"]
-    assert state == "auto_done" and args["horizon_h"] == 2 and args["model_id"] == "m-test"
+    assert state == "auto_done" and args["applied"] and args["horizon_h"] == 2 and args["model_id"] == "m-test"
     assert args["brier_after"] < args["brier_before"] - 0.1 and (args["n_fit"], args["n_test"]) == (60, 30)
     assert agent.memory["calibration:m-test:2"] == args["steps"]
     assert await agent.tick(NOW + timedelta(minutes=1)) == 0  # checked again only after RECALIBRATE_EVERY
 
 
 @pytest.mark.anyio
-async def test_calibrated_probabilities_are_left_alone(agent_db, superuser):
+async def test_calibrated_probabilities_are_left_alone_and_the_check_is_still_logged(agent_db, superuser):
     graded(superuser, "CASE WHEN pred_id % 10 < 8 THEN 1 ELSE 0 END", "0.8")
-    await (await started(agent_db, FakeSigner())).tick(NOW)
-    assert "recalibrate" not in decisions(superuser)
+    agent = await started(agent_db, FakeSigner())
+    await agent.tick(NOW)
+    [(_, args)] = decisions(superuser)["recalibrate"]
+    assert not args["applied"] and args["steps"] is None and args["brier_after"] == args["brier_before"]
+    assert "calibration:m-test:2" not in agent.memory
 
 
 @pytest.mark.anyio

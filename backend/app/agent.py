@@ -336,7 +336,8 @@ class Agent:
 
     async def self_correct(self, now: datetime) -> int:
         """recalibrate(horizon): a monotone correction per horizon and model, fitted on the older GB grades and kept
-        only if it lowers the Brier on the newer ones, which is what drift looks like for a probability."""
+        only if it lowers the Brier on the newer ones, which is what drift looks like for a probability. Each check is
+        a decision either way, so declining to correct is on the record too."""
         last = self.memory.get("recalibrate_at")
         if last and now - datetime.fromisoformat(last) < RECALIBRATE_EVERY:
             return 0
@@ -352,17 +353,18 @@ class Agent:
             cut = int(len(y) * FIT_SHARE)
             steps = isotonic(p[:cut], y[:cut])
             before, after = brier(p[cut:], y[cut:]), brier([corrected(steps, q) for q in p[cut:]], y[cut:])
-            if before - after < MIN_GAIN:
-                continue
+            applied = before - after >= MIN_GAIN
             fitted = {"p": [round(v, 3) for v in steps[0]], "corrected": [round(v, 3) for v in steps[1]]}
-            await self.call("recalibrate", {"horizon_h": h, "model_id": model_id, "brier_before": round(before, 4),
-                                            "brier_after": round(after, 4), "n_fit": cut, "n_test": len(y) - cut,
-                                            "steps": fitted}, [
-                f"GB grades at +{h} h: a correction fitted on the older {cut} lowers the Brier on the newer "
+            await self.call("recalibrate", {"horizon_h": h, "model_id": model_id, "applied": applied,
+                                            "brier_before": round(before, 4), "brier_after": round(after, 4),
+                                            "n_fit": cut, "n_test": len(y) - cut, "steps": fitted if applied else None}, [
+                f"GB grades at +{h} h: a correction fitted on the older {cut} takes the Brier on the newer "
                 f"{len(y) - cut} from {before:.4f} to {after:.4f}",
-                "kept in agent memory; the triage scorer doesn't apply it yet",
+                "kept in agent memory; the triage scorer doesn't apply it yet" if applied
+                else f"not a gain of {MIN_GAIN}, so the model is left as it is",
             ], now)
-            await self.remember([f"calibration:{model_id}:{h}"], fitted, now)
+            if applied:
+                await self.remember([f"calibration:{model_id}:{h}"], fitted, now)
             calls += 1
         await self.remember(["recalibrate_at"], now.isoformat(), now)
         return calls
