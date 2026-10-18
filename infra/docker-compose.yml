@@ -11,6 +11,7 @@ include:
       - signer.yml
       - agent.yml
       - granite.yml
+      - nnpa.yml
 
 services:
   edge:

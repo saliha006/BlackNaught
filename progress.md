@@ -921,3 +921,30 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @sali: when you delete `context` before submission, **keep the `audit-checkpoints` branch**. It's the off-box evidence.
   - @nate: closing 38888 would end your browser access to Jupyter (an SSH tunnel would still work), so you'll be asked first.
 - Conflict status: open
+
+### 2026-10-18 08:48 — evidence combiner and scale classifier, scored on the live footprints (task 12, F3) — @ahmed
+- Shipped: `backend/app/combiner.py`, pure functions that nothing live calls yet.
+  - `scale()` follows the fuse-box flow in BLACKNAUGHT.md §7. At least 60% of a cell's sensors quiet within 5 min is a street event; two such cells under one parent are an area; three or more plus an IODA dip or a shedding stage are a region. EMERGENCY with half the sensed cells quiet is the whole system.
+  - "This home only" never lowers a patient's priority. Fewer than two anchors reporting gives "unresolved".
+  - `p_outage()` is naive Bayes in odds form. A declared DNO fault gives 0.999. A stale source and silence each count as LR 1; only a last gasp is positive evidence.
+- **Nate's LR table never arrived** (it isn't in `contracts/`, `ml/`, `evidence/` or the research doc). So the ratios are hand-set orders of magnitude, each with its reason, and they're the first thing to replace with measured values.
+- Evidence: `python -m app.localiser` writes `evidence/localiser.json`. On the live data, with the DNO feed left out of the calls: **precision 1.0, recall 0.90** over 103 sensed cells, and postcode recall 0.94. Honesty caveat, also in the file: the GB sensors are simulated on those footprints, so this is footprint recovery under noise, not real-world accuracy. The real Accra cell comes out as no outage (P 0.02; it has no footprint).
+- Tests: 9 (combiner 100%, localiser 84%), full suite 253 on s390x.
+- Touched: `backend/app/combiner.py`, `backend/app/localiser.py`, `backend/tests/test_combiner.py`, `evidence/localiser.json` (all new)
+- ⚠️ Conflicts: @nate: if you have measured LRs, the constants are at the top of `combiner.py`. @sali: no file of yours changed. Wiring it into triage or the API would be your call after submission.
+- Conflict status: open
+
+### 2026-10-18 08:50 — Nate's signed M2 is served on the NNPA, in shadow beside KM (task 13) — @ahmed
+- Shipped: `backend/app/nnpa.py`, running as its own `nnpa` service (`infra/nnpa.yml`, role `bn_agent`, no published port, **no signer token**: checking a signature needs none).
+  - Every minute it builds **one batch** of every at-risk patient × active outage with Nate's own feature code (`ml.m2.features`, option A1), and runs `model.predict` on the Telum NNPA.
+  - The zDNN precheck showed 3 `zdnn_matmul_transpose_op` and 1 `zdnn_softmax` per batch on the NNPA.
+  - It logs outage predictions as `m2-hazard-nnpa-shadow`, so Sali's Grader grades M2 beside KM. **Triage keeps KM**, as Nate decided; it never writes `triage_snapshot`.
+- Signed model: `scripts/sign-model.sh` had our ML-DSA signer sign the model's `{file, sha256, customers_median}` (purpose `model_release`). The service won't load the model if the signature file is missing, the hash differs, or the signer says no or can't be reached; it then idles with a log line.
+- Live first batch: 48 rows (18 outages, 30 pairs) in **77 ms**. Escalations: M2 30, KM 30. 36 predictions logged for grading. The container uses 298 MiB.
+- Tests: 8 (module 70%; the TF, signing and loop path ran for real), full suite 252, 19 compose checks.
+- Deployed: `up -d nnpa` from `~/BlackNaught` after a dry run. Only the new container was created; the app wasn't restarted.
+- Touched: `backend/app/nnpa.py`, `backend/tests/test_nnpa.py`, `infra/nnpa.yml`, `scripts/sign-model.sh` (new); `infra/docker-compose.yml`, `infra/test-compose.sh`. On the VM: `~/models/m2_hazard.keras` (a read-only copy of Nate's) and its `.sig.json`.
+- ⚠️ Conflicts:
+  - @nate: your model and feature code are used read-only. If you want M2 live instead of KM, that's your call; the grades will show both.
+  - @sali: `/api/agent/grades` will gain `m2-hazard-nnpa-shadow` rows as they're graded (+2 h, +4 h).
+- Conflict status: open
