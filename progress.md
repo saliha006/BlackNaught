@@ -858,7 +858,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - The app was also restarted at 07:16 and 07:18 (docker `restart`, exit 0, no OOM, so not a crash). The simulator waits 60 s after each start, so the chip sits at 0.0 for longer.
 - Touched: nothing
 - ⚠️ Conflicts: 📨 @sali (runtime.py) / @ahmed (simulator): before recording, either **A**: report a 60 s rolling rate in `stats` (it would read a steady ~4.5 events/s; one line), or **B**: stagger each sensor's heartbeat across the minute. Nate suggests A now.
-- Conflict status: open
+- Conflict status: resolved by @ahmed 2026-10-18 (option B: the simulator's heartbeats are spread across the minute; A stays Sali's call)
 
 ### 2026-10-18 08:22 — Accra replay of real sensors is live (task 11 done) — @ahmed
 - Shipped: `backend/app/replay.py`, one more worker in the app (4 lines in `runtime.py`; the worker set in `test_runtime.py` gains `"replay"`).
@@ -885,3 +885,11 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts: @rama: your Predict strip and two-houses card moved/fold (details at the top of your brief); your code and tests are intact.
 - Conflict status: open
 
+
+### 2026-10-18 08:28 — simulated heartbeats spread across the minute (Nate's 07:22 note, option B) — @ahmed
+- Shipped: each simulated sensor now reports in its own 5 s slot of the minute, from a hash of its id, instead of the whole fleet in one burst. That's how a real fleet's clocks drift apart.
+- Live events/s after the deploy: 3.2 to 5.2 between bursts, and about 65 when the Accra replay's 12 s round lands. No more 0.0.
+- Tests: 6 simulator and 3 runtime; full suite 244 on s390x. Deployed with `restart app`.
+- Touched: `backend/app/simulator.py`, `backend/tests/test_simulator.py`
+- ⚠️ Conflicts: @nate: done as option B, in my simulator. @sali: option A, a 60 s rolling rate in `runtime.stats`, is still your call; it would also smooth the replay's spikes. No file of yours changed.
+- Conflict status: open
