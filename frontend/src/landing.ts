@@ -141,9 +141,15 @@ export function setupLanding(root: HTMLElement, app: HTMLElement[], onEnter: () 
   setupFaq(root);
   fillLiveBits(root);
 
+  // The app fills in under the overlay while the landing page is up. Hidden, its loading shuffle isn't painted, so it
+  // neither shows through nor counts as layout shift; it becomes visible as the fade-out starts.
+  const showApp = (on: boolean) => {
+    for (const el of app) el.style.visibility = on ? '' : 'hidden';
+  };
   const setOpen = (open: boolean) => {
     root.hidden = !open;
     for (const el of app) el.inert = open;
+    showApp(!open);
   };
 
   // Set while the fade-out runs, so a quick browser Back can cancel it.
@@ -152,6 +158,7 @@ export function setupLanding(root: HTMLElement, app: HTMLElement[], onEnter: () 
   const close = () => {
     if (root.hidden || leaving) return;
     root.classList.add('is-leaving');
+    showApp(true);
     stopBolt();
     const done = () => {
       leaving = null;

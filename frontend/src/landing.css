@@ -644,10 +644,22 @@
   padding: var(--space-4);
   border: 1px solid var(--l-border-strong);
   border-radius: 16px;
-  background: rgb(20 20 22 / 0.78);
+  /* Near-solid, so the chart line behind no longer reads through the rows; still a touch of glass at the top */
+  background: linear-gradient(180deg, rgb(20 20 22 / 0.9), rgb(17 17 19 / 0.97) 40%);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   box-shadow: 0 30px 60px rgb(0 0 0 / 0.5);
+}
+
+/* Fog where this card slides over the chart, so the layering reads as depth rather than a clash */
+.l-triage::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -40px -32px auto;
+  height: 96px;
+  background: radial-gradient(ellipse at 50% 60%, rgb(11 11 12 / 0.85), rgb(11 11 12 / 0) 70%);
+  pointer-events: none;
 }
 
 .l-triage__list {

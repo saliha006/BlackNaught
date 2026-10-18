@@ -34,7 +34,7 @@ import { formatElapsed } from './format';
 import { isLocated } from './geo';
 import { setupLanding } from './landing';
 import { connectLive, formatRate, type Refetch } from './live';
-import { createMap, type LayerGroup, type OutageMap, type Padding } from './map';
+import type { LayerGroup, OutageMap, Padding } from './map';
 import { askLogin, confirm, openModal } from './modal';
 import { renderMyHome } from './myHome';
 import { markSelected, renderOutageList, sortOutages } from './outageList';
@@ -388,7 +388,8 @@ if (history.state?.view === 'map') history.replaceState(null, '');
 
 async function start() {
   const [m, outages, cellData, triage] = await Promise.all([
-    createMap($('#map'), chromePadding),
+    // MapLibre is most of the JS; loading it as its own chunk lets the landing page paint before it arrives
+    import('./map').then(({ createMap }) => createMap($('#map'), chromePadding)),
     getOutages(),
     getCells(),
     // Triage only powers the escalations toggle; the map must still load without it.
