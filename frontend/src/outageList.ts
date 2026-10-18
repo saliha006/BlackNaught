@@ -37,9 +37,21 @@ function row(o: Outage): HTMLLIElement {
   return li;
 }
 
-export function renderOutageList(list: HTMLElement, outages: Outage[], onPick: (o: Outage) => void) {
+export function renderOutageList(
+  list: HTMLElement,
+  outages: Outage[],
+  onPick: (o: Outage) => void,
+  emptyText = 'No active power cuts right now.',
+) {
   const sorted = sortOutages(outages);
-  list.replaceChildren(...sorted.map(row));
+  if (sorted.length === 0) {
+    const empty = document.createElement('li');
+    empty.className = 'panel__loading';
+    empty.textContent = emptyText;
+    list.replaceChildren(empty);
+  } else {
+    list.replaceChildren(...sorted.map(row));
+  }
   list.onclick = (e) => {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button.outage');
     const picked = btn && sorted.find((o) => o.id === Number(btn.dataset.id));

@@ -46,7 +46,8 @@
   --dur-fast: 140ms;
 
   --topbar-h: 56px;
-  --panel-w: 380px;
+  --controls-h: 44px;
+  --panel-w: 420px;
 }
 
 *,
@@ -96,6 +97,88 @@ body {
   gap: var(--space-6);
   padding: 0 var(--space-6);
   background: linear-gradient(#07090c, rgb(7 9 12 / 0));
+}
+
+/* One toggle row above everything it scopes: map, list and charts */
+.controls {
+  position: fixed;
+  top: var(--topbar-h);
+  left: var(--space-6);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  max-width: calc(100% - 2 * var(--space-6));
+  height: var(--controls-h);
+  padding: 0 var(--space-2) 0 var(--space-4);
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: var(--glass);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+}
+
+.controls__group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: none;
+}
+
+.controls__group + .controls__group {
+  padding-left: var(--space-4);
+  border-left: 1px solid var(--line);
+}
+
+.controls__label {
+  margin-right: var(--space-1);
+  font-size: var(--fs-small);
+  color: var(--text-faint);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 30px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font: 500 var(--fs-small) / 1 var(--font-sans);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+
+.chip:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.06);
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--n-9);
+  border-color: var(--n-9);
+  color: var(--n-0);
+}
+
+.chip:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* Escalation is severity, so this one chip may carry the red, beside its words */
+.chip--severity::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sev-escalate);
+}
+
+.chip__count {
+  font-weight: 400;
 }
 
 /* Severity: the only hue in the UI, always with its word */
@@ -151,7 +234,7 @@ body {
 
 .panel {
   position: absolute;
-  top: calc(var(--topbar-h) + var(--space-2));
+  top: calc(var(--topbar-h) + var(--controls-h) + var(--space-4));
   right: var(--space-4);
   bottom: var(--space-4);
   width: var(--panel-w);
@@ -336,6 +419,11 @@ body {
 
   .topbar__grid {
     display: none;
+  }
+
+  .controls {
+    left: var(--space-2);
+    max-width: calc(100% - 2 * var(--space-2));
   }
 
   /* Lift zoom buttons and attribution above the bottom sheet; .stage outranks maplibre-gl.css, which loads later */

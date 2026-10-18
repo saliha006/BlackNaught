@@ -28,7 +28,8 @@ export const getOutages = () =>
 export const getCells = () =>
   isLive ? live<Cell[]>('/api/cells?level=1') : fixture<Cell[]>('cells');
 
-export const getTriage = () => (isLive ? live<Triage>('/api/triage?limit=3') : fixture<Triage>('triage'));
+export const getTriage = (limit = 3) =>
+  isLive ? live<Triage>(`/api/triage?limit=${limit}`) : fixture<Triage>('triage');
 
 export const getSourcesHealth = () =>
   isLive

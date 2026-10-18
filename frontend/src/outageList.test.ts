@@ -54,6 +54,14 @@ describe('renderOutageList', () => {
     expect(list.querySelector('button[data-id="101"] .outage__note')).toBeNull();
   });
 
+  it('says why the list is empty', () => {
+    const list = document.createElement('ul');
+    renderOutageList(list, [], vi.fn());
+    expect(list.textContent).toBe('No active power cuts right now.');
+    renderOutageList(list, [], vi.fn(), 'No power cuts match these filters.');
+    expect(list.textContent).toBe('No power cuts match these filters.');
+  });
+
   it('ignores clicks outside a row', () => {
     const { list, onPick } = setup();
     list.click();

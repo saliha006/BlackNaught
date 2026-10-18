@@ -18,11 +18,15 @@ setWorkerUrl(workerUrl);
 
 const BASEMAP = 'https://tiles.openfreemap.org/styles/dark';
 const GB_BOUNDS: [number, number, number, number] = [-8.6, 49.8, 2.0, 59.2];
-// Keep the map's focus clear of the outage panel: a right column on desktop, a bottom sheet on phones (styles.css).
-const panelPad = () =>
-  innerWidth > 720
-    ? { top: 60, bottom: 40, left: 40, right: 420 }
-    : { top: 60, bottom: Math.round(innerHeight * 0.45), left: 20, right: 20 };
+export type Padding = { top: number; bottom: number; left: number; right: number };
+
+export type LayerGroup = 'beams' | 'sweep' | 'cells';
+
+const LAYER_GROUPS: Record<LayerGroup, string[]> = {
+  beams: ['beam-core', 'beam-core-top', 'beam-glow', 'outage-glow'],
+  sweep: ['sweep-fill', 'sweep-line'],
+  cells: ['cells-fill', 'cells-line'],
+};
 
 // If OpenFreeMap is unreachable mid-recording, overlays still draw on a plain background.
 const FALLBACK_STYLE: Exclude<MapOptions['style'], string | undefined> = {
@@ -58,6 +62,7 @@ export interface OutageMap {
   reset(): void;
   /** Run the sensor animation only while the map is on screen. */
   setLive(on: boolean): void;
+  setLayerVisible(group: LayerGroup, visible: boolean): void;
 }
 
 // Checked once up front: map 'error' events also fire for single missing sprites/tiles, which must not drop the basemap.
@@ -199,12 +204,13 @@ function addBeamLayers(map: MapLibreMap) {
   });
 }
 
-export async function createMap(container: HTMLElement): Promise<OutageMap> {
+/** `padding` returns the space the page's panels cover, so camera moves centre on what is actually visible. */
+export async function createMap(container: HTMLElement, padding: () => Padding): Promise<OutageMap> {
   const map = new MapLibreMap({
     container,
     style: await pickStyle(),
     bounds: GB_BOUNDS,
-    fitBoundsOptions: { padding: panelPad() },
+    fitBoundsOptions: { padding: padding() },
     maxPitch: 75,
     attributionControl: false,
   });
@@ -293,9 +299,14 @@ export async function createMap(container: HTMLElement): Promise<OutageMap> {
   let sweeping = false;
   let raf = 0;
 
+  const shown: Record<LayerGroup, boolean> = { beams: true, sweep: true, cells: true };
+
   const drawSensors = (t: number) => {
     const bounds = map.getBounds();
-    const visible = map.getZoom() >= SWEEP_MINZOOM ? located.filter((o) => bounds.contains([o.centroid[1], o.centroid[0]])) : [];
+    const visible =
+      shown.sweep && map.getZoom() >= SWEEP_MINZOOM
+        ? located.filter((o) => bounds.contains([o.centroid[1], o.centroid[0]]))
+        : [];
     // Nothing to sweep and nothing left on screen: leave the map idle instead of re-rendering every frame.
     if (visible.length === 0 && !sweeping) return;
     sweeping = visible.length > 0;
@@ -327,7 +338,7 @@ export async function createMap(container: HTMLElement): Promise<OutageMap> {
         pitch: 64,
         bearing: -28,
         duration,
-        padding: panelPad(),
+        padding: padding(),
         essential: false,
       });
     },
@@ -335,12 +346,12 @@ export async function createMap(container: HTMLElement): Promise<OutageMap> {
       selectHandler = handler;
     },
     overview() {
-      const camera = map.cameraForBounds(GB_BOUNDS, { padding: panelPad() });
+      const camera = map.cameraForBounds(GB_BOUNDS, { padding: padding() });
       map.easeTo({ ...camera, pitch: 42, bearing: -12, duration: 2400 });
     },
     reset() {
       select(null);
-      map.jumpTo({ ...map.cameraForBounds(GB_BOUNDS, { padding: panelPad() }), pitch: 0, bearing: 0 });
+      map.jumpTo({ ...map.cameraForBounds(GB_BOUNDS, { padding: padding() }), pitch: 0, bearing: 0 });
     },
     setLive(on) {
       live = on;
@@ -349,6 +360,10 @@ export async function createMap(container: HTMLElement): Promise<OutageMap> {
       if (!on) return;
       if (reduceMotion) drawSensors(0);
       else raf = requestAnimationFrame(loop);
+    },
+    setLayerVisible(group, visible) {
+      shown[group] = visible;
+      for (const id of LAYER_GROUPS[group]) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
     },
   };
 }
