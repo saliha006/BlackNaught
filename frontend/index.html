@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#07090c" />
+    <title>Blacknaught · Control room</title>
+  </head>
+  <body>
+    <div class="landing" id="landing">
+      <div class="l-page">
+        <nav class="l-nav" aria-label="Landing">
+          <a class="l-logo" href="#l-top">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 4 13.6h6.6L9 22l11-12.2h-6.8L13.5 2Z" /></svg>
+            Blacknaught.
+          </a>
+          <ul class="l-nav__links">
+            <li><a href="#l-top" aria-current="page">Home</a></li>
+            <li><a href="#l-features">How it works</a></li>
+            <li><a href="#l-control">Control room</a></li>
+            <li><a href="#l-feeds">Live feeds</a></li>
+            <li><a href="#l-faq">FAQ</a></li>
+          </ul>
+          <button class="l-btn l-btn--ghost" type="button" data-enter>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5L9 4Zm0 0v13.5m6-11v13.5" /></svg>
+            Open control room
+          </button>
+        </nav>
+
+        <header class="l-hero" id="l-top">
+          <canvas class="l-bolt" id="l-bolt" role="img" aria-label="A lightning bolt drawn in ASCII characters, slowly turning. Drag to spin it."></canvas>
+          <span class="l-pill">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4m0 10v4M3 12h4m10 0h4M6 6l2.5 2.5m7 7L18 18M6 18l2.5-2.5m7-7L18 6" /></svg>
+            Built on IBM LinuxONE
+          </span>
+          <h1>Know who runs out of power<br />before the power comes back</h1>
+          <p>
+            Blacknaught reads live UK power-cut feeds, predicts how long each cut will last, and ranks people on oxygen
+            and ventilators by who will run out of backup first, so health workers reach the right door first.
+          </p>
+          <button class="l-btn" type="button" data-enter>Open the live map</button>
+        </header>
+
+        <section class="l-partners" aria-labelledby="l-partners-title">
+          <span class="l-pill">Our data</span>
+          <h2 id="l-partners-title">Running on real, open grid data</h2>
+          <ul class="l-partners__row">
+            <li>Electricity North West</li>
+            <li class="is-lit">UK Power Networks</li>
+            <li>SSEN</li>
+            <li>Northern Powergrid</li>
+            <li>Elexon</li>
+            <li>NESO</li>
+          </ul>
+        </section>
+
+        <section class="l-section" id="l-features" aria-labelledby="l-features-title">
+          <div class="l-section__head">
+            <span class="l-pill">How it works</span>
+            <h2 id="l-features-title" class="l-display">One fault. Different answers.</h2>
+            <p>The same power cut means a phone check for one household and a 999 escalation for the next. Blacknaught works out which is which.</p>
+          </div>
+
+          <div class="l-grid">
+            <article class="l-card l-card--wide">
+              <header class="l-card__head">
+                <span class="l-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-5 4 3 7-8M15 7h4v4" /></svg></span>
+                <div>
+                  <h3>Predicts how long the power stays off</h3>
+                  <p>A survival model trained on every unplanned outage Electricity North West has published, conditioned on how long a cut has already lasted.</p>
+                </div>
+              </header>
+              <div class="l-card__duo">
+                <div class="l-mini">
+                  <span class="l-mini__title"><b>ENWL</b> 312,936 outages</span>
+                  <span class="l-mini__sub">Share still off after</span>
+                  <svg class="l-curve" viewBox="0 0 240 90" data-curve="12" preserveAspectRatio="none" aria-hidden="true">
+                    <path class="curve-area" /><path class="curve-line" />
+                  </svg>
+                  <dl class="l-mini__stats">
+                    <div><dt>1 h</dt><dd class="num" data-still-off="1"></dd></div>
+                    <div><dt>4 h</dt><dd class="num" data-still-off="4"></dd></div>
+                    <div><dt>8 h</dt><dd class="num" data-still-off="8"></dd></div>
+                  </dl>
+                </div>
+                <div class="l-mini">
+                  <span class="l-mini__title"><b>UKPN</b> graded live</span>
+                  <span class="l-mini__sub">Against real restorations, on LinuxONE</span>
+                  <p class="l-figure num">0.186</p>
+                  <span class="l-mini__sub">Brier score at 2 h over 150 predictions (0 is perfect)</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="l-card l-card--narrow">
+              <header class="l-card__head">
+                <span class="l-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 4.4 3.4 8.2 8 9 4.6-.8 8-4.6 8-9V6l-8-3Z" /></svg></span>
+                <div>
+                  <h3>Private by design</h3>
+                  <p>No home is ever drawn. Sensitive fields are AES-256-GCM encrypted, and the map only shows cells with 11 or more people.</p>
+                </div>
+              </header>
+              <div class="l-vault" aria-hidden="true">
+                <span class="l-vault__ring"></span>
+                <span class="l-vault__core">
+                  <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+                </span>
+              </div>
+            </article>
+
+            <article class="l-card l-card--narrow">
+              <header class="l-card__head">
+                <span class="l-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" /><circle cx="12" cy="12" r="8" /></svg></span>
+                <div>
+                  <h3>An agent that checks its own work</h3>
+                  <p>Every prediction is graded once its horizon passes. If accuracy drifts, the agent recalibrates and logs why.</p>
+                </div>
+              </header>
+              <div class="l-orbits" aria-hidden="true">
+                <span></span><span></span><span></span>
+                <i style="--a: 20deg"></i><i style="--a: 140deg"></i><i style="--a: 250deg"></i>
+                <b><svg viewBox="0 0 24 24"><path d="M13.5 2 4 13.6h6.6L9 22l11-12.2h-6.8L13.5 2Z" /></svg></b>
+              </div>
+            </article>
+
+            <article class="l-card l-card--wide">
+              <header class="l-card__head">
+                <span class="l-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 4l9 7v9H3v-9Z" /></svg></span>
+                <div>
+                  <h3>Two houses, one fault</h3>
+                  <p>Caution scales with how critical the patient is, not with how bad the area usually is. That keeps alerts rare enough to be trusted.</p>
+                </div>
+              </header>
+              <div class="l-houses">
+                <div class="l-house">
+                  <span class="badge" data-label="SIMULATED">SIMULATED</span>
+                  <b>House A</b>
+                  <span>Oxygen concentrator, cylinder good for 4 h</span>
+                  <span class="sev sev--escalate">Escalate</span>
+                </div>
+                <div class="l-house">
+                  <span class="badge" data-label="SIMULATED">SIMULATED</span>
+                  <b>House B</b>
+                  <span>Ventilator, battery good for 15 h</span>
+                  <span class="sev sev--calm">SMS check</span>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="l-split" id="l-control" aria-labelledby="l-control-title">
+          <div class="l-split__text">
+            <h2 id="l-control-title" class="l-display">A control room<br />for welfare checks</h2>
+            <p>Live faults on a 3D map, a ranked list of who to reach first and why, and one-click approval for every escalation. Nothing goes to 999 without a person signing it off.</p>
+            <button class="l-btn" type="button" data-enter>Open the control room</button>
+          </div>
+          <div class="l-split__visual">
+            <div class="l-chart">
+              <div class="l-chart__head">
+                <span>Still off after…</span>
+                <span class="l-chip">ENWL · 24 h</span>
+              </div>
+              <svg class="l-curve l-curve--big" viewBox="0 0 480 200" data-curve="24" preserveAspectRatio="none" aria-hidden="true">
+                <path class="curve-area" /><path class="curve-line" />
+              </svg>
+              <div class="l-chart__axis"><span>0 h</span><span>6 h</span><span>12 h</span><span>18 h</span><span>24 h</span></div>
+            </div>
+            <div class="l-triage">
+              <div class="l-triage__head">
+                <span>Who to reach first</span>
+                <span class="badge" data-label="SIMULATED">SIMULATED</span>
+              </div>
+              <ol class="l-triage__list" id="l-triage"><li class="l-muted">Loading…</li></ol>
+            </div>
+          </div>
+        </section>
+
+        <section class="l-split l-split--flip" id="l-feeds" aria-labelledby="l-feeds-title">
+          <div class="l-table-card">
+            <table>
+              <thead>
+                <tr><th scope="col">Feed</th><th scope="col">Polled</th><th scope="col">Last data</th><th scope="col">Status</th></tr>
+              </thead>
+              <tbody id="l-sources"><tr><td colspan="4" class="l-muted">Loading…</td></tr></tbody>
+            </table>
+          </div>
+          <div class="l-split__text">
+            <h2 id="l-feeds-title" class="l-display">Every feed watched.<br />Every gap admitted.</h2>
+            <p>When a feed goes quiet, Blacknaught never reads silence as "power back". It widens its uncertainty, re-ranks the people affected, and says so on screen.</p>
+            <button class="l-btn" type="button" data-enter>See it live</button>
+          </div>
+        </section>
+
+        <section class="l-faq" id="l-faq" aria-labelledby="l-faq-title">
+          <div class="l-faq__top">
+            <h2 id="l-faq-title" class="l-display">Have questions?<br />We've got answers.</h2>
+            <div>
+              <p>Short answers to what people ask first. The full design, data and evidence are in the project docs.</p>
+              <button class="l-btn" type="button" data-enter>Open the map</button>
+            </div>
+          </div>
+          <div class="l-faq__list" id="l-faq-list"></div>
+          <div class="l-faq__nav">
+            <button class="l-round" id="l-faq-prev" type="button" aria-label="Previous questions">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+            </button>
+            <button class="l-round" id="l-faq-next" type="button" aria-label="Next questions">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+            </button>
+          </div>
+        </section>
+
+        <footer class="l-footer">
+          <div class="l-footer__main">
+            <div class="l-footer__brand">
+              <a class="l-logo" href="#l-top">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 4 13.6h6.6L9 22l11-12.2h-6.8L13.5 2Z" /></svg>
+                Blacknaught.
+              </a>
+              <p><b>IBM Z Datathon 2026</b></p>
+              <p>Built at the Manchester hub. Track 1, real-time AI for critical decisions, with Track 2 security built in.</p>
+            </div>
+            <div class="l-footer__cols">
+              <div>
+                <h3>Product</h3>
+                <ul><li>Live 3D map</li><li>Triage list</li><li>Agent panel</li><li>Audit view</li></ul>
+              </div>
+              <div>
+                <h3>Data</h3>
+                <ul>
+                  <li><a href="https://www.opennetzero.org/electricity-north-west/unplanned-outages1">ENWL outages</a></li>
+                  <li><a href="https://opennetzero.org/uk-power-networks/interruptions-incentive-scheme">UKPN IIS</a></li>
+                  <li><a href="https://www.neso.energy/data-portal/system-frequency-data">NESO frequency</a></li>
+                  <li><a href="https://data.elexon.co.uk/bmrs/api/v1/system/frequency">Elexon</a></li>
+                </ul>
+              </div>
+              <div>
+                <h3>Team</h3>
+                <ul><li>Sali, backend</li><li>Ahmed, platform</li><li>Nate, data and ML</li><li>Rama, frontend</li></ul>
+              </div>
+            </div>
+          </div>
+          <div class="l-footer__bar">
+            <span>© 2026 Blacknaught</span>
+            <span>Patients shown are synthetic</span>
+            <a href="https://github.com/saliha006/BlackNaught">GitHub</a>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <header class="topbar">
+      <button class="l-btn l-btn--ghost" id="back-to-landing" type="button" aria-label="Back to the home page">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+        Back
+      </button>
+      <a class="l-logo" href="#l-top" id="topbar-logo">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 4 13.6h6.6L9 22l11-12.2h-6.8L13.5 2Z" /></svg>
+        Blacknaught.
+      </a>
+      <span class="topbar__grid">Great Britain</span>
+      <span class="topbar__mode" id="data-mode"></span>
+    </header>
+
+    <main class="stage">
+      <div id="map" class="map" role="region" aria-label="Map of active power cuts"></div>
+
+      <aside class="panel" aria-labelledby="outages-title">
+        <header class="panel__head">
+          <h2 id="outages-title">Active power cuts</h2>
+          <span class="panel__count num" id="outage-count">–</span>
+        </header>
+        <p class="panel__note">Areas only. Homes are never shown; cells with fewer than 11 patients are suppressed.</p>
+        <ul class="panel__list" id="outage-list" aria-live="polite">
+          <li class="panel__loading">Loading power cuts…</li>
+        </ul>
+      </aside>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
