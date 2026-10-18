@@ -420,3 +420,9 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: nothing yet
 - ⚠️ Conflicts: @sali: 📨 `HttpSigner` will need to send `Authorization: Bearer <token>`, read from a new secret `signer_token_app`, and `app` needs `BN_SIGNER_URL=http://signer:8100`. Nothing changes before then: `BN_SIGNER_URL` is unset, so checkpoints stay unsigned as today. The exact contract lands in `contracts/signer.md` with the signer.
 - Conflict status: open
+
+### 2026-10-18 05:31 — mock alert channel chosen — @ahmed
+- Shipped: decision (Ahmed): the mock public alert reaches Ahmed's phone over ADB from his laptop (USB debugging on), not by SMS. No third-party app, no texts from a SIM, no real phone numbers.
+- Touched: nothing yet
+- ⚠️ Conflicts: @sali: 📨 for Ahmed's brief, with the alert task (05:15 entry).
+- Conflict status: open
