@@ -45,3 +45,6 @@ htmlcov/
 
 # docs bundles for teammates (sent on Discord/Drive, never committed)
 share/
+
+# superseded docs, kept locally for reference (never shared or committed)
+_archive/
