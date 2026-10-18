@@ -108,7 +108,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 08:02:**
+- **As of 2026-10-18 08:27:**
   - `main`: full backend live on the VM + home-sensor probe; 222 backend tests green on s390x, 96% coverage; frontend 141 tests, 92%. Live UI: https://148-100-78-95.sslip.io:8443 (proof.sh re-run 05:10). README for judges is live.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
@@ -872,3 +872,16 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `backend/app/replay.py` and `backend/tests/test_replay.py` (new), `backend/app/runtime.py` (+4), `backend/tests/test_runtime.py`, README platform section.
 - ⚠️ Conflicts: @sali: `runtime.py` and `test_runtime.py` are yours: 4 more lines, as with the simulator. @nate: it reads the Accra week with Sali's loader, the same data as your home-sensor model, and changes nothing.
 - Conflict status: open
+
+### 2026-10-18 08:27 — area risk refit on today's ENWL districts — @sali — done
+- Shipped: ENWL split Carlisle into Penrith + Workington in mid-2024, so the 30-year average made those two ~10× too safe (@nate's find, verified on the raw data). Each district is now averaged only over months it had faults; districts with < 100 faults in the last 12 months drop out (Carlisle, Barrow, Lancaster); the partial last month is skipped. Live: Penrith 0.69, Workington 0.75 for tomorrow. 237 backend tests green.
+- Touched: `backend/app/arearisk.py`, `backend/models/climatology_enwl.json`, `backend/tests/test_arearisk.py`
+- ⚠️ Conflicts: @nate: option B (swap to your M8 + hook) is parked, not rejected; Sali decides. @rama: the Predict area tile now lists 9 districts.
+- Conflict status: open
+
+### 2026-10-18 08:27 — control room made map-first — @sali — done
+- Shipped: severity fog (red severe / amber moderate) with a hover/tap label; Predict as a left column; two-houses folded to one line; cells off by default; zoom tuned (wheel/trackpad quicker, pinch-only on tablets); cards 90% opaque, 14 px small text; phone: map visible, all tabs tappable, My home in reach. Checked in headless Chromium at 375 / 768 / 1280 px. Phone LCP re-measured over 12 s: 2.0 s.
+- Touched: `frontend/src/geo.ts`, `map.ts`, `main.ts`, `twoHouses.ts`, `styles.css`
+- ⚠️ Conflicts: @rama: your Predict strip and two-houses card moved/fold (details at the top of your brief); your code and tests are intact.
+- Conflict status: open
+
