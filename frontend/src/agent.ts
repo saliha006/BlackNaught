@@ -1,10 +1,12 @@
 import { badge, button, el, facts, rerender } from './dom';
+import type { ConfirmText } from './modal';
 import type { AgentDecision, AuditVerify } from './types';
 
 const TOOL_NAMES: Record<string, string> = {
   escalate: 'Escalate to 999',
   assign_visit: 'Assign visits',
   notify_carer: 'SMS the carer',
+  bulk_sms: 'Bulk SMS',
   request_supplier: 'Request a cylinder',
   draft_cap_alert: 'Public alert (CAP)',
   write_sitrep: 'Situation report',
@@ -20,6 +22,41 @@ const STATE_TEXT: Record<string, string> = {
   exported: 'Exported',
   expired: 'Expired',
 };
+
+/** The decision's arguments; the API truncates them to 200 characters, so a cut-off summary reads as empty. */
+function args(d: AgentDecision): Record<string, unknown> {
+  try {
+    return JSON.parse(d.args_summary);
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Wording for the confirm step before an approval or a rejection. Both directions are confirmed: rejecting a 999
+ * escalation is as serious as sending one. `backupLeft` comes from the triage row when the patient is on it.
+ */
+export function confirmText(d: AgentDecision, approve: boolean, backupLeft?: string): ConfirmText {
+  const a = args(d);
+  const who = typeof a.patient === 'string' ? a.patient : 'this patient';
+  const left = backupLeft ? ` (${backupLeft} of backup left)` : '';
+  switch (d.tool) {
+    case 'escalate':
+      return approve
+        ? { title: 'Send to 999?', message: `Send the 999 context packet for ${who}${left}.`, action: 'Send 999 packet' }
+        : { title: 'Reject the escalation?', message: `No packet is sent for ${who}${left}. They stay on the triage list.`, action: 'Reject escalation' };
+    case 'draft_cap_alert': {
+      const area = typeof a.area === 'string' ? ` for ${a.area}` : '';
+      return approve
+        ? { title: 'Approve the public alert?', message: `The CAP alert${area} is exported for the authority's broadcast channel.`, action: 'Approve alert' }
+        : { title: 'Reject the public alert?', message: `The alert${area} is not sent.`, action: 'Reject alert' };
+    }
+    default:
+      return approve
+        ? { title: 'Approve?', message: `${TOOL_NAMES[d.tool] ?? d.tool}: ${d.args_summary}`, action: 'Approve and send' }
+        : { title: 'Reject?', message: `${TOOL_NAMES[d.tool] ?? d.tool}: ${d.args_summary}`, action: 'Reject' };
+  }
+}
 
 export interface DecisionActions {
   decide(id: string, approve: boolean): void;

@@ -48,6 +48,22 @@ describe('openModal', () => {
   });
 });
 
+describe('confirm', () => {
+  it('focuses Cancel, and resolves true only on the named action', async () => {
+    const { confirm } = await load(vi.fn());
+    const root = document.createElement('div');
+    document.body.append(root);
+    const text = { title: 'Send to 999?', message: 'Send it.', action: 'Send 999 packet' };
+    const backedOut = confirm(root, text);
+    expect((document.activeElement as HTMLElement).textContent).toBe('Cancel');
+    root.querySelector<HTMLButtonElement>('[data-action="Cancel"]')!.click();
+    expect(await backedOut).toBe(false);
+    const sent = confirm(root, text);
+    root.querySelector<HTMLButtonElement>('[data-action="Send 999 packet"]')!.click();
+    expect(await sent).toBe(true);
+  });
+});
+
 describe('askLogin', () => {
   it('resolves with the login name once the right role signs in', async () => {
     const login = vi.fn().mockResolvedValue('operator');

@@ -23,18 +23,19 @@ import {
   getTriage,
   isLive,
 } from './api';
-import { renderAudit, renderDecisions } from './agent';
+import { confirmText, renderAudit, renderDecisions } from './agent';
 import { renderAccuracy } from './charts/accuracy';
 import { chartCard, setBadge, showUnavailable } from './charts/card';
 import { renderFeeds } from './charts/feeds';
 import { renderOutageLength } from './charts/outageLength';
 import { renderRisk } from './charts/risk';
 import { renderControls } from './controls';
+import { formatElapsed } from './format';
 import { isLocated } from './geo';
 import { setupLanding } from './landing';
 import { connectLive, formatRate, type Refetch } from './live';
 import { createMap, type LayerGroup, type OutageMap, type Padding } from './map';
-import { askLogin, openModal } from './modal';
+import { askLogin, confirm, openModal } from './modal';
 import { renderMyHome } from './myHome';
 import { markSelected, renderOutageList, sortOutages } from './outageList';
 import { renderPredict } from './predict';
@@ -209,7 +210,22 @@ async function withLogin<T>(role: 'operator' | 'household', run: () => Promise<T
   }
 }
 
+/** Approvals and rejections both go through a named confirm step: these send (or stop) a 999 packet or a public alert. */
+async function confirmDecision(id: string, approve: boolean): Promise<boolean> {
+  const row = triageItems.find((i) => i.decision_id === id);
+  const decision = decisions?.find((d) => d.id === id) ?? {
+    id,
+    tool: row ? 'escalate' : 'unknown',
+    state: 'awaiting_approval' as const,
+    created_at: '',
+    args_summary: row ? JSON.stringify({ patient: row.patient_ref }) : '',
+    rationale: [],
+  };
+  return confirm(modalRoot, confirmText(decision, approve, row ? formatElapsed(row.reserve_left_h) : undefined));
+}
+
 async function decideAndRefresh(id: string, approve: boolean) {
+  if (!(await confirmDecision(id, approve))) return;
   try {
     const result = await withLogin('operator', () => decide(id, approve));
     if (!result) return;

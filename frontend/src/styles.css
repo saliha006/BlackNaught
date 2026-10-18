@@ -1330,3 +1330,14 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Confirm step: Cancel first and focused; the action button names exactly what happens */
+.confirm__message {
+  margin: 0;
+}
+
+.confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
