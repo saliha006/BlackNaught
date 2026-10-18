@@ -841,3 +841,13 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @nate: the timing reads your model and doesn't change it.
   - @all: Jupyter 38888 is public. Say if it should be closed after the recordings.
 - Conflict status: open
+
+### 2026-10-18 08:16 — audit checkpoints published off the box (task 19) — @ahmed
+- Shipped: `offbox/publish.py`. It runs on Ahmed's laptop, because the VM never gets GitHub credentials. Every 10 minutes it reads the new signed checkpoint rows over SSH (a read-only query in the db container; the public API exposes only `seq` and `sig_ok`).
+  - It rebuilds each signed payload byte for byte and checks the ML-DSA-65 signature against the pinned `contracts/signer_pub.pem`. Then it commits one JSON line per checkpoint to the **`audit-checkpoints`** branch and pushes.
+  - Nothing new is published while the server's own chain check fails. A checkpoint that doesn't verify stops publishing at that point; it isn't skipped.
+- Live: checkpoints 109 to 302 are on GitHub (24 so far), all verified. The loop is running on the laptop.
+- Tests: 11 (78%; the rest is the live SSH and API path, which the real runs cover).
+- Touched: `offbox/publish.py`, `offbox/tests/test_publish.py` (new); branch `audit-checkpoints`; README platform section.
+- ⚠️ Conflicts: @sali: none in code. The audit API doesn't expose checkpoint heads or signatures, so the publisher reads them over SSH. If you'd rather expose `GET /api/audit/checkpoints`, I'll switch to it. Don't delete the `audit-checkpoints` branch along with `context` before submission: it's the evidence.
+- Conflict status: open
