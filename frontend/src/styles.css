@@ -17,7 +17,8 @@
   --bg: var(--n-0);
   --text: var(--n-9);
   --text-muted: var(--n-7);
-  --text-faint: var(--n-5);
+  /* #8a8a91 rather than --n-5: small text needs 4.5:1 on the glass panels, and --n-5 only reaches 3.6:1 */
+  --text-faint: #8a8a91;
   --line: rgb(255 255 255 / 0.09);
   --line-strong: rgb(255 255 255 / 0.18);
   --glass: rgb(19 19 21 / 0.72);
