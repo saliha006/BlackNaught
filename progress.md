@@ -108,7 +108,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 11:39:**
+- **As of 2026-10-18 11:44:**
   - `main`: full backend live on the VM + home-sensor probe; 222 backend tests green on s390x, 96% coverage; frontend 152 tests. Live UI: https://148-100-78-95.sslip.io:8443 (proof.sh re-run 05:10). README for judges is live.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
@@ -1018,3 +1018,9 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `frontend/index.html`, `src/main.ts`, `src/map.ts`, `src/status.ts` (new), `src/landing.css`; removed `src/glance.ts`
 - ⚠️ Conflicts: @rama: the landing page's glance panel is now the map window; the map element moves between the window and the control room.
 - Conflict status: open
+
+### 2026-10-18 11:44 — landing opens at the top; whole-of-GB map button — @sali — done
+- Shipped: `#l-top` moved from the hero to the top of the page, so refreshes and the Home link land on the map window (checked with and without the hash). A globe control under zoom/perspective flies to all of GB, in the window and the control room.
+- Touched: `frontend/index.html`, `src/map.ts`, `src/styles.css`
+- ⚠️ Conflicts: none
+- Conflict status: resolved
