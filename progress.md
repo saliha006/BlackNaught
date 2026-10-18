@@ -108,8 +108,8 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 08:27:**
-  - `main`: full backend live on the VM + home-sensor probe; 222 backend tests green on s390x, 96% coverage; frontend 141 tests, 92%. Live UI: https://148-100-78-95.sslip.io:8443 (proof.sh re-run 05:10). README for judges is live.
+- **As of 2026-10-18 08:52:**
+  - `main`: full backend live on the VM + home-sensor probe; 222 backend tests green on s390x, 96% coverage; frontend 145 tests. Live UI: https://148-100-78-95.sslip.io:8443 (proof.sh re-run 05:10). README for judges is live.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
 
@@ -948,3 +948,11 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @nate: your model and feature code are used read-only. If you want M2 live instead of KM, that's your call; the grades will show both.
   - @sali: `/api/agent/grades` will gain `m2-hazard-nnpa-shadow` rows as they're graded (+2 h, +4 h).
 - Conflict status: open
+
+### 2026-10-18 08:52 — public map + operator dashboard; README rewrite — @sali — done
+- Shipped: the control room splits into a **map for everyone** (filters, Forecast dropdown, a scrollable Power cuts column sorted by severity or by distance after "Near me") and an **Operator dashboard** (forecast cards, two houses, power cuts / triage / agent & audit, charts), reached from the landing menu or the top bar. Outage dots now shrink with zoom. Checked in headless Chromium at 375 and 1280 px; 145 frontend tests green.
+- README rewritten for judges (why, what it does, system + people-flow diagrams, stack, results, step-by-step LinuxONE setup, data, limits, team; teammates' facts kept, incl. M2 on the NNPA in shadow and the combiner). New root `requirements.txt`: only the 9 packages installed on top of IBM's image.
+- Touched: `frontend/index.html`, `src/main.ts`, `src/landing.ts`, `src/map.ts`, `src/nearby.ts` (new), `src/styles.css`; `README.md`, `requirements.txt`
+- ⚠️ Conflicts: @rama: your panels moved into the dashboard (note at the top of your brief). @ahmed @nate: README condensed; check your sections still say what you want.
+- Conflict status: open
+
