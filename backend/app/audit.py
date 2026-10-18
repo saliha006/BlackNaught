@@ -33,15 +33,17 @@ async def append(db: Db, kind: str, actor: str, ref: str | None, data: dict[str,
 
 
 class HttpSigner:
-    """Client for Ahmed's signer container (contract: BLACKNAUGHT.md §B12)."""
+    """Client for Ahmed's signer container (contract: contracts/signer.md)."""
 
-    def __init__(self, client: httpx.AsyncClient, url: str):
+    def __init__(self, client: httpx.AsyncClient, url: str, token: str):
         self.client = client
         self.url = url.rstrip("/")
+        self.token = token
 
-    async def sign(self, payload: bytes) -> dict[str, str]:
-        resp = await self.client.post(f"{self.url}/sign", json={
-            "purpose": "audit_checkpoint", "payload_b64": base64.b64encode(payload).decode()})
+    async def sign(self, payload: bytes, purpose: str = "audit_checkpoint") -> dict[str, str]:
+        # only /sign needs the token: checking a signature can't forge one, so /verify stays open
+        resp = await self.client.post(f"{self.url}/sign", headers={"Authorization": f"Bearer {self.token}"}, json={
+            "purpose": purpose, "payload_b64": base64.b64encode(payload).decode()})
         resp.raise_for_status()
         return resp.json()
 

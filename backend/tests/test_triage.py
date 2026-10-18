@@ -27,14 +27,14 @@ def test_fit_is_empirical_survival():
 
 def test_conditional_survival_properties():
     for elapsed in (0, 1, 4, 12, 200):
-        surv = MODEL.predict(elapsed)["surv"]
+        surv = MODEL.predict({}, elapsed)["surv"]
         assert all(0 <= s <= 1 for s in surv)
         assert all(a >= b for a, b in zip(surv, surv[1:]))  # never increases with horizon
     assert MODEL.conditional(0, 0) == 1.0
 
 
 def test_older_outages_last_longer():
-    q = [MODEL.predict(e)["quantiles"] for e in (0, 4, 12)]
+    q = [MODEL.predict({}, e)["quantiles"] for e in (0, 4, 12)]
     assert q[0]["q50"] < q[1]["q50"] < q[2]["q50"]
     assert all(x["q50"] <= x["q75"] <= x["q90"] for x in q)
 
@@ -42,7 +42,7 @@ def test_older_outages_last_longer():
 def test_quantile_inverts_conditional():
     for elapsed in (0, 3):
         for qn, key in ((0.5, "q50"), (0.9, "q90")):
-            t = MODEL.predict(elapsed)["quantiles"][key]
+            t = MODEL.predict({}, elapsed)["quantiles"][key]
             assert abs(MODEL.conditional(elapsed, t) - (1 - qn)) < 0.01
 
 
@@ -68,7 +68,7 @@ def test_expected_excess_simple_cases():
 
 
 def test_two_houses_one_hour_into_a_real_fault():
-    pred = MODEL.predict(1.0)
+    pred = MODEL.predict({}, 1.0)
     house_a = harm.assess(pred["quantiles"], pred["surv"], reserve_left_h=3.0, severity=5, other_backup=False)
     house_b = harm.assess(pred["quantiles"], pred["surv"], reserve_left_h=14.0, severity=5, other_backup=False)
     assert house_a.escalate and house_a.q_used == "q75"
@@ -77,13 +77,13 @@ def test_two_houses_one_hour_into_a_real_fault():
 
 
 def test_nearly_empty_with_no_backup_uses_q90():
-    pred = MODEL.predict(1.0)
+    pred = MODEL.predict({}, 1.0)
     a = harm.assess(pred["quantiles"], pred["surv"], reserve_left_h=0.5, severity=5, other_backup=False)
     assert a.q_used == "q90" and a.escalate
 
 
 def test_sms_never_stands_down_a_no_backup_patient():
-    pred = MODEL.predict(1.0)
+    pred = MODEL.predict({}, 1.0)
     a = harm.assess(pred["quantiles"], pred["surv"], 0.5, 5, other_backup=False, sms_power_back=True)
     assert a.escalate and "ignored" in a.why[-1]
     b = harm.assess(pred["quantiles"], pred["surv"], 0.5, 5, other_backup=True, sms_power_back=True)
@@ -91,7 +91,7 @@ def test_sms_never_stands_down_a_no_backup_patient():
 
 
 def test_other_backup_reduces_harm():
-    pred = MODEL.predict(1.0)
+    pred = MODEL.predict({}, 1.0)
     alone = harm.assess(pred["quantiles"], pred["surv"], 1.0, 4, other_backup=False).harm
     backed = harm.assess(pred["quantiles"], pred["surv"], 1.0, 4, other_backup=True).harm
     assert backed == pytest.approx(alone * harm.OTHER_BACKUP_FACTOR, rel=1e-3)

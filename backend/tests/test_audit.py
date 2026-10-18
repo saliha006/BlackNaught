@@ -24,7 +24,7 @@ class FakeSigner(audit.HttpSigner):
     def __init__(self):
         self.signed = []
 
-    async def sign(self, payload):
+    async def sign(self, payload, purpose="audit_checkpoint"):
         self.signed.append(payload)
         digest = hashlib.sha256(payload).digest()
         return {"alg": "ML-DSA-65", "key_id": "k1", "sig_b64": base64.b64encode(digest).decode()}
@@ -105,16 +105,19 @@ async def test_http_signer_contract():
     seen = []
 
     def handler(request):
-        seen.append((request.url.path, json.loads(request.content)))
+        seen.append((request.url.path, request.headers.get("authorization"), json.loads(request.content)))
         if request.url.path == "/sign":
             return httpx.Response(200, json={"alg": "ML-DSA-65", "key_id": "k", "sig_b64": "c2ln"})
         return httpx.Response(200, json={"ok": True})
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as c:
-        signer = audit.HttpSigner(c, "http://signer:8100/")
+        signer = audit.HttpSigner(c, "http://signer:8100/", "tok")
         assert (await signer.sign(b"abc"))["alg"] == "ML-DSA-65"
+        await signer.sign(b"abc", "cap_alert")
         assert await signer.verify(b"abc", "c2ln")
-    assert seen[0] == ("/sign", {"purpose": "audit_checkpoint", "payload_b64": "YWJj"})
+    assert seen[0] == ("/sign", "Bearer tok", {"purpose": "audit_checkpoint", "payload_b64": "YWJj"})
+    assert seen[1][2]["purpose"] == "cap_alert"
+    assert seen[2][:2] == ("/verify", None)
 
 
 @pytest.mark.anyio
