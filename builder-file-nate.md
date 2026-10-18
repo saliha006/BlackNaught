@@ -1,0 +1,163 @@
+# Nate: Data & ML (datasets, models trained on LinuxONE, grid configs, evaluation)
+**GitHub:** `aldrichbanas07` · **Branch:** `nate-ml` · **Brief last updated:** 2026-10-17 22:30 by Sali
+**Spec:** `BLACKNAUGHT.md` (NOW at the top, then Part A spec, Part B backend design); the § numbers below refer to it.
+
+## 0. How the agent reads this brief (every task)
+1. Read the project `CLAUDE.md` in full, then this brief. Follow both.
+2. **Only action `▶ Current tasks`**, top to bottom.
+3. Before starting: `git fetch`, then read the new `progress.md` entries. Handle any open `⚠️ Conflicts: @nate` first.
+4. **Ship sequence for each feature:**
+   1. `no-slop`
+   2. tests with coverage
+   3. push `nate-ml`
+   4. `git merge origin/main` into the branch and re-test
+   5. merge to `main`
+   6. add a `progress.md` entry
+
+   Use the `debug` skill on every issue.
+
+---
+
+## 1. Ownership
+**Owns:**
+- `/ml`:
+  - data prep
+  - **M1** baselines
+  - **M2** duration survival
+  - **M8** area fault risk
+  - **M3** recalibration logic
+  - the **M4** stress rule
+  - the **M5** LR table
+  - **M9** Accra brownout/outage quorum
+  - evaluation and fairness numbers
+- `grids/*.yaml` (§5): every value with its source and year.
+- `contracts/model.md`: `predict(features, elapsed_h) → {quantiles, p_exceeds_reserve, eta_h, interval}` and `area_risk(district, date) → {p_ge_k, expected}`.
+- `data/` (git-ignored) and the synthetic-household statistics, which Ahmed's simulator uses.
+
+**Does NOT touch:** `/backend` and `/db` (@sali), `/frontend` (@rama), `/infra` and `/agent` (@ahmed).
+
+## 2. Contract & Guardrails
+**Scope contract.** Nate is building:
+- **M2, trained ON THE LINUXONE VM** inside IBM's image: XGBoost AFT + a Keras discrete-time hazard MLP (24 bins), on ENWL; cross-operator check on UKPN. The Keras model goes to Ahmed for NNPA serving.
+- **M8, tomorrow's area fault risk:** P(≥k faults in each ENWL district tomorrow), using XGBoost Poisson on Open-Meteo ERA5 weather + season + base rate. Scored by Brier skill against climatology.
+- The conditional survival and expected-harm-hours functions behind `predict()`.
+- The grid YAMLs, the LR table, and the evaluation numbers in `docs/results.json`.
+
+**Out of scope:**
+- Kaggle fault simulations
+- waveform classifiers
+- OpenDSS
+- PGCB/Bangladesh M3 (parked)
+- the HMM
+- the grid-difference panel (parked)
+
+**Guardrails:**
+- **Train on the VM** (it's evidence for judges). Save `evidence/train_log_*.txt` plus metrics JSON.
+- **Never pip-install numpy, pandas, TF or torch.** Never pickle across endianness: save XGBoost JSON and `.keras`. Spot-check 5 predictions against the laptop.
+- **ENWL feature whitelist:** cause, start time, season, voltage, primary substation, district, customers at start. **Never** customer-minutes or restoration columns, since they leak the answer.
+- Use a time split (2000–22 train / 2023 validate / 2024–26 test) plus group-by-event. Never a random row split.
+- Fix the stress thresholds **before** replaying 9 Aug 2019.
+- Report every margin honestly. **No CSV/parquet over 100 MB in git.**
+- **Accra data is CC BY-NC.** Coarsen GPS **off-box** to district or ~1 km before it reaches the VM.
+
+---
+
+## 3. ▶ Current tasks (2026-10-17 v3), in order
+**Status update 2026-10-18 02:40 (from Sali)**
+**🔄 Headline changed 2026-10-18 (ADR):** "Blacknaught **predicts blackouts before they happen** and **protects the people they'd hurt most**."
+- **Prediction layers:**
+  - area fault risk (hours to days);
+  - home sensors (minutes): flags homes likely to lose power in 30 min; real Accra probe: 1 in 5 top alerts true, 9× chance;
+  - grid stress (seconds, NESO).
+- **Triage + alerting** of electricity-dependent people stay the core of "who this helps".
+- **Never say:** "predicts every blackout", "minutes ahead from frequency", "voltage dips warn of blackouts" (the probe shows ≈ chance).
+- **New, now headline-critical (your area):**
+  - **Layer 1, M8 weather fault risk.** This is the "days ahead" prediction; beat the climatology baseline (Brier skill).
+  - **Layer 2, the home-sensor early-warning model.** Start from Sali's probe: `backend/app/probe_precursor.py`, with results in `evidence/07_precursor_probe.txt` and data in `~/data/raw/accra/` on the VM (7 days, GPS and ids already stripped). Ideas:
+    - more days (stream more with the same stripping script; ask Sali);
+    - a 5-run bootstrap for ± figures;
+    - 15/60-min horizons;
+    - calibration.
+    - Then score the Accra replay (F13) so the demo shows live early warnings.
+  - **Layer 3, M4 grid stress on the NESO 9 Aug 2019 replay** (F12): honest seconds of lead.
+  - Order if short on time: M2 → layer 2 → M8 → M4.
+- **Start with `progress.md` → "Start here"** on GitHub (clone, hooks, `scripts/sync-context.sh`, VM access).
+- ⚠ **Times in this brief (00:30 skeleton, 03:00 freeze) predate the team starting.** Sali will confirm a new freeze time on Discord; until then, prioritise top-down.
+- **The training data is already on the VM:**
+  - `~/data/raw/enwl_unplanned-outages.csv` (312,936 rows) and `ukpn_ukpn-iis.csv` (316,435), with `SHA256SUMS`;
+  - task 4 no longer waits on Sali.
+- **The backend runs today on stand-ins you replace:**
+  - a KM duration model (`backend/app/survival.py`, fitted on all of ENWL);
+  - a climatology area-risk model (`backend/app/arearisk.py`).
+- **The interface is written down:** `contracts/model.md`. ⚠ **Open item:** M2 needs outage features, so `predict(features, elapsed_h)`. Agree the live feature list with Sali (it's in that file).
+- **Live grading is already scoring the KM model** (150+ real UKPN predictions, Brier ≈ 0.19 at 2 h). Your M2 gets graded the same way, side by side.
+- **Training notebook pattern:** `notebooks/train_on_linuxone.ipynb` (executed in Jupyter on the VM, which is the evidence).
+
+1. ⬜ **Send your public SSH key to Sali** (or Ahmed). `ssh-keygen -t ed25519` if you need one.
+2. 🟡 **Contract freeze:** `contracts/model.md` is drafted by Sali from the backend side; amend it and settle the M2 feature list. No stub is needed (KM is live). Originally: write `contracts/model.md` and ship a **stub `predict()` and `area_risk()`** returning fixture-shaped output, so Sali and Ahmed can integrate right away. `[⚠ shared with ALL]`
+3. ⬜ **VM ML checks** (in Ahmed's notebook container):
+   - `xgboost survival:aft` and `count:poisson` run;
+   - the TF zDNN device is listed;
+   - pandas 3.0 works with your code.
+
+   Post a go/no-go. `[⚠ @ahmed owns the VM]`
+4. ⬜ **ENWL + UKPN prep** (the data is on the VM in `~/data/raw/`). Harmonise to the 5-min threshold; whitelist; split. `[⚠ waiting on @sali]`
+5. ⬜ **M1 baselines on the VM:** Kaplan–Meier per cause, plus log-linear. Brier at 2/4/8 h and C-index logged.
+6. ⬜ **M2 XGBoost AFT on the VM.** Beats or matches the baselines on the 2024–26 test, with the margin reported. UKPN cross-check.
+7. ⬜ **M2 Keras hazard MLP on the VM** (24 bins). Save `.keras` and hand it to Ahmed for signing and NNPA. `[⚠ @ahmed signing + NNPA]`
+8. ⬜ **The real `predict()`:** conditional survival P(T > t + r | T > t) plus expected harm-hours. Unit tests, including r → 0. `[⚠ @sali triage calls it]`
+9. ⬜ **M5 LR table** (hand-set and documented; only the GB DNO-feed weight is learnable), plus household distributions (device, reserve, backup) for Ahmed's simulator. `[⚠ @ahmed]`
+10. ⬜ **`grids/gb.yaml`** plus the target-grid YAMLs (§5, once countries are confirmed). Fields per PRD §5, including `labels_source`.
+11. ⬜ **M8 area fault risk (P1, first in)**
+    - Aggregate ENWL to district-day counts.
+    - Join to Open-Meteo archive daily weather (max gust, precipitation, min/max temperature) at each district centroid.
+    - Fit XGBoost Poisson; compute Brier skill against climatology on the time split.
+    - `area_risk()` uses tomorrow's Open-Meteo forecast.
+    - `[⚠ @sali /areas/risk; @rama map layer]`
+12. ⬜ **M4 stress rule (P1).** `t_to_rung × fragility`. NESO 1-s replay of 9 Aug 2019: lead time to 48.8 Hz, plus false alarms per month over 12 normal months. `[⚠ @ahmed replay hook]`
+13. ⬜ **M9 target-grid replay (P1)**
+    - Request a key through the nLine form; fall back to the bucket with credit.
+    - Take one week of 2021 Accra data and coarsen the GPS off-box.
+    - Run the brownout detector (V/V0 < `vmin_pu`) and the outage quorum against `is_powered`.
+    - Add a Ghana/target YAML.
+14. ⬜ **Evaluation + fairness → `docs/results.json`:**
+    - calibration per region; miss rate
+    - a 5-run event bootstrap
+    - a not-worst-case replay
+    - the honest-limits text
+15. ⬜ **03:00 freeze.** Then sleep in shifts.
+16. ⬜ **06:00–07:00:** check the overnight grades and finalise the numbers.
+17. ⬜ **Video:** your segment (model + risk map) and one line.
+
+## 4. Done log (newest first)
+- (empty)
+
+## 5. Waiting on / owed to others
+- 📥 **Waiting on @sali:** ENWL + UKPN downloads.
+- 📥 **Waiting on @ahmed:** VM access and the Jupyter container.
+- 📤 **Owed to @sali:** stub `predict()` / `area_risk()` (hour 1), the real versions by about 01:30.
+- 📤 **Owed to @ahmed:** the `.keras` model, the LR table, household distributions.
+- 📤 **Owed to @rama:** `docs/results.json` and the risk-layer GeoJSON.
+
+## 6. Working-style notes for the agent
+- Explain s390x and NNPA gotchas. Keep stats rigorous and honest, and flag leakage loudly.
+- Verbosity Level 0.
+
+## 7. Reference
+- **ENWL:** Open Net Zero `unplanned-outages1` (CC BY 4.0; login to download). **UKPN:** `ukpn-iis`.
+- **Open-Meteo:** `archive-api.open-meteo.com/v1/archive` and `api.open-meteo.com/v1/forecast` (keyless; 10k calls a day).
+- **NESO:** 1-s system frequency.
+- **nLine:** https://nline.io/public-data/gridwatch
+- **Method precedent:** Glasgow district-day fault forecasting (arXiv 2603.01653).
+- **Ledger:** `research-and-codebase.md` §12.3, §12.2 and §13.
+
+---
+── Archived (superseded 2026-10-17 — do NOT action) ──
+- **The v2 task list (18 items):**
+  - contract freeze, VM checks
+  - gb/bd/pk YAMLs, ENWL prep, M1, M2 AFT + Keras, `predict()`
+  - M4 stress, M5 LRs
+  - **M3 Bangladesh PGCB model**, CAIDI transfer ratios
+  - the §3.4 grid-comparison panel, HMM grid-state bands
+  - evaluation, 23:00 freeze
+- **Why superseded:** PRD v3. Bangladesh/Pakistan are parked (they fail the free-healthcare filter). M8 area risk and M9 Accra replay are added. Training on the VM is explicit. The freeze moves to 03:00.
