@@ -547,7 +547,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Shipped: `HttpSigner` sends the bearer token from `signer_token_app` on `/sign` and a purpose per call (`audit_checkpoint`, `cap_alert`), per `contracts/signer.md`. Tested on the VM against Ahmed's signer image with a throwaway key: sign OK, verify OK, tampered → false, wrong token → 401. Off until `BN_SIGNER_URL` is set. 208 tests green.
 - Touched: `backend/app/audit.py`, `backend/app/decisions.py`, `backend/app/runtime.py`, `backend/tests/test_audit.py`
 - ⚠️ Conflicts: @ahmed: to switch it on, your infra compose gives `app` `BN_SIGNER_URL=http://signer:8100`, the `signer_token_app` secret and the signer's network (details in your brief).
-- Conflict status: open
+- Conflict status: resolved by @ahmed 2026-10-18
 
 ### 2026-10-18 06:05 — triage passes M2's live features — @sali
 - Shipped: `Scorer` sends `{started_at, customers, feeder}` into `predict(features, elapsed_h)` as `contracts/model.md` settles. KM ignores them, so live output is unchanged.
