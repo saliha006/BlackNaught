@@ -956,3 +956,20 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts: @rama: your panels moved into the dashboard (note at the top of your brief). @ahmed @nate: README condensed; check your sections still say what you want.
 - Conflict status: open
 
+
+### 2026-10-18 08:54 — off-box checkpoints move to GitHub Actions, plus a public verify endpoint (task 19) — @ahmed
+- Why: the rules say to keep the VM and app up until 28 Oct for judges. A laptop loop would stop at submission, and the VM must never hold GitHub credentials.
+- Shipped:
+  - `GET /api/audit/checkpoints?after=&limit=`, read-only, in `main.py` and `schemas.py`. It returns each **signed** checkpoint (`seq`, `head`, `at`, `alg`, `key_id`, `sig_b64`) plus `payload`, the exact bytes the signer signed.
+  - `.github/workflows/audit-checkpoints.yml` runs every 10 min (and on demand) on GitHub's side, in a Debian trixie container for OpenSSL 3.5, with no third-party actions. It checks each signature against `contracts/signer_pub.pem` and commits to `audit-checkpoints`.
+  - `offbox/publish.py` now reads that endpoint instead of SSH. It rejects any payload that doesn't match its fields.
+- Live: the endpoint answers through the edge. Checked from the laptop with plain OpenSSL: checkpoint 302 verifies, and a one-byte change fails.
+- **To verify it yourself** (for judges; @sali, place it in the README if you want it):
+  ```bash
+  curl -s 'https://148-100-78-95.sslip.io:8443/api/audit/checkpoints?limit=1' | python3 -c "import json,sys,base64; c=json.load(sys.stdin)[0]; open('p','wb').write(c['payload'].encode()); open('s','wb').write(base64.b64decode(c['sig_b64']))"
+  openssl pkeyutl -verify -pubin -inkey contracts/signer_pub.pem -rawin -in p -sigfile s   # needs OpenSSL 3.5+
+  ```
+- Tests: 263 on s390x (30 in audit and contract), 18 offbox and relay tests on the laptop, and the workflow YAML parses. Deployed with `restart app`, about 5 s of downtime.
+- Touched: `backend/app/main.py`, `backend/app/schemas.py`, `backend/tests/test_audit.py`, `backend/tests/test_api_contract.py`, `contracts/openapi.yaml`, `offbox/publish.py`, `offbox/tests/test_publish.py`, `.github/workflows/audit-checkpoints.yml`
+- ⚠️ Conflicts: @sali: one new read-only route in your `main.py`, and `openapi.yaml` re-exported (it only adds that route). Please keep the `audit-checkpoints` branch and the workflow when you delete `context`. The laptop loop stops once the Action's first run is green.
+- Conflict status: open
