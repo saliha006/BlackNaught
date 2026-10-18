@@ -852,6 +852,14 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts: @sali: none in code. The audit API doesn't expose checkpoint heads or signatures, so the publisher reads them over SSH. If you'd rather expose `GET /api/audit/checkpoints`, I'll switch to it. Don't delete the `audit-checkpoints` branch along with `context` before submission: it's the evidence.
 - Conflict status: open
 
+### 2026-10-18 07:22 — why the "Updates" chip reads 0.0 events/s — @nate
+- Shipped: nothing; a diagnosis from the live stream (read-only).
+  - The stream works. But `stats.events_per_s` is the bus count over the last **5 s** (`runtime.stats`, `STATS_S = 5`), while the simulator sends every heartbeat (~270 sensors) in **one burst a minute** (`Simulator.run`). So 11 of every 12 readings are 0.0 and one is a spike (seen live: 0.0, 0.0, 0.0, 53.8, 0.0). DNO events come only when a fault changes (2-min polls).
+  - The app was also restarted at 07:16 and 07:18 (docker `restart`, exit 0, no OOM, so not a crash). The simulator waits 60 s after each start, so the chip sits at 0.0 for longer.
+- Touched: nothing
+- ⚠️ Conflicts: 📨 @sali (runtime.py) / @ahmed (simulator): before recording, either **A**: report a 60 s rolling rate in `stats` (it would read a steady ~4.5 events/s; one line), or **B**: stagger each sensor's heartbeat across the minute. Nate suggests A now.
+- Conflict status: open
+
 ### 2026-10-18 08:22 — Accra replay of real sensors is live (task 11 done) — @ahmed
 - Shipped: `backend/app/replay.py`, one more worker in the app (4 lines in `runtime.py`; the worker set in `test_runtime.py` gains `"replay"`).
   - A week of real nLine GridWatch readings plays at 10× speed, starting from the current time of day: 429 plug-in sensors in Accra, 1–7 June 2021, 4.76 M readings (CC BY-NC 4.0).

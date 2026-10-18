@@ -20,14 +20,30 @@ export const SCALE_RADIUS: Record<Scale, number> = {
   unresolved: 5,
 };
 
-export function outagesToGeoJSON(outages: Outage[]): FeatureCollection<Point> {
+export type Severity = 'severe' | 'moderate';
+
+/**
+ * Severe when someone in the cut needs escalating, or the cut is region- or grid-wide; any other live cut is moderate.
+ * A household reads the colour, so it follows harm to people first and size second.
+ */
+export const severityOf = (o: Outage, escalated: Set<number>): Severity =>
+  escalated.has(o.id) || o.scale === 'region' || o.scale === 'system' ? 'severe' : 'moderate';
+
+export function outagesToGeoJSON(outages: Outage[], escalated: Set<number> = new Set()): FeatureCollection<Point> {
   return {
     type: 'FeatureCollection',
     features: outages.filter(isLocated).map((o) => ({
       type: 'Feature',
       id: o.id,
       geometry: { type: 'Point', coordinates: toLonLat(o.centroid) },
-      properties: { id: o.id, scale: o.scale, radius: SCALE_RADIUS[o.scale] },
+      properties: {
+        id: o.id,
+        scale: o.scale,
+        radius: SCALE_RADIUS[o.scale],
+        severity: severityOf(o, escalated),
+        source: o.source,
+        customers: o.customers,
+      },
     })),
   };
 }
