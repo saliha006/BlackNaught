@@ -38,6 +38,30 @@ export function openModal(root: HTMLElement, title: string, onClose?: () => void
   return { body, close: () => dialog.close() };
 }
 
+export interface ConfirmText {
+  title: string;
+  message: string;
+  // Says what happens ("Send 999 packet"), never a bare "OK", so the button can't be pressed on autopilot
+  action: string;
+}
+
+/** For decisions that can't be undone. Cancel takes focus, so Enter on a stray keypress backs out. */
+export function confirm(root: HTMLElement, text: ConfirmText): Promise<boolean> {
+  return new Promise((resolve) => {
+    let confirmed = false;
+    const modal = openModal(root, text.title, () => resolve(confirmed));
+    const cancel = button('Cancel', 'l-btn l-btn--ghost', () => modal.close());
+    const go = button(text.action, 'l-btn', () => {
+      confirmed = true;
+      modal.close();
+    });
+    const actions = el('div', 'confirm__actions');
+    actions.append(cancel, go);
+    modal.body.append(el('p', 'confirm__message', text.message), actions);
+    cancel.focus();
+  });
+}
+
 const ROLE_TEXT: Record<Role, { hint: string; user: string }> = {
   operator: { hint: 'Approving sends a 999 context packet or a public alert, so it needs the operator login.', user: 'operator' },
   household: { hint: 'Each household sees only its own home. The demo logins are in households.txt on the VM.', user: 'home-1' },

@@ -108,8 +108,8 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 07:25:**
-  - `main`: full backend live on the VM + home-sensor probe; 222 backend tests green on s390x, 96% coverage; frontend 137 tests, 92%. Live UI: https://148-100-78-95.sslip.io:8443 (proof.sh re-run 05:10). README for judges is live.
+- **As of 2026-10-18 07:42:**
+  - `main`: full backend live on the VM + home-sensor probe; 222 backend tests green on s390x, 96% coverage; frontend 141 tests, 92%. Live UI: https://148-100-78-95.sslip.io:8443 (proof.sh re-run 05:10). README for judges is live.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
 
@@ -749,3 +749,16 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `ml/make_results_notebook.py`; VM `~/shared/nate-runs/blacknaught_results.ipynb`
 - ⚠️ Conflicts: @sali @rama: free to use the charts in the video and slides. Open the notebook in Jupyter (`nate-runs/`); don't show the URL bar (token).
 - Conflict status: open
+
+### 2026-10-18 07:42 — confirm step before approvals — @sali — done
+- Shipped: decision (Sali): approving or rejecting an escalation, public alert or bulk SMS opens a confirm dialog naming what happens ("Send the 999 context packet for P-BA1699 (0 min of backup left)"), with Cancel focused. Verified in a real (headless) browser on the live site.
+- Touched: `frontend/src/modal.ts`, `frontend/src/agent.ts`, `frontend/src/main.ts`, `frontend/src/styles.css` (+ tests)
+- ⚠️ Conflicts: @ahmed: the wording reads `args.patient`, `args.outage_id`, `args.area` from your decisions.
+- Conflict status: open
+
+### 2026-10-18 07:42 — row 14: real-browser check + performance measurements — @sali
+- Shipped: headless Chromium pass at 375 / 768 / 1280 px on the live site. Fixed what it found in my code: sign-in bar showing while signed out, the audit heading style, raw JSON in decision rows. Measured: desktop LCP 1.1 s; phone (4× CPU, slow 4G) LCP 3.4 s, CLS 0.13; CLS 0.16–0.30 from the two-houses card resizing; nginx serves JS uncompressed (1,066 KiB vs ~302 kB gzipped). Phone layout: tabs and My home are covered.
+- Touched: `frontend/src/agent.ts`, `frontend/src/styles.css`
+- ⚠️ Conflicts: @ahmed: nginx gzip + cache headers proposed (your brief), not applied. @rama: phone layout issues are in your views (two-houses card, Predict strip); proposals pending with Sali.
+- Conflict status: open
+

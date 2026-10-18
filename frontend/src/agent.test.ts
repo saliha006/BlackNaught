@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import decisions from '../../fixtures/api/agent_decisions.json';
 import audit from '../../fixtures/api/audit_verify.json';
-import { renderAudit, renderDecisions } from './agent';
+import { confirmText, readable, renderAudit, renderDecisions } from './agent';
 import type { AgentDecision, AuditVerify } from './types';
 
 const sample = decisions as AgentDecision[];
@@ -37,6 +37,35 @@ describe('renderDecisions', () => {
     expect(list.textContent).toContain('No agent decisions yet');
     renderDecisions(list, null, handlers());
     expect(list.textContent).toContain('unavailable');
+  });
+});
+
+describe('readable', () => {
+  it("shows a report's text, else key: value pairs, else the raw summary", () => {
+    expect(readable({ ...sample[0], args_summary: '{"text": "32 patients"}' })).toBe('32 patients');
+    expect(readable({ ...sample[0], args_summary: '{"outage_id": 3, "areas": ["TN26", "TN30"]}' })).toBe('outage id: 3 · areas: TN26, TN30');
+    expect(readable({ ...sample[0], args_summary: '{"cut off' })).toBe('{"cut off');
+  });
+});
+
+describe('confirmText', () => {
+  const escalate: AgentDecision = { ...sample[0], tool: 'escalate', args_summary: '{"patient": "P-1", "outage_id": 3}' };
+
+  it('names the patient, the backup left and the outcome, both ways', () => {
+    const yes = confirmText(escalate, true, '1 h 12 min');
+    expect(yes.message).toBe('Send the 999 context packet for P-1 (1 h 12 min of backup left).');
+    expect(yes.action).toBe('Send 999 packet');
+    expect(confirmText(escalate, false).action).toBe('Reject escalation');
+  });
+
+  it('names the area of a public alert and falls back for other tools or cut-off args', () => {
+    const cap: AgentDecision = { ...sample[0], tool: 'draft_cap_alert', args_summary: '{"area": "TN26, TN30"}' };
+    expect(confirmText(cap, true).message).toContain('for TN26, TN30');
+    expect(confirmText(cap, false).action).toBe('Reject alert');
+    const bulk: AgentDecision = { ...sample[0], tool: 'bulk_sms', args_summary: '{"to": 40, "tex' };
+    expect(confirmText(bulk, true).message).toContain('Bulk SMS');
+    expect(confirmText(bulk, false).action).toBe('Reject');
+    expect(confirmText({ ...escalate, args_summary: 'not json' }, true).message).toContain('this patient');
   });
 });
 
