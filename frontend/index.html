@@ -67,12 +67,12 @@
                 <span class="l-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-5 4 3 7-8M15 7h4v4" /></svg></span>
                 <div>
                   <h3>Predicts how long the power stays off</h3>
-                  <p>A survival model trained on every unplanned outage Electricity North West has published, conditioned on how long a cut has already lasted.</p>
+                  <p>A survival curve fitted on 178,864 UK Power Networks outages, conditioned on how long a cut has already lasted. On UKPN's newest year it beat both a 312,936-outage ENWL curve and our trained models.</p>
                 </div>
               </header>
               <div class="l-card__duo">
                 <div class="l-mini">
-                  <span class="l-mini__title"><b>ENWL</b> 312,936 outages</span>
+                  <span class="l-mini__title"><b>UKPN</b> 178,864 outages</span>
                   <span class="l-mini__sub">Share still off after</span>
                   <svg class="l-curve" viewBox="0 0 240 90" data-curve="12" preserveAspectRatio="none" aria-hidden="true">
                     <path class="curve-area" /><path class="curve-line" />
@@ -86,8 +86,8 @@
                 <div class="l-mini">
                   <span class="l-mini__title"><b>UKPN</b> graded live</span>
                   <span class="l-mini__sub">Against real restorations, on LinuxONE</span>
-                  <p class="l-figure num">0.186</p>
-                  <span class="l-mini__sub">Brier score at 2 h over 150 predictions (0 is perfect)</span>
+                  <p class="l-figure num" id="l-brier">–</p>
+                  <span class="l-mini__sub" id="l-brier-sub">Brier score at 2 h (0 is perfect)</span>
                 </div>
               </div>
             </article>
@@ -159,7 +159,7 @@
             <div class="l-chart">
               <div class="l-chart__head">
                 <span>Still off after…</span>
-                <span class="l-chip">ENWL · 24 h</span>
+                <span class="l-chip">UKPN · 24 h</span>
               </div>
               <svg class="l-curve l-curve--big" viewBox="0 0 480 200" data-curve="24" preserveAspectRatio="none" aria-hidden="true">
                 <path class="curve-area" /><path class="curve-line" />
@@ -261,6 +261,7 @@
       </a>
       <span class="topbar__grid">Great Britain</span>
       <span class="topbar__mode" id="data-mode"></span>
+      <span class="topbar__who" id="signed-in" hidden>Signed in: <b id="signed-in-name"></b><button class="chip" id="sign-out" type="button">Sign out</button></span>
       <button class="l-btn l-btn--ghost topbar__home" id="open-my-home" type="button">My home</button>
     </header>
 
@@ -293,7 +294,7 @@
           <span class="panel__count num" id="outage-count">–</span>
         </header>
         <p class="panel__note">Areas only. Homes are never shown; cells with fewer than 11 patients are suppressed.</p>
-        <ul class="panel__list" id="outage-list" aria-live="polite">
+        <ul class="panel__list" id="outage-list">
           <li class="panel__loading">Loading power cuts…</li>
         </ul>
         <div class="analysis" id="analysis" aria-label="Analysis"></div>
@@ -304,7 +305,7 @@
             <span class="badge" data-label="SIMULATED">SIMULATED</span>
           </header>
           <p class="panel__note">Ranked by expected harm-hours. Patients are synthetic, placed on real live faults. Escalations wait for an operator.</p>
-          <ul class="panel__list panel__list--tall" id="triage-list" aria-live="polite">
+          <ul class="panel__list panel__list--tall" id="triage-list">
             <li class="panel__loading">Loading triage…</li>
           </ul>
         </div>
@@ -315,7 +316,7 @@
             <span class="badge" data-label="LIVE">LIVE</span>
           </header>
           <p class="panel__note">Every tool call the agent makes, newest first. Anything sent to more than one person, or escalated, waits for a person.</p>
-          <ul class="panel__list panel__list--tall" id="decision-list" aria-live="polite">
+          <ul class="panel__list panel__list--tall" id="decision-list">
             <li class="panel__loading">Loading decisions…</li>
           </ul>
         </div>
@@ -323,6 +324,8 @@
     </main>
 
     <div id="modal-root"></div>
+    <!-- In the page from the start: a live region added later by script is often missed by screen readers -->
+    <p class="visually-hidden" id="status" role="status"></p>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

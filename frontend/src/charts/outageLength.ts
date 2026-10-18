@@ -54,7 +54,7 @@ export function renderOutageLength(card: ChartCard, curve: number[], outages: Ou
     cross.setAttribute('x1', String(x(h)));
     cross.setAttribute('x2', String(x(h)));
     cross.setAttribute('visibility', 'visible');
-    showTip(e.clientX, box.top + y(stillOff(curve, h)), `${pct(stillOff(curve, h))} still off`, `after ${formatElapsed(h)}, ENWL history`);
+    showTip(e.clientX, box.top + y(stillOff(curve, h)), `${pct(stillOff(curve, h))} still off`, `after ${formatElapsed(h)}, UKPN history`);
   });
   hit.addEventListener('pointerleave', () => {
     cross.setAttribute('visibility', 'hidden');
@@ -74,7 +74,7 @@ export function renderOutageLength(card: ChartCard, curve: number[], outages: Ou
   }
 
   fillLegend(card.legend, [
-    { key: 'line', tone: 'ink', text: 'ENWL history' },
+    { key: 'line', tone: 'ink', text: 'UKPN history' },
     { key: 'dot', tone: 'ink', text: 'Live cut' },
     { key: 'dot', tone: 'escalate', text: 'Has an escalation' },
   ]);

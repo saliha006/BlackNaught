@@ -4,11 +4,12 @@ import '@fontsource/ibm-plex-sans/500.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import './styles.css';
 import './landing.css';
-import km from '../../backend/models/km_enwl.json';
+import km from '../../backend/models/km_ukpn.json';
 import {
   ApiError,
   AuthError,
   decide,
+  logout,
   getAreaRisk,
   getAudit,
   getCapXml,
@@ -79,6 +80,27 @@ let decisions: AgentDecision[] | null = null;
 let openTab = 'tab-outages';
 const fresh = new Set<number>();
 const modalRoot = $('#modal-root');
+let auditChecked = false;
+let newSinceAnnounce = 0;
+let announceTimer = 0;
+
+/** One polite status line for what a screen reader should hear: decisions, audit verdicts, new faults. */
+const announce = (text: string) => {
+  $('#status').textContent = text;
+};
+
+function setSignedIn(name: string | null) {
+  $('#signed-in').hidden = name === null;
+  $('#signed-in-name').textContent = name ?? '';
+}
+
+// The session cookie is HttpOnly and there's no "who am I" endpoint, so the bar only knows sign-ins made on this page
+$('#sign-out').addEventListener('click', async () => {
+  modalRoot.querySelector('dialog')?.close();
+  await logout().catch(() => undefined);
+  setSignedIn(null);
+  announce('Signed out');
+});
 
 const filters: Filters = { operators: allOperators(), escalationsOnly: false };
 const layers: Record<LayerGroup, boolean> = { beams: true, sweep: true, cells: true };
@@ -91,7 +113,12 @@ const controls = renderControls($('#controls'), filters, layers, {
 
 const analysis = $('#analysis');
 const cards = {
-  length: chartCard(analysis, 'Outage length vs history', 'Live cuts on the survival curve of 312,936 ENWL outages', 'LIVE'),
+  length: chartCard(
+    analysis,
+    'Outage length vs history',
+    `Live cuts on the survival curve of ${km.n.toLocaleString('en-GB')} UKPN outages`,
+    'LIVE',
+  ),
   accuracy: chartCard(analysis, 'Prediction accuracy', 'Brier score of predictions graded against real GB restorations', 'LIVE'),
   risk: chartCard(analysis, "Tomorrow's risk", 'Chance of 3 or more faults per ENWL district; not filtered by operator', null),
   feeds: chartCard(analysis, 'Feed health', 'Time since each feed last delivered; the tick marks stale (2× its polling interval)', 'LIVE'),
@@ -163,7 +190,10 @@ async function loadDecisions() {
 }
 
 async function verifyAudit() {
-  renderAudit($('#audit'), await getAudit().catch(() => null), verifyAudit);
+  const result = await getAudit().catch(() => 'failed' as const);
+  renderAudit($('#audit'), result, verifyAudit);
+  if (result === 'failed') announce("Couldn't verify the audit chain");
+  else announce(result.ok ? 'Audit chain intact' : `Audit chain tampered at row ${result.first_bad_seq}`);
 }
 
 /** A 401/403 means the wrong person (or nobody) is signed in: ask for the role's login once, then retry. */
@@ -172,17 +202,25 @@ async function withLogin<T>(role: 'operator' | 'household', run: () => Promise<T
     return await run();
   } catch (err) {
     if (!(err instanceof AuthError)) throw err;
-    return (await askLogin(modalRoot, role)) ? run() : null;
+    const who = await askLogin(modalRoot, role);
+    if (who === null) return null;
+    setSignedIn(who);
+    return run();
   }
 }
 
 async function decideAndRefresh(id: string, approve: boolean) {
   try {
     const result = await withLogin('operator', () => decide(id, approve));
-    // reload('triage') refreshes the decisions too, so the approved row loses its buttons
-    if (result) await reload('triage');
+    if (!result) return;
+    announce(`${approve ? 'Approved' : 'Rejected'}${result.audit_seq ? `, audit row ${result.audit_seq}` : ''}`);
+    // reload('triage') refreshes the decisions too, so the decided row loses its buttons
+    await reload('triage');
   } catch (err) {
-    openModal(modalRoot, 'Not sent').body.append(`The decision wasn't recorded: ${(err as Error).message}`);
+    // 409 means another operator decided first: a normal outcome with two people on shift, not a fault
+    const message = (err as Error).message;
+    const text = message.endsWith('409') ? 'Already decided by another operator.' : `The decision wasn't recorded: ${message}`;
+    openModal(modalRoot, 'Not sent').body.append(text);
   }
 }
 
@@ -213,7 +251,11 @@ setupTabs($('.tabs'), (panel) => {
   if (panel === 'tab-triage') renderTriageTab();
   if (panel === 'tab-agent') {
     renderAgentTab();
-    verifyAudit();
+    // Verify walks the whole chain on the server, so arrowing past the tab mustn't re-run it; the button does
+    if (!auditChecked) {
+      auditChecked = true;
+      void verifyAudit();
+    }
   }
 });
 
@@ -273,6 +315,13 @@ function setLiveUpdates(on: boolean) {
     stats: (rate) => controls.setLive('live', formatRate(rate)),
     ping(id) {
       fresh.add(id);
+      // Batched, so a burst of new faults is one sentence rather than a run of interruptions
+      newSinceAnnounce += 1;
+      clearTimeout(announceTimer);
+      announceTimer = window.setTimeout(() => {
+        announce(`${newSinceAnnounce} new power cut${newSinceAnnounce === 1 ? '' : 's'}`);
+        newSinceAnnounce = 0;
+      }, 5000);
       setTimeout(() => {
         fresh.delete(id);
         list.querySelector(`button.outage[data-id="${id}"]`)?.classList.remove('is-new');
