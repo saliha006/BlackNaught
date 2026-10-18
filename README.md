@@ -196,9 +196,11 @@ agent can reach Granite, and the app answers only on the VM itself.
   s390x.
 - **Encryption uses the hardware.** Patient fields are AES-256-GCM through the system libcrypto, which uses CPACF,
   tested against NIST vectors.
-- **Telum's NNPA is there.** The zDNN TensorFlow plugin loads on the VM, and we time the trained Keras duration model
-  with NNPA on and off (`evidence/nnpa_timing.csv`). That model isn't the live one: Kaplan–Meier scored better on UKPN
-  (see Results), and it needs no accelerator.
+- **Telum's NNPA does real work.** Nate's trained Keras duration model (M2) runs on it every minute, in shadow. It scores
+  one batch of every at-risk patient and outage, and the zDNN log shows the matmuls and softmax going to the NNPA. The
+  model is signed by our ML-DSA signer and refused if tampered with. Its predictions are graded beside the live
+  Kaplan–Meier curve, which stays the live ranking because it scored better on UKPN (see Results). NNPA on vs off is
+  timed in `evidence/nnpa_timing.csv`.
 - **Security a regulator would expect.** Least-privilege roles, a hash-chained audit log, operator login for approvals,
   a blind index for encrypted lookups, and nothing under a count of 11 shown on a map.
 
@@ -361,7 +363,7 @@ footprints, with phone numbers from Ofcom's range reserved for drama. A table co
   on a 9 Aug 2019-style event the live gauge turns red after the disconnection has started. The replay is one event.
 - The agent's words come from Granite on the CPU. A fresh text takes about 80 s, so the agent asks for one per tick and
   keeps its template for the rest. The brief's zDNN route needs the 2.7 GB Q8_0 build; we run Q4_K_M on the CPU instead.
-- NNPA is timed, not used live: the live duration model is the Kaplan–Meier curve.
+- M2 runs on the NNPA in shadow only: it's graded, but the live ranking is the Kaplan–Meier curve, which scored better.
 - The public alert goes to a phone over ADB, standing in for a government alerting service. Nothing is broadcast to the
   public.
 - The database volume isn't LUKS2-encrypted yet. The field-encryption key isn't wrapped by the signer either; it's a file
