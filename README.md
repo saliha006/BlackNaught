@@ -180,6 +180,11 @@ minutes?
 Supply instability and time of day carried the signal. Low voltage, which we expected to work, didn't. Full output in
 `evidence/07_precursor_probe.txt`.
 
+**The served version** (`ml/home_sensor.py`) trains on days 1–4, calibrates its probability and sets the "elevated"
+threshold on day 5, and is tested on days 6–7, with a 5-run bootstrap over sensors. It flags 0.96% of home-windows, and
+**18.8% ± 1.1% of those homes lose power within 30 minutes, 8.9× the 2.1% base rate** (ROC AUC 0.666 ± 0.005).
+Log: `evidence/train_log_home_sensor.txt`.
+
 198 tests pass on s390x with 96% coverage (`evidence/04_tests.txt`).
 
 ## Run it on LinuxONE

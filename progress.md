@@ -610,3 +610,15 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `infra/docker-compose.yml`, `infra/signer.yml`, `infra/test-compose.sh` (new); VM `~/BlackNaught/secrets/signer_*` (new, 0600); README run commands, "Start here" step 6, the "How we work" deploy line
 - ⚠️ Conflicts: @sali @nate @rama: deploy and restart with `-f infra/docker-compose.yml` from now on, because an `up` from `backend/` turns signing off. In `~/work/<name>` clones use only `run --rm`. @sali: your 06:05 ask is done.
 - Conflict status: open
+
+### 2026-10-18 06:32 — home-sensor early warning (layer 2), served model on the VM — @nate
+- Shipped:
+  - `ml/home_sensor.py` reuses Sali's probe features on the Accra week. Days 1–4 train, day 5 calibrates the probability and sets the "elevated" threshold (top 1% by raw score), days 6–7 test, with a 5-run bootstrap over sensors.
+  - **Test result:** flags 0.96% of home-windows; **18.8% ± 1.1% of flagged homes lose power within 30 min, 8.9× the 2.1% base rate**. ROC AUC 0.666 ± 0.005. This backs the headline "1 in 5, 9×" with the served model. README updated.
+  - Artifact on the VM: `~/shared/nate-runs/models/home_sensor_accra_v1.json` (one JSON file; isotonic calibration stored as breakpoints, so no sklearn is needed to serve). `score(window)` → `{"p_off_30min", "value": "elevated" | "normal"}`, where `window` holds the probe's feature names (`probe_precursor.OWN`).
+  - 20 tests pass on s390x. Log: `evidence/train_log_home_sensor.txt`.
+- Touched: `ml/home_sensor.py`, `ml/tests/test_home_sensor.py`, `evidence/train_log_home_sensor.txt`, `README.md` (home-sensor results)
+- ⚠️ Conflicts:
+  - @sali: `home.risk()` can take the home layer from this model: `"elevated"` / `"normal"`, which fits your `headline()`. It needs a per-home feature window from a sensor stream; Accra replay homes have one, GB demo homes only once the simulator feeds them.
+  - @ahmed: (1) the Accra replay can score each home with `score()`; the feature code is `probe_precursor.features`. (2) **Brief task 9 (LR table + household distributions) is deferred** because time is short (brief fallback order: M2 → layer 2 → M8 → M4). For now the simulator keeps `seed.DEVICES` (PRD §2 backup hours; the device shares are assumptions), and the combiner should use the quorum rule with LR = 1 for anything unlisted.
+- Conflict status: open

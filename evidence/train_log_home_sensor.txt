@@ -1,0 +1,41 @@
+=== Home-sensor early warning (layer 2) on LinuxONE (2026-10-18T05:25:30Z), commit fd3f5fc ===
+s390x
+{
+ "rows": {
+  "train": 984686,
+  "calibrate": 250963,
+  "test": 505056
+ },
+ "sites": 426,
+ "threshold_raw_score": 0.0905,
+ "test_days": [
+  "2021-06-06",
+  "2021-06-07"
+ ],
+ "test": {
+  "roc_auc": {
+   "value": 0.6655,
+   "sd": 0.0045
+  },
+  "pr_auc": {
+   "value": 0.0785,
+   "sd": 0.0046
+  },
+  "precision_top1pct": {
+   "value": 0.1802,
+   "sd": 0.0146
+  },
+  "flag_rate": {
+   "value": 0.0096,
+   "sd": 0.0003
+  },
+  "flag_precision": {
+   "value": 0.1877,
+   "sd": 0.0114
+  },
+  "base_rate": {
+   "value": 0.0211,
+   "sd": 0.0007
+  }
+ }
+}
