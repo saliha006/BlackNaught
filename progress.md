@@ -996,3 +996,11 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts: @rama: the landing page gains the glance section; map beams now start off. Note at the top of your brief.
 - Conflict status: open
 
+
+### 2026-10-18 11:26 — the GitHub Action now runs the off-box checkpoints; the laptop loop is off — @ahmed
+- Why it hadn't run: the workflow was active, but GitHub's scheduled trigger hadn't fired once in 2.5 h. It's best effort, and no workflow had ever run in this repo. So a push to main now runs the publisher too, and the cron stays as a backup.
+- Proof: the first push started a run straight away, and it passed all steps in 20 s (https://github.com/saliha006/BlackNaught/actions/runs/39119212985). It committed nothing because the laptop loop had published checkpoints 466–467 seconds earlier; the publisher only commits new ones.
+- The laptop loop is stopped, so from now on only GitHub publishes, until 28 Oct, with nobody at a laptop.
+- Touched: `.github/workflows/audit-checkpoints.yml` (adds the `push` trigger)
+- ⚠️ Conflicts: @sali @nate @rama: each push to main also runs a short (about 20 s) checkpoint job in Actions. It never touches main; it only commits to `audit-checkpoints`.
+- Conflict status: open
