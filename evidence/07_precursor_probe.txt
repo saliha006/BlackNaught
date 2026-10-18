@@ -1,0 +1,76 @@
+=== Home-sensor precursor probe on LinuxONE (2026-10-18T03:00:26Z) — s390x
+Data: nLine GridWatch Accra, 1–7 Jun 2021, CC BY-NC 4.0 (GPS + ids stripped before the VM). Label: power lost within 30 min. Time split: train 1–5 Jun, test 6–7 Jun.
+loaded 4,764,274 readings from 429 sensors
+{
+ "rows_train": 1235649,
+ "rows_test": 505056,
+ "sites": 426,
+ "base_rate_test": 0.0211,
+ "train_days": [
+  "2021-06-01",
+  "2021-06-05"
+ ],
+ "test_days": [
+  "2021-06-06",
+  "2021-06-07"
+ ],
+ "horizon_min": 30,
+ "own_sensor": {
+  "roc_auc": 0.668,
+  "pr_auc": 0.0893,
+  "precision_top1pct": 0.197,
+  "top_features": [
+   [
+    "flicker60",
+    0.4650000035762787
+   ],
+   [
+    "hour",
+    0.13899999856948853
+   ],
+   [
+    "v_std60",
+    0.05700000002980232
+   ],
+   [
+    "freq_last",
+    0.0560000017285347
+   ]
+  ]
+ },
+ "own_plus_district": {
+  "roc_auc": 0.684,
+  "pr_auc": 0.0919,
+  "precision_top1pct": 0.188,
+  "top_features": [
+   [
+    "flicker60",
+    0.38600000739097595
+   ],
+   [
+    "hour",
+    0.13699999451637268
+   ],
+   [
+    "district_dark_share",
+    0.07999999821186066
+   ],
+   [
+    "freq_last",
+    0.06300000101327896
+   ]
+  ]
+ },
+ "rule_recent_flicker": {
+  "roc_auc": 0.568,
+  "pr_auc": 0.0708
+ },
+ "rule_low_voltage": {
+  "roc_auc": 0.514,
+  "pr_auc": 0.0263
+ },
+ "rule_district_dark": {
+  "roc_auc": 0.546,
+  "pr_auc": 0.0248
+ }
+}
