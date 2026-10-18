@@ -105,8 +105,9 @@ a feed is treated as censored, not restored, so the grades mean something.
   (`evidence/03_training.txt`, `notebooks/train_on_linuxone.ipynb`).
 - **Big-endian safe:** XGBoost JSON and `.keras` only, never pickles, with predictions checked on s390x.
 - **Hardware crypto:** patient fields are AES-256-GCM through libcrypto on CPACF, tested against NIST vectors.
-- **Telum NNPA:** the zDNN plugin loads, and the trained Keras duration model is timed with NNPA on and off
-  (`evidence/nnpa_timing.csv`).
+- **Telum NNPA does real work:** Nate's trained Keras duration model (M2) scores every at-risk patient and outage on it
+  each minute, in shadow; the zDNN log shows the matmuls and softmax going to the NNPA. It's signed, refused if
+  tampered with, and graded beside the live Kaplan–Meier curve. NNPA on vs off is timed in `evidence/nnpa_timing.csv`.
 - **Security a regulator would expect:** least-privilege roles, hash-chained and signed audit, post-quantum TLS
   (`evidence/09_edge_pq_tls.txt`), and nothing under a count of 11 shown on a map.
 
@@ -225,8 +226,8 @@ footprints, with phone numbers from Ofcom's drama range; a table constraint refu
 - Live area risk is still the climatology baseline (labelled BASELINE); the weather model beats it but isn't wired in.
 - Northern Powergrid can't be graded and SSEN only partly, because grading needs explicit restore times.
 - Grid stress gives seconds of warning, and only on 1-second data; Elexon's live feed is 15 s and about 1.5 min late.
-- Granite takes about 80 s per text on the CPU, so the agent keeps its template for most ticks; NNPA is timed, not
-  used live.
+- Granite takes about 80 s per text on the CPU, so the agent keeps its template for most ticks. M2 runs on the
+  NNPA in shadow only: it's graded, but the live ranking is the Kaplan–Meier curve, which scored better on UKPN.
 - The public alert goes to a phone over ADB, standing in for a government channel; nothing is broadcast.
 - The evidence combiner (`backend/app/combiner.py`) fuses sensor quorum, the DNO feeds, IODA and grid stress into one
   outage probability per cell, scored on live footprints in `evidence/localiser.json`. Triage doesn't use it yet, and
