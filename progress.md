@@ -108,8 +108,8 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 10:52:**
-  - `main`: full backend live on the VM + home-sensor probe; 222 backend tests green on s390x, 96% coverage; frontend 145 tests. Live UI: https://148-100-78-95.sslip.io:8443 (proof.sh re-run 05:10). README for judges is live.
+- **As of 2026-10-18 11:15:**
+  - `main`: full backend live on the VM + home-sensor probe; 222 backend tests green on s390x, 96% coverage; frontend 152 tests. Live UI: https://148-100-78-95.sslip.io:8443 (proof.sh re-run 05:10). README for judges is live.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
 
@@ -984,5 +984,15 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Shipped: Nate's M8 (XGBoost Poisson on ENWL × Open-Meteo, +5.1% Brier skill over climatology on 2024-26) now answers `/api/areas/risk`, labelled LIVE. One forecast call per hour for the 7 district centres; if it fails or the date is outside the 3-day forecast, the climatology baseline answers as before (BASELINE). Live now: e.g. Cumbria 0.95, Stockport 0.15 for tomorrow. 267 backend tests green, new module 100% covered.
 - Touched: `backend/app/weatherrisk.py` (new), `backend/app/main.py`, `backend/app/config.py`, `backend/models/m8_weather_enwl_v1.json`, tests
 - ⚠️ Conflicts: @nate: your artifact is served as is; retrain = replace the JSON. @rama: area risk now has 7 districts (Cumbria merged) and the LIVE badge.
+- Conflict status: open
+
+### 2026-10-18 11:15 — landing glance window, labelled pins, fog grain — @sali — done
+- Shipped (from a harsh critic-agent pass on Sali's ideas; ledger `## Landing hero + map fog critique pass` in the research doc):
+  - **Glance window** between the navbar and the bolt: live count, Severe / Moderate, a still GB night picture with live glows, "Is there one near me?", "Call 105". A picture, not a second WebGL map: no swipe trapping, no extra GPU cost.
+  - **Map:** cuts labelled "● Severe" / "● Moderate" as clustered pins ("N cuts", tap to zoom in); beams off by default (chip kept); still grain inside the fog from zoom 12; outage dots shrink with zoom.
+  - The bolt's `touch-action` is `pan-y`, so a vertical swipe over it scrolls on phones. Navbar, labels and bolt otherwise unchanged.
+- Measured: phone LCP 2.2–2.5 s (4 runs, image preloaded; fading the window in had pushed it to 4.4 s, so it doesn't animate). Wheel-scroll over the window scrolls the page at 375 / 1024 / 1280 px. 152 frontend tests green; contrast ≥ 4.95:1.
+- Touched: `frontend/index.html`, `src/glance.ts` (new), `src/grain.ts` (new), `src/geo.ts`, `src/map.ts`, `src/main.ts`, `src/sweep.ts`, `src/landing.css`, `public/gb-night.webp` (new)
+- ⚠️ Conflicts: @rama: the landing page gains the glance section; map beams now start off. Note at the top of your brief.
 - Conflict status: open
 
