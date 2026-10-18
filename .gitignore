@@ -1,0 +1,7 @@
+# Ignore all Markdown files...
+*.md
+/.claude/skills/
+/.Claude/skills/
+
+# ...except Progress.md and anything under .claude
+!Progress.md
