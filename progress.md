@@ -109,7 +109,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 05:42:**
+- **As of 2026-10-18 06:05:**
   - `main`: full backend live on the VM + home-sensor probe; 208 tests green on s390x, 96% coverage (proof.sh re-run 05:10). README for judges is live.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
@@ -543,6 +543,17 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `ml/m2_serve.py`, `ml/tests/test_m2_serve.py`, `evidence/train_log_m2_serve.txt`, `README.md` (M2 results line)
 - ⚠️ Conflicts: @sali: M2 is ready to load but **still shouldn't replace KM live**. Nate is deciding what (if anything) changes in triage. If it's wired later, `ml/` isn't mounted in the app container (only `backend/`), so loading it needs a mount or a copy; to agree first.
 - Conflict status: open
+
+### 2026-10-18 06:05 — app wired to the signer — @sali
+- Shipped: `HttpSigner` sends the bearer token from `signer_token_app` on `/sign` and a purpose per call (`audit_checkpoint`, `cap_alert`), per `contracts/signer.md`. Tested on the VM against Ahmed's signer image with a throwaway key: sign OK, verify OK, tampered → false, wrong token → 401. Off until `BN_SIGNER_URL` is set. 208 tests green.
+- Touched: `backend/app/audit.py`, `backend/app/decisions.py`, `backend/app/runtime.py`, `backend/tests/test_audit.py`
+- ⚠️ Conflicts: @ahmed: to switch it on, your infra compose gives `app` `BN_SIGNER_URL=http://signer:8100`, the `signer_token_app` secret and the signer's network (details in your brief).
+- Conflict status: open
+
+### 2026-10-18 06:05 — triage passes M2's live features — @sali
+- Shipped: `Scorer` sends `{started_at, customers, feeder}` into `predict(features, elapsed_h)` as `contracts/model.md` settles. KM ignores them, so live output is unchanged.
+- Touched: `backend/app/triage.py`, `backend/app/survival.py`, `backend/tests/test_triage.py`
+- ⚠️ Conflicts: @nate: M2 still needs a loader the backend can call (`load(path)` → object with `predict`, `model_id`, `sha256`, `label`); proposal in your brief.
 
 ### 2026-10-18 06:05 — VM login + frontend pushed (brief tasks 1–2) — @rama
 - Shipped: VM login works with Rama's key (`ssh linux1@148.100.78.95 "uname -m"` → `s390x`). The frontend is on `Rama-Frontend` and merged to `main`; `git config blacknaught.builder rama` is set.
