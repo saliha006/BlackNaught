@@ -63,7 +63,69 @@
 
 ---
 
-## 3. ▶ Current tasks (2026-10-17 v3), in order
+## 3. ▶ Current tasks (2026-10-18 06:05), in order
+**How you build it is your call.** Layout, components, visual direction and how each view looks are your decisions: keep making them, and log the big ones in `progress.md` so Sali can mirror them. What this list fixes is **coverage**: every backend feature below needs a place in the UI before the recordings, because the video and the README promise them.
+
+**Keep this list honest:** when you finish a task, mark it ✅ here (your one self-edit), publish with `bash scripts/publish-context.sh "..."`, and add a `progress.md` entry with your name, date and time. **Push your work to `Rama-Frontend` as you go.** Right now the branch has no frontend code on it, so nobody, Sali included, can see what's already done. Run `git config blacknaught.builder rama` once (publish refuses without it).
+
+**Setup**
+1. ✅ Merge `main` into `Rama-Frontend` *(done 05:13)*. ✅ SSH key on the VM *(added by Sali 03:09)*. ⬜ Test the login: `ssh linux1@148.100.78.95 "uname -m"` should print `s390x`; post it in `progress.md`.
+2. ⬜ **Push what you have** to `Rama-Frontend` and log which of the views below already work.
+
+**Backend → frontend coverage** (each needs a home in the UI; build against `fixtures/api/*.json` if the VM is unreachable)
+
+| # | Feature | Endpoint(s) | Must show | Status |
+|---|---|---|---|---|
+| 3 | Map | `GET /api/outages`, `GET /api/cells?level=1` (or 2, 3) | Live outages by scale (home / street / area / region / system); fixed k≥11 cells only, never a home | ⬜ |
+| 4 | **Two-houses card** (demo centrepiece) | `GET /api/triage`; Sali seeds the pair on a fresh real fault with `python -m app.seed --two-houses <outage_id>` | Same fault, different answers: one escalates, one gets an SMS check. Readable in under 10 s | ⬜ |
+| 5 | Triage list + approvals | `GET /api/triage`; `POST /api/auth/login` (operator); `POST /api/decisions/{id}/approve` | Rank; expected case then range (`remaining_h` q50 / q75 / q90 and `q_used`); harm-hours; the `why` lines; escalate flag; approve button behind the operator login | ⬜ |
+| 6 | Live updates | SSE `GET /stream` (sample: `fixtures/stream_sample.txt`) | New outages and re-ranks appear without a reload, with a small ping | ⬜ |
+| 7 | **Predict strip** (top of the control room) | `GET /api/areas/risk`, `GET /api/grids/gb/stress`; home layer from Nate later | The three layers with honest lead times: area tomorrow (label BASELINE), grid now, homes at risk in 30 min ("no data" until Nate's model is served) | ⬜ |
+| 8 | Agent + grading panel | `GET /api/agent/decisions`, `GET /api/agent/grades` | Decision feed; "graded N real restorations"; Brier by operator and horizon (`by_horizon`) and the hourly `trend` | ⬜ |
+| 9 | Source health | `GET /api/sources/health` | A LIVE / stale badge per feed (UKPN, NPg, SSEN, Elexon, IODA) | ⬜ |
+| 10 | Audit view | `GET /api/audit/verify` | Verify: green with row count and last checkpoint. Tamper: red with `first_bad_seq` | ⬜ |
+| 11 | CAP alert + SMS preview | `GET /api/alerts/cap/{decision_id}` (sample: `fixtures/cap_alert_sample.xml`) | Phone mock-up of the alert "awaiting approval"; SMS template with actions and the reserve clock. Ahmed's real phone receiving it can be a video shot | ⬜ |
+| 12 | **"My home"** (household login) | `POST /api/auth/login` (household, from `households.txt`); `GET /api/me/home` | Power state, reserve clock, next action, grid line "the same for everyone", and the **option C `risk` block: one badge (low / elevated / high / unknown) with the three layer gauges underneath**, each with source, horizon and "updated"; a `null` value means "no data". Never an ETA. Shape: `contracts/openapi.yaml` → `MyHome.risk` | ⬜ |
+| 13 | Labels everywhere | the `label` field in responses | LIVE / SIMULATED / REPLAY / TRANSFERRED / BASELINE badges on every panel that shows data | ⬜ |
+
+**Finish**
+14. ⬜ `ui-audit` + `frontend-performance`; build statically and hand `dist/` to Ahmed's nginx (`:8443`).
+15. ⬜ **Recordings** at 1080p in a browser showing the VM IP: map, two-houses, triage + approve, Predict strip, my home, audit tamper, CAP preview.
+16. ⬜ **Video edit lead:** captions burned in, ≤3:00, everyone on screen. Ready by 09:15 (Sali submits at 09:30).
+17. ⬜ *(P2, cut first)* Globe intro, 30 min max.
+
+## 4. Done log (newest first)
+- (empty)
+
+## 5. Waiting on / owed to others
+- 📥 **Waiting on @sali:** fixtures + API (by about 23:30), SSE, `/me/home`, `/alerts/cap`.
+- 📥 **Waiting on @nate:** `docs/results.json`, the risk GeoJSON.
+- 📥 **Waiting on @ahmed:** the decision-log format; nginx serving `dist/`.
+- 📤 **Owed to ALL:** UI recordings by 07:00; the video edit by 09:15.
+
+## 6. Working-style notes for the agent
+- Clarity for judges over feature count. One idea per panel.
+- Verbosity Level 0.
+
+## 7. Reference
+- **MapLibre globe:** `map.setProjection({type:'globe'})`.
+- **CAP 1.2:** https://docs.oasis-open.org/emergency/cap/v1.2/CAP-v1.2.html
+- **Demo script:** PRD §17. **Privacy:** PRD §14.
+
+---
+── Archived (superseded 2026-10-17 — do NOT action) ──
+- **The v2 task list (17 items):**
+  - contract freeze, design direction, shell + map, gauge, skeleton by 18:00
+  - triage, two-houses card on SSEN, SSE, agent panel
+  - the "how different are these grids?" panel, audit view
+  - globe intro (1 h), SMS preview + field briefing page
+  - ui-audit, 23:00 freeze, recordings, video edit
+- **Why superseded:** PRD v3. The grid-difference panel is parked. Added: CAP preview, "my home", the risk overlay, and the agent tool-call feed. Freeze moves to 03:00.
+
+── Archived (superseded 2026-10-18 06:05 — do NOT action) ──
+- **Why superseded:** the task list is now organised by backend coverage, keeping Rama's own design choices; the old times (00:30 skeleton, 03:00 freeze) predate the team starting.
+
+#### Old list (2026-10-17 v3, with the 02:40 and 05:40 status notes)
 **Status update 2026-10-18 02:40 (from Sali)**
 **🔄 Headline changed 2026-10-18 (ADR):** "Blacknaught **predicts blackouts before they happen** and **protects the people they'd hurt most**."
 - **Prediction layers:**
@@ -114,30 +176,3 @@
 18. ⬜ **06:00–07:00:** screen-record the UI segments at 1080p in a browser showing the VM IP.
 19. ⬜ **Video edit lead, 07:00–09:15:** captions burned in, ≤3:00, everyone on screen.
 
-## 4. Done log (newest first)
-- (empty)
-
-## 5. Waiting on / owed to others
-- 📥 **Waiting on @sali:** fixtures + API (by about 23:30), SSE, `/me/home`, `/alerts/cap`.
-- 📥 **Waiting on @nate:** `docs/results.json`, the risk GeoJSON.
-- 📥 **Waiting on @ahmed:** the decision-log format; nginx serving `dist/`.
-- 📤 **Owed to ALL:** UI recordings by 07:00; the video edit by 09:15.
-
-## 6. Working-style notes for the agent
-- Clarity for judges over feature count. One idea per panel.
-- Verbosity Level 0.
-
-## 7. Reference
-- **MapLibre globe:** `map.setProjection({type:'globe'})`.
-- **CAP 1.2:** https://docs.oasis-open.org/emergency/cap/v1.2/CAP-v1.2.html
-- **Demo script:** PRD §17. **Privacy:** PRD §14.
-
----
-── Archived (superseded 2026-10-17 — do NOT action) ──
-- **The v2 task list (17 items):**
-  - contract freeze, design direction, shell + map, gauge, skeleton by 18:00
-  - triage, two-houses card on SSEN, SSE, agent panel
-  - the "how different are these grids?" panel, audit view
-  - globe intro (1 h), SMS preview + field briefing page
-  - ui-audit, 23:00 freeze, recordings, video edit
-- **Why superseded:** PRD v3. The grid-difference panel is parked. Added: CAP preview, "my home", the risk overlay, and the agent tool-call feed. Freeze moves to 03:00.

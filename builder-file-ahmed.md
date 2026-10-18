@@ -108,7 +108,15 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
 ---
 
 ## 4. ▶ Current tasks (2026-10-17 v3), in order
-**▶ New 2026-10-18 04:55 (from Sali)**
+**▶ New 2026-10-18 06:05 (from Sali)**
+- ⬜ **Public alert broadcast, mocked (your 05:15 + 05:31 decisions, approved by Sali).** An operator-approved CAP alert (`GET /api/alerts/cap/{id}` after `POST /api/decisions/{id}/approve`) is pushed to your Android phone over ADB from your laptop, behind a channel interface a government alerting service can replace later. Pitch line: "Blacknaught drafts standard CAP 1.2 alerts that a government alerting service can broadcast; in the demo a phone stands in for that channel." Never "we send alerts to the public". Log it in `progress.md` when done; Rama may film the phone.
+- ✅ **Compose layout OK'd by Sali (task 7):** go ahead with `infra/docker-compose.yml` `include:`-ing `backend/compose.backend.yml`. Update "Start here" + the README run commands when it lands.
+- ✅ **`sensor` table shipped** (migration `0010_sensor.sql`, applied on the VM). Named `sensor` (singular, like `patient` and `freq_reading`): `sensor_id` PK, `type` in home / anchor / control, `household_id` (required for home, null otherwise, enforced by a CHECK), `cell_l1`. `bn_ingest` reads + writes, `bn_agent` reads.
+- ✅ **Publish clobber fixed:** Sali merged Nate's version of the context scripts. Run once: `git config blacknaught.builder ahmed`.
+- 📌 **Signer:** when `contracts/signer.md` lands, ping Sali in `progress.md`; Sali adds the bearer token + `BN_SIGNER_URL` to the app.
+- ⚠ **Urgent:** fragments of the portal password and the Drive link were in the public `publish-context.sh` guard (now removed, but they're in git history). Change the portal password and turn off the Drive link now.
+
+**▶ 2026-10-18 04:55 (from Sali)**
 - ⬜ **Ask #helpdesk:** can our video show NNPA on vs off timing of *our own* model on the same VM (ToU §5 bans benchmarks)? Post the answer in `progress.md` so Sali and Rama know whether it goes in the video.
 - ✅ Labs 01 + 02 (task 5) marked done.
 
@@ -152,7 +160,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
    - Post a NNPA go/no-go in `progress.md`. `[⚠ @nate needs the image]`
 5. ✅ **Labs 01 + 02 run and screenshotted** (they're mandatory). Split with the team if needed.
 6. ✅ **Contract freeze:** *Done 2026-10-18 05:07 by Ahmed: events frozen as they are; a sensor's type and its home link go in a new `sensors` table, asked of Sali in `progress.md`.* Originally: (Sali drafted it; please ✅ in `progress.md` or add kinds) co-author `contracts/events.schema.json` with Sali. Events: heartbeat, last-gasp, DNO fault, frequency reading, SMS reply, IODA event, shedding stage. `[⚠ shared with ALL]`
-7. 🟡 **Compose skeleton** (the backend stack already runs; extend it, see the status update)
+7. 🟡 *(layout OK'd by Sali 06:05)* **Compose skeleton** (the backend stack already runs; extend it, see the status update)
    - `app` (FROM the IBM image + `pip install fastapi uvicorn pg8000 httpx`)
    - `postgres:17` on `127.0.0.1`
    - `edge` (nginx on trixie)

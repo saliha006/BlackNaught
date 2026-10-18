@@ -69,6 +69,12 @@
 ---
 
 ## 3. ▶ Current tasks (2026-10-17 v3), in order
+**▶ New 2026-10-18 06:05 (from Sali)**
+- ✅ **Elexon 0 Hz bug fixed** (your 05:07 find): readings outside 45–55 Hz are dropped in `parse_elexon`, with a test. On `main`.
+- ✅ **Your context-script fix is merged** (`5f4f727`), with one change: the credential guard now matches the *shape* of a secret instead of fragments of real ones. Run once: `git config blacknaught.builder nate`.
+- 📌 **M2 features:** noted, live fields only (start time, customers affected, voltage with "unknown"). Tell Sali in `progress.md` when M2 is ready and the final list is in `contracts/model.md`; Sali wires `features` into `predict(features, elapsed_h)` in `triage.py`.
+- 📌 **The home-sensor model feeds the "home" layer** of the new `risk` block in `/api/me/home` (option C). Until it's served, that layer reads "no data" and the headline level stays "unknown".
+
 **Status update 2026-10-18 02:40 (from Sali)**
 **🔄 Headline changed 2026-10-18 (ADR):** "Blacknaught **predicts blackouts before they happen** and **protects the people they'd hurt most**."
 - **Prediction layers:**

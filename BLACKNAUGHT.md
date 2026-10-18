@@ -10,7 +10,7 @@
 
 ---
 
-## NOW (updated 2026-10-18 05:40)
+## NOW (updated 2026-10-18 06:05)
 
 ### Headline
 **Blacknaught predicts blackouts before they happen and protects the people they'd hurt most.**
@@ -29,7 +29,8 @@ Full records with the rejected options: Sali's vault Log (Sali); the summary is 
 
 | Date | Decision |
 |---|---|
-| 18 Oct | **Home dashboard = option C:** one headline risk level (Low / Elevated / High) from simple worst-signal rules, with the three layer gauges (home 30 min, area tomorrow, grid now) underneath, each with source + horizon. No blended probability. A layer with no data shows "no data", never Low. Exact rules pending (Sali) |
+| 18 Oct | **Home dashboard = option C:** one headline risk level (Low / Elevated / High) from simple worst-signal rules, with the three layer gauges (home 30 min, area tomorrow, grid now) underneath, each with source + horizon. No blended probability. Rules (Sali, 06:00): **High** = home flagged OR grid EMERGENCY; **Elevated** = area in the top third OR grid STRESSED; **Low** only when all three layers report and none flags; otherwise **unknown**. Live in `/api/me/home` → `risk` |
+| 18 Oct | **Sali, 06:00:** `sensor` table as Ahmed asked (0010); Ahmed's `infra/docker-compose.yml` layout OK'd; Elexon readings outside 45–55 Hz dropped; Ahmed's mocked public alert (CAP → his phone over ADB) approved; Nate's context-script fix adopted (teammates publish only their own brief; `git config blacknaught.builder <name>`) |
 | 18 Oct | **Headline = predict + protect** (the line above). Reverses 17 Oct "triage only"; triage stays as the co-headline |
 | 18 Oct | **Shared docs live on the public repo's `context` branch** and auto-sync to every agent each prompt (`scripts/sync-context.sh`). Only Sali publishes. **Delete the branch before submission.** Reverses 17 Oct "docs never on GitHub" |
 | 18 Oct | **Docs merged:** `BLACKNAUGHT.md` + `DATATHON-CONTEXT.md`; off-vision material archived locally |
@@ -46,9 +47,6 @@ Full records with the rejected options: Sali's vault Log (Sali); the summary is 
 ### Pending decisions
 - **New freeze time.** Briefs still say 03:00; the team started later. Deferred: Sali decides later.
 - **M2 live-feature list** (Nate + Sali; `contracts/model.md`). Waiting on Nate.
-- **Option C rules + thresholds** (Sali): draft = High if home flagged OR grid EMERGENCY; Elevated if area in high band OR grid ALERT; else Low.
-- **Ahmed's asks:** a `sensors` table migration; OK for the `infra/docker-compose.yml` layout.
-- **Elexon 0 Hz readings** (Nate found): drop out-of-range frequency before the stress rule.
 - **NNPA on/off timing in the video:** Ahmed is asking #helpdesk (ToU §5 bans benchmarks).
 - **Off-box audit-checkpoint publishing** (Ahmed).
 - **Vercel mirror of the UI:** optional; the demo stays on the VM IP.
@@ -56,10 +54,10 @@ Full records with the rejected options: Sali's vault Log (Sali); the summary is 
 ### Active tasks (executing now; details in each brief)
 | Who | Now |
 |---|---|
-| **Sali** | Brief tasks 1–20 **done and live**. README for judges ✅, evidence re-run ✅. Next: option C `risk` block in `/api/me/home`; answer Ahmed's two asks; Elexon 0 Hz fix; video segment; submit 09:30 |
-| **Ahmed** | Edge (nginx, PQ TLS, public `:8443`); signer (`/sign`, `/verify`); agent loop via `decisions.create()`; sensor sim + Accra replay; NNPA serving; ask #helpdesk about NNPA timing; Drive link + portal password. Labs 01+02 ✅ |
+| **Sali** | Backend live; README ✅; option C `risk` block ✅; `sensor` table ✅; Elexon fix ✅. Waiting: signer contract (Ahmed), M2 (Nate). Then re-seed, video segment, submit 09:30 |
+| **Ahmed** | Edge (nginx, PQ TLS, public `:8443`); signer (`/sign`, `/verify`); agent loop via `decisions.create()`; sensor sim + Accra replay; NNPA serving; **mocked public alert to his phone**; ask #helpdesk about NNPA timing; Drive link + portal password (**urgent: fragments were in a public script, now removed**). Labs 01+02 ✅ |
 | **Nate** | M2 (replaces KM behind `contracts/model.md`); home-sensor early-warning model (from `backend/app/probe_precursor.py`); M8 weather risk; M4 NESO stress |
-| **Rama** | Control-room UI on the live `/api/*` + `/stream`: a "Predict" strip on top, then "Protect" views (triage, two-houses, approvals, CAP preview, my home); recordings; video edit |
+| **Rama** | Brief reorganised 06:05 by backend coverage (13 features), his design choices kept; **push work to `Rama-Frontend`**. Control-room UI on the live `/api/*` + `/stream`: a "Predict" strip on top, then "Protect" views (triage, two-houses, approvals, CAP preview, my home); recordings; video edit |
 
 ### Blockers only humans can clear
 - ~~Team name; team leader~~ ✅ **The 4 Musketeers**; **Sali is team leader** and submits. Title: `[The 4 Musketeers_IBM Z Datathon 2026 Project]`.
