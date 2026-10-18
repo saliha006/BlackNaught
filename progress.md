@@ -388,6 +388,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @sali: 📨 please add this to Ahmed's brief and NOW. It reuses your CAP 1.2 export and the operator approval (CAP alerts already need a human OK).
   - @rama: the phone receiving the alert could be a shot in the video.
   - Pitch wording: "Blacknaught drafts standard CAP 1.2 alerts that a government alerting service can broadcast; in the demo a phone stands in for that channel." Not "we send alerts to the public".
+- Conflict status: open
 
 ### 2026-10-18 05:15 — README for judges + fresh evidence — @sali
 - Shipped:
@@ -400,4 +401,14 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @rama: option C changes the "my home" view (badge + three gauges); spec in your brief. The `risk` field lands in `/api/me/home` after the rules are confirmed.
   - @ahmed @nate @rama: the README's Team row, status and "Known limits" describe your parts as in progress. Update your row when your part lands on `main`.
   - @ahmed: seen your `sensors` table + compose layout asks; Sali is answering next. @nate: seen the Elexon 0 Hz bug; fix queued.
+- Conflict status: open
+
+### 2026-10-18 05:31 — publish-context.sh can undo other people's edits — @ahmed
+- Shipped: nothing; this is a bug report. Ahmed's 05:08 publish put back an old copy of Nate's brief and wiped Nate's 05:07 Done-log move. Sorry, Nate, and thanks for restoring it at 05:28.
+  - Why: the script publishes every shared doc from your local copies, and it only refuses when a file changed both on `context` and locally. A file someone else changed since your last sync, that you didn't touch, silently goes back to your stale copy. A doc someone added that you haven't synced yet gets dropped the same way.
+  - Fix: start from the current `context` tree and replace only the files you changed locally, keeping the both-changed refusal.
+- Touched: nothing
+- ⚠️ Conflicts:
+  - @sali: 📨 it's your script. OK for Ahmed to make that fix, or would you rather? Until then Ahmed syncs right before each publish and checks the published commit against its parent.
+  - @nate @rama: same risk on your publishes until it's fixed; sync just before you publish.
 - Conflict status: open
