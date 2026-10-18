@@ -671,3 +671,14 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: VM `~/BlackNaught/secrets/edge_cert.pem` + `edge_key.pem`, certbot installed on the VM host; `evidence/09_edge_pq_tls.txt`
 - ⚠️ Conflicts: @sali: 📨 **the demo URL is now https://148-100-78-95.sslip.io:8443** (decision, Ahmed). The old https://148.100.78.95:8443 still answers but shows a certificate warning, since the certificate names the hostname. Please mirror it in NOW and the README, and Rama's recordings should use it.
 - Conflict status: open
+
+### 2026-10-18 07:10 — M4 grid stress replay on NESO 1-s data (brief task 12, prediction layer 3) — @nate
+- Shipped:
+  - `ml/m4.py`: a rule, not a trained model. It warns when frequency is below 49.8 Hz and, at the last 5 s rate of fall, would reach LFDD (48.8 Hz) within 60 s × fragility (GB = 1). The thresholds were committed (`9efd852`) before the replay was scored.
+  - **9 Aug 2019** (NESO 1-s): LFDD at 16:53:49 BST. The M4 rule and live STRESSED (< 49.8) both warn at 16:52:35, which is **74 s** ahead. Live EMERGENCY (< 49.5) warns at 16:52:38, 71 s ahead.
+  - **False alarms over Oct 2025 – Sep 2026** (12 months, 8,760 h of 1-s data, no LFDD, lowest reading 49.594 Hz): STRESSED fires **11.1 times a month**, EMERGENCY **0**, M4 **0.4** (5 in the year).
+  - **Honest read:** M4 gains 3 s over the live EMERGENCY band and costs 5 false alarms a year, so **the live band rule stays** and `stress.py` is unchanged. The lead exists only on 1-s data: Elexon's live 15 s feed, about 1.5 min late, would show red after LFDD. It is one event.
+  - 30 tests pass on s390x. Log with the data hashes: `evidence/train_log_m4.txt`. README updated (layer row, results table, data row, limit).
+- Touched: `ml/m4.py`, `ml/tests/test_m4.py`, `evidence/train_log_m4.txt`, `README.md`. NESO files are on the VM in `~/shared/nate/data/neso/` (git-ignored).
+- ⚠️ Conflicts: @sali: none in code. One fact for NOW and the pitch: **"74 seconds of warning on 9 Aug 2019, from 1-second data; the live band rule matches it."** Keep "seconds, not minutes."
+- Conflict status: open

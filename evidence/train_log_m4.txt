@@ -1,0 +1,79 @@
+=== M4 grid stress replay on LinuxONE (2026-10-18T06:07:55Z), commit 9efd852 ===
+s390x
+8a519e06951d52438f5a5d178e3ca40ddb1c40d2c6b235835efa6e667d7be6b1  f 2019 8.csv
+{
+ "rule": {
+  "normal_low": 49.8,
+  "statutory_low": 49.5,
+  "lfdd_hz": 48.8,
+  "rocof_window_s": 5,
+  "horizon_s": 60,
+  "fragility": 1.0,
+  "episode_gap_s": 60
+ },
+ "replay": {
+  "file": "f 2019 8.csv",
+  "lfdd_at": "2019-08-09T15:53:49+00:00",
+  "min_hz": 48.787,
+  "band_stressed": {
+   "first_alert": "2019-08-09T15:52:35+00:00",
+   "lead_s": 74
+  },
+  "band_emergency": {
+   "first_alert": "2019-08-09T15:52:38+00:00",
+   "lead_s": 71
+  },
+  "m4_warning": {
+   "first_alert": "2019-08-09T15:52:35+00:00",
+   "lead_s": 74
+  }
+ },
+ "normal": {
+  "files": [
+   "fnew-2025-10.csv",
+   "fnew-2025-11.csv",
+   "fnew-2025-12.csv",
+   "fnew-2026-1.csv",
+   "fnew-2026-2.csv",
+   "fnew-2026-3.csv",
+   "fnew-2026-4.csv",
+   "fnew-2026-5.csv",
+   "fnew-2026-6.csv",
+   "fnew-2026-7.csv",
+   "fnew-2026-8.csv",
+   "fnew-2026-9.csv"
+  ],
+  "months": 12,
+  "valid_hours": 8760.0,
+  "seconds_at_or_below_lfdd": 0,
+  "min_hz": 49.594,
+  "band_stressed": {
+   "episodes": 133,
+   "per_month": 11.08,
+   "share_of_time": 0.000362
+  },
+  "band_emergency": {
+   "episodes": 0,
+   "per_month": 0.0,
+   "share_of_time": 0.0
+  },
+  "m4_warning": {
+   "episodes": 5,
+   "per_month": 0.42,
+   "share_of_time": 0.0
+  }
+ }
+}
+8a519e06951d52438f5a5d178e3ca40ddb1c40d2c6b235835efa6e667d7be6b1  f 2019 8.csv
+e1e25dbd8d381495df04783d2755960ee5d661a0978cbb1404c6744f9a23eaef  fnew-2025-10.csv
+d7f9311bf46549143d5c7ee4c7cee681cbaa639e245a02a20226ad8abb01ec5b  fnew-2025-11.csv
+9ed085bd3627dd1dfa4c308b25883becd9e5551ae0210aceb6641f89f2ca3d4d  fnew-2025-12.csv
+91c50b26014087f1c37d8449a467a501e10987ba5c8fd15cf969977ab834dfec  fnew-2026-1.csv
+3afe6fb8e3526377dfb8f813958ff2517b159c2974dcd82eb53b85b3b3e9ea58  fnew-2026-2.csv
+e7592d058f2df0531987298b8c43ebba641615a36b798c76de38b370e9536df7  fnew-2026-3.csv
+799bd9f78f85d953e6fbf48030742b7a6a558a1451a1241c3657a96d26d3c3ce  fnew-2026-4.csv
+c3677df5b38f9681651d38cbce0b82f4fc1a2a3810a8f13bf1bb11e0de59e315  fnew-2026-5.csv
+400105c258a73532cd212c9d55d95df16434a28ce01379168be7bd49554326c9  fnew-2026-6.csv
+1ca3e9e995c32928b475a2914a2dea1b1ddc738d39942f579931d38aec3b3964  fnew-2026-7.csv
+510b37fd12bf932d4771b83bec63fbdb8e0e2bdca79408d54532909b6f517c8a  fnew-2026-8.csv
+7a897109ffd90740f074be46840cbc642729996f266afd8d0b20352740f9ebde  fnew-2026-9.csv
