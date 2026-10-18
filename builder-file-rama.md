@@ -69,24 +69,24 @@
 **Keep this list honest:** when you finish a task, mark it ✅ here (your one self-edit), publish with `bash scripts/publish-context.sh "..."`, and add a `progress.md` entry with your name, date and time. **Push your work to `Rama-Frontend` as you go.** Right now the branch has no frontend code on it, so nobody, Sali included, can see what's already done. Run `git config blacknaught.builder rama` once (publish refuses without it).
 
 **Setup**
-1. ✅ Merge `main` into `Rama-Frontend` *(done 05:13)*. ✅ SSH key on the VM *(added by Sali 03:09)*. ⬜ Test the login: `ssh linux1@148.100.78.95 "uname -m"` should print `s390x`; post it in `progress.md`.
-2. ⬜ **Push what you have** to `Rama-Frontend` and log which of the views below already work.
+1. ✅ Merge `main` into `Rama-Frontend` *(done 05:13)*. ✅ SSH key on the VM *(added by Sali 03:09)*. ✅ Test the login: `ssh linux1@148.100.78.95 "uname -m"` should print `s390x`; post it in `progress.md`. *(done 06:05: s390x)*
+2. ✅ **Push what you have** to `Rama-Frontend` and log which of the views below already work. *(done 06:05; also merged to `main`)*
 
 **Backend → frontend coverage** (each needs a home in the UI; build against `fixtures/api/*.json` if the VM is unreachable)
 
 | # | Feature | Endpoint(s) | Must show | Status |
 |---|---|---|---|---|
-| 3 | Map | `GET /api/outages`, `GET /api/cells?level=1` (or 2, 3) | Live outages by scale (home / street / area / region / system); fixed k≥11 cells only, never a home | ⬜ |
+| 3 | Map | `GET /api/outages`, `GET /api/cells?level=1` (or 2, 3) | Live outages by scale (home / street / area / region / system); fixed k≥11 cells only, never a home | ✅ 06:05 |
 | 4 | **Two-houses card** (demo centrepiece) | `GET /api/triage`; Sali seeds the pair on a fresh real fault with `python -m app.seed --two-houses <outage_id>` | Same fault, different answers: one escalates, one gets an SMS check. Readable in under 10 s | ⬜ |
 | 5 | Triage list + approvals | `GET /api/triage`; `POST /api/auth/login` (operator); `POST /api/decisions/{id}/approve` | Rank; expected case then range (`remaining_h` q50 / q75 / q90 and `q_used`); harm-hours; the `why` lines; escalate flag; approve button behind the operator login | ⬜ |
-| 6 | Live updates | SSE `GET /stream` (sample: `fixtures/stream_sample.txt`) | New outages and re-ranks appear without a reload, with a small ping | ⬜ |
-| 7 | **Predict strip** (top of the control room) | `GET /api/areas/risk`, `GET /api/grids/gb/stress`; home layer from Nate later | The three layers with honest lead times: area tomorrow (label BASELINE), grid now, homes at risk in 30 min ("no data" until Nate's model is served) | ⬜ |
-| 8 | Agent + grading panel | `GET /api/agent/decisions`, `GET /api/agent/grades` | Decision feed; "graded N real restorations"; Brier by operator and horizon (`by_horizon`) and the hourly `trend` | ⬜ |
-| 9 | Source health | `GET /api/sources/health` | A LIVE / stale badge per feed (UKPN, NPg, SSEN, Elexon, IODA) | ⬜ |
+| 6 | Live updates | SSE `GET /stream` (sample: `fixtures/stream_sample.txt`) | New outages and re-ranks appear without a reload, with a small ping | 🟡 06:05: refetch on `/stream` + events/s; ping not yet |
+| 7 | **Predict strip** (top of the control room) | `GET /api/areas/risk`, `GET /api/grids/gb/stress`; home layer from Nate later | The three layers with honest lead times: area tomorrow (label BASELINE), grid now, homes at risk in 30 min ("no data" until Nate's model is served) | ✅ 06:05 |
+| 8 | Agent + grading panel | `GET /api/agent/decisions`, `GET /api/agent/grades` | Decision feed; "graded N real restorations"; Brier by operator and horizon (`by_horizon`) and the hourly `trend` | 🟡 06:05: grading done (count, trend, by operator + horizon); decision feed not yet |
+| 9 | Source health | `GET /api/sources/health` | A LIVE / stale badge per feed (UKPN, NPg, SSEN, Elexon, IODA) | ✅ 06:05 |
 | 10 | Audit view | `GET /api/audit/verify` | Verify: green with row count and last checkpoint. Tamper: red with `first_bad_seq` | ⬜ |
 | 11 | CAP alert + SMS preview | `GET /api/alerts/cap/{decision_id}` (sample: `fixtures/cap_alert_sample.xml`) | Phone mock-up of the alert "awaiting approval"; SMS template with actions and the reserve clock. Ahmed's real phone receiving it can be a video shot | ⬜ |
 | 12 | **"My home"** (household login) | `POST /api/auth/login` (household, from `households.txt`); `GET /api/me/home` | Power state, reserve clock, next action, grid line "the same for everyone", and the **option C `risk` block: one badge (low / elevated / high / unknown) with the three layer gauges underneath**, each with source, horizon and "updated"; a `null` value means "no data". Never an ETA. Shape: `contracts/openapi.yaml` → `MyHome.risk` | ⬜ |
-| 13 | Labels everywhere | the `label` field in responses | LIVE / SIMULATED / REPLAY / TRANSFERRED / BASELINE badges on every panel that shows data | ⬜ |
+| 13 | Labels everywhere | the `label` field in responses | LIVE / SIMULATED / REPLAY / TRANSFERRED / BASELINE badges on every panel that shows data | 🟡 06:05: on outage list, Predict strip and charts; more as panels land |
 
 **Finish**
 14. ⬜ `ui-audit` + `frontend-performance`; build statically and hand `dist/` to Ahmed's nginx (`:8443`).
