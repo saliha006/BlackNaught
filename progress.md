@@ -84,6 +84,8 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   4. `git merge origin/main` into your branch and re-test, fixing conflicts there (agree with the owner if it's their code).
   5. Merge to `main`.
   6. Add an entry below. Flag anyone whose files or contracts you touched with `⚠️ Conflicts: @name`.
+- **Log every completed task here,** not just merges: who (@name), date + time, what. Push it to `main` straight away.
+- **Shared docs** (CLAUDE.md, `BLACKNAUGHT.md`, `DATATHON-CONTEXT.md`, briefs, research ledger) are **never** committed to `main`. Every edit is published to the `context` branch with `bash scripts/publish-context.sh "what changed"`, and everyone's agent pulls it on its next prompt.
 - **Docs** (PRD, briefs, design notes) are git-ignored and shared on Discord/Drive. Only this file and `README.md` live on GitHub.
 
 **LinuxONE VM** (`ssh linux1@148.100.78.95`, with your own SSH key):
@@ -297,4 +299,13 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - **CLAUDE.md** now makes every agent sync at the start of every prompt.
 - Touched: `scripts/sync-context.sh`, `scripts/publish-context.sh`, `progress.md`; new branch `context`
 - ⚠️ Conflicts: @ahmed @nate @rama: run `bash scripts/sync-context.sh` once in your clone (after `git pull` on `main`). Your briefs now point at `BLACKNAUGHT.md`; old `BLACKNAUGHT-PRD.md` / `system-design-choices.md` copies on your machine are stale, so delete them.
+- Conflict status: open
+
+### 2026-10-18 04:28 — rule: publish every doc edit + log every task — @sali
+- Shipped:
+  - **CLAUDE.md now requires:** any edit to a shared doc is published to `context` in the same turn (so every agent gets it next prompt); shared docs never go to `main`.
+  - **Every completed task** gets a `progress.md` entry with name, date and time, pushed to `main` straight away.
+  - Published to `context`.
+- Touched: `progress.md` ("How we work"); `CLAUDE.md` on `context`
+- ⚠️ Conflicts: @ahmed @nate @rama: your agents follow this from their next sync. Log your finished tasks here.
 - Conflict status: open
