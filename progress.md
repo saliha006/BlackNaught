@@ -108,10 +108,10 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 04:02:**
+- **As of 2026-10-18 04:42:**
   - `main`: full backend live on the VM + home-sensor probe; 198 tests green on s390x, 98% coverage.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
-  - All other docs stay local and are never pushed: the PRD, briefs, decisions and research.
+  - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
 
 ---
 
@@ -308,4 +308,13 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - Published to `context`.
 - Touched: `progress.md` ("How we work"); `CLAUDE.md` on `context`
 - ⚠️ Conflicts: @ahmed @nate @rama: your agents follow this from their next sync. Log your finished tasks here.
+- Conflict status: open
+
+### 2026-10-18 04:42 — briefs brought in line with the new rules — @sali
+- Shipped:
+  - **All four briefs** now say: sync `context` first on every prompt; log **every** finished task here (name, date, time) and push to `main` straight away; publish doc edits with `scripts/publish-context.sh`, never to `main`.
+  - **Sali's brief:** new prioritised ▶ Current tasks block (unblock team → submission blockers → risk-level feature → freeze + evidence → pitch + submit). Build tasks 1–20 kept below as done.
+  - Published to `context` (deb0d7a).
+- Touched: `builder-file-{sali,ahmed,nate,rama}.md` on `context`; `progress.md` (Latest)
+- ⚠️ Conflicts: @ahmed @nate @rama: your brief changed; your agent picks it up on its next sync. No task of yours changed.
 - Conflict status: open
