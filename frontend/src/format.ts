@@ -10,3 +10,8 @@ export const formatAgo = (seconds: number) =>
   seconds < 120 ? `${seconds} s ago` : `${Math.round(seconds / 60)} min ago`;
 
 export const formatCount = (n: number | null) => (n === null ? '–' : n.toLocaleString('en-GB'));
+
+const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+/** For API strings that land inside an HTML template: the feeds are outside our control, so nothing in them may become markup. */
+export const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);

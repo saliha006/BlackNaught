@@ -62,6 +62,13 @@ describe('renderOutageList', () => {
     expect(list.textContent).toBe('No power cuts match these filters.');
   });
 
+  it('renders a hostile source name as text, not markup', () => {
+    const list = document.createElement('ul');
+    renderOutageList(list, [{ ...fixture[0], source: '<img src=x onerror=alert(1)>' }], vi.fn());
+    expect(list.querySelector('img')).toBeNull();
+    expect(list.querySelector('.outage__source')!.textContent).toBe('<img src=x onerror=alert(1)>');
+  });
+
   it('ignores clicks outside a row', () => {
     const { list, onPick } = setup();
     list.click();

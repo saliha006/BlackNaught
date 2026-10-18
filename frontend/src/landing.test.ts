@@ -40,6 +40,13 @@ describe('triageRow', () => {
   });
 });
 
+it('keeps unknown device and source names as text', () => {
+  const [a] = triage.items as TriageItem[];
+  expect(triageRow({ ...a, device: '<b>x</b>' })).toContain('&lt;b&gt;x&lt;/b&gt;');
+  const [ukpn] = health.sources as SourceHealth[];
+  expect(sourceRow({ ...ukpn, source: '<i>y</i>' })).toContain('&lt;i&gt;y&lt;/i&gt;');
+});
+
 describe('sourceRow', () => {
   const [ukpn, , npg] = health.sources as SourceHealth[];
 

@@ -2,7 +2,7 @@ import km from '../../backend/models/km_enwl.json';
 import { getSourcesHealth, getTriage } from './api';
 import { mountAsciiBolt } from './asciiBolt';
 import { deviceName } from './devices';
-import { formatAgo, formatElapsed } from './format';
+import { escapeHtml, formatAgo, formatElapsed } from './format';
 import type { SourceHealth, TriageItem } from './types';
 
 const SOURCE_NAMES: Record<string, string> = {
@@ -32,8 +32,8 @@ export function triageRow(item: TriageItem): string {
     <li class="l-triage__row">
       <span class="l-triage__rank num">${item.rank}</span>
       <span class="l-triage__who">
-        <b>${deviceName(item.device)}</b>
-        <span><b class="num">${formatElapsed(item.reserve_left_h)}</b> reserve · may stay off <b class="num">${formatElapsed(item.remaining_h[item.q_used])}</b> (${item.q_used})</span>
+        <b>${escapeHtml(deviceName(item.device))}</b>
+        <span><b class="num">${formatElapsed(item.reserve_left_h)}</b> reserve · may stay off <b class="num">${formatElapsed(item.remaining_h[item.q_used])}</b> (${escapeHtml(item.q_used)})</span>
       </span>
       ${action}
     </li>`;
@@ -43,10 +43,10 @@ export function sourceRow(s: SourceHealth): string {
   const age = s.staleness_s === null ? '–' : formatAgo(s.staleness_s);
   return `
     <tr>
-      <th scope="row">${SOURCE_NAMES[s.source] ?? s.source}</th>
+      <th scope="row">${escapeHtml(SOURCE_NAMES[s.source] ?? s.source)}</th>
       <td><span class="l-chip num">every ${s.interval_s} s</span></td>
       <td class="num">${age}</td>
-      <td><span class="l-status" data-status="${s.status}">${s.status}</span></td>
+      <td><span class="l-status" data-status="${escapeHtml(s.status)}">${escapeHtml(s.status)}</span></td>
     </tr>`;
 }
 

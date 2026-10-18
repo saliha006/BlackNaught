@@ -1,4 +1,4 @@
-import { formatCount, formatElapsed } from './format';
+import { escapeHtml, formatCount, formatElapsed } from './format';
 import { isLocated } from './geo';
 import type { Outage } from './types';
 
@@ -23,10 +23,10 @@ function row(o: Outage): HTMLLIElement {
   li.innerHTML = `
     <button class="outage" type="button" data-id="${o.id}"${placed ? '' : ' disabled'}>
       <span class="outage__top">
-        <span class="outage__scale">${o.scale}</span>
-        <span class="badge" data-label="${o.label}">${o.label}</span>
+        <span class="outage__scale">${escapeHtml(o.scale)}</span>
+        <span class="badge" data-label="${escapeHtml(o.label)}">${escapeHtml(o.label)}</span>
       </span>
-      <span class="outage__source">${SOURCE_NAMES[o.source] ?? o.source}</span>
+      <span class="outage__source">${escapeHtml(SOURCE_NAMES[o.source] ?? o.source)}</span>
       <span class="outage__stats">
         <span><b class="num">${formatCount(o.customers)}</b> customers</span>
         <span><b class="num">${formatCount(o.priority_customers)}</b> priority</span>
