@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Ignore all Markdown files...
 *.md
 /.claude/skills/
@@ -6,7 +5,6 @@
 
 # ...except Progress.md and anything under .claude
 !Progress.md
-=======
 # Docs stay local. Only progress.md (conflict board) and README.md (submission) go to GitHub.
 *.md
 !progress.md
@@ -16,7 +14,7 @@
 
 # Research bundle, raw data, models
 DATATHON INFO/
-data/
+/data/
 *.csv
 *.zip
 *.gguf
@@ -54,4 +52,6 @@ htmlcov/
 
 # docs bundles for teammates (sent on Discord/Drive, never committed)
 share/
->>>>>>> origin/main
+
+# superseded docs, kept locally for reference (never shared or committed)
+_archive/

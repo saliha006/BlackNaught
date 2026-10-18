@@ -12,6 +12,15 @@
 - Conflict status: open | resolved by @<Name> <date>
 ```
 
+## Headline (changed 2026-10-18)
+**Blacknaught predicts blackouts before they happen and protects the people they'd hurt most.**
+- **Predict**, with honest lead times:
+  1. district fault risk for tomorrow (hours to days);
+  2. homes most likely to lose power in the next 30 min, from fuse-box/meter sensors (minutes; real Accra data: 1 in 5 top alerts come true, 9× chance);
+  3. grid-wide stress (seconds).
+- **Protect:** triage + alerts for electricity-dependent people.
+- **Never pitch:** "predicts every blackout", "minutes ahead from frequency" or "voltage dips warn of blackouts".
+
 ## Start here (teammates, first 15 minutes)
 1. **GitHub:** accept the collaborator invite for `saliha006/BlackNaught` (check your email or github.com/notifications). Then:
    ```bash
@@ -19,12 +28,17 @@
    git config user.email "<the email on YOUR GitHub account>"   # judges read who committed
    git config core.hooksPath scripts/git-hooks                   # blocks AI co-author trailers on commits
    ```
-2. **Docs bundle** (from Sali on Discord/Drive; never on GitHub): unzip into your clone's root. You get:
-   - `CLAUDE.md` (our working rules, which your Claude Code reads automatically);
-   - your `builder-file-<name>.md` (your task list);
-   - `BLACKNAUGHT-PRD.md`, `system-design-choices.md`;
-   - `.claude/skills/` (`no-slop`, `debug`, the frontend skills);
-   - `DATATHON INFO/` (research ledger + IBM handoff).
+2. **Shared docs, kept in sync automatically:** from your clone's root run `bash scripts/sync-context.sh`.
+   - It unpacks the team docs from the `context` branch (never committed to `main`):
+     - `CLAUDE.md`;
+     - `BLACKNAUGHT.md` (NOW, spec, backend design, Parked);
+     - `DATATHON-CONTEXT.md`;
+     - your `builder-file-<name>.md`;
+     - `.claude/skills/`;
+     - the research ledger + IBM handoff.
+   - From then on, **your Claude re-syncs at the start of every prompt** (a CLAUDE.md rule) and tells you what changed.
+   - Only Sali publishes doc changes, except your own finished-task move: `bash scripts/publish-context.sh "what changed"`.
+   - ⚠ The repo is public; `context` is deleted before submission.
 3. **VM access:** run `ssh-keygen -t ed25519` if you have no key, and send **only** `~/.ssh/id_ed25519.pub` to Sali. Then connect with `ssh linux1@148.100.78.95`.
 4. **Things that live only on the VM** (read them there; never paste them in chat or commit them):
 
@@ -54,7 +68,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 |---|---|---|---|---|
 | **Sali** `saliha006` | Backend; repo + docs owner | `sali-backend` | `/backend`, `/db`, `contracts/openapi.yaml`. Ingest, triage, grading, audit chain, operator login + approvals, SSE `/stream`, k≥11 map, area-risk baseline, CAP export, `/me/home`, IODA. **Status: brief tasks 1–20 done and live on the VM** | Everything is served under `/api/*` (docs at `/api/docs`) |
 | **Ahmed** `meep-boop` | Platform + agent; **VM owner** | `ahmed-platform` | `/infra` (team compose, nginx edge with PQ TLS, LUKS), `/agent` (agent loop, evidence combiner), signer (ML-DSA), sensor simulator, Granite, NNPA serving, VM keys + portal restarts | Agent creates decisions with `app.decisions.create()`; signer contract `POST /sign`, `POST /verify` (set `BN_SIGNER_URL`); simulator publishes events per `contracts/events.schema.json` |
-| **Nate** `aldrichbanas07` | Data + ML | `nate-ml` | `/ml`, `grids/*.yaml`, `contracts/model.md`. M2 duration model, M8 weather fault risk, LR table, household distributions, evaluation numbers | M2 replaces `KmModel` behind `predict(elapsed_h) → {quantiles, surv[24]}`; M8 replaces `arearisk.area_risk()`; data in `~/data/raw/` on the VM |
+| **Nate** `aldrichbanas07` | Data + ML | `nate-ml` | `/ml`, `grids/*.yaml`, `contracts/model.md`. M2 duration model, **M8 weather fault risk (prediction layer 1)**, **home-sensor early-warning model (layer 2; start from `backend/app/probe_precursor.py`)**, M4 grid stress (layer 3), LR table, evaluation numbers | M2 replaces `KmModel` behind `predict(elapsed_h) → {quantiles, surv[24]}`; M8 replaces `arearisk.area_risk()`; data in `~/data/raw/` on the VM |
 | **Rama** `rama0623` | Frontend; video edit lead | `Rama-Frontend` | `/frontend` (Vite + TS + MapLibre): map, triage list, two-houses card, agent panel, audit view, CAP/SMS previews, "my home"; screen recordings + video edit | Builds against the live `/api/*` + `/stream` (mocks in `fixtures/api/`); `dist/` is served by Ahmed's nginx |
 
 **Shared** (anyone may edit; flag it): `contracts/*`, `fixtures/*`, `docker-compose.yml`.
@@ -70,6 +84,8 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   4. `git merge origin/main` into your branch and re-test, fixing conflicts there (agree with the owner if it's their code).
   5. Merge to `main`.
   6. Add an entry below. Flag anyone whose files or contracts you touched with `⚠️ Conflicts: @name`.
+- **Log every completed task here,** not just merges: who (@name), date + time, what. Push it to `main` straight away.
+- **Shared docs** (CLAUDE.md, `BLACKNAUGHT.md`, `DATATHON-CONTEXT.md`, briefs, research ledger) are **never** committed to `main`. Every edit is published to the `context` branch with `bash scripts/publish-context.sh "what changed"`, and everyone's agent pulls it on its next prompt.
 - **Docs** (PRD, briefs, design notes) are git-ignored and shared on Discord/Drive. Only this file and `README.md` live on GitHub.
 
 **LinuxONE VM** (`ssh linux1@148.100.78.95`, with your own SSH key):
@@ -78,7 +94,12 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - Don't edit code there.
   - After a merge to `main`: `cd ~/BlackNaught && git pull --ff-only && cd backend && sudo docker compose -f compose.backend.yml restart app`.
   - Say so in Discord first.
-- **`~/work/<name>`** is your own clone for testing your branch on real s390x: `cd backend && sudo docker compose -f compose.backend.yml run --rm --no-deps app pytest`.
+- **`~/work/<name>`** is your own clone for testing your branch on real s390x. One-time setup:
+  ```bash
+  git clone https://github.com/saliha006/BlackNaught.git ~/work/<name> && cd ~/work/<name> && git checkout <your-branch>
+  ln -sfn ~/BlackNaught/secrets ~/work/<name>/secrets && ln -sfn ~/data ~/work/data   # compose needs ../secrets and ../../data/raw
+  ```
+  Then test with `cd backend && sudo docker compose -f compose.backend.yml run --rm --no-deps -e BN_WORKERS=0 app pytest -o addopts="" -q`.
   - The test DB is shared and reset per run, so **one person tests at a time**.
 - **Jupyter** is at `http://148.100.78.95:38888` (token from Sali; never in screenshots).
   - Files go in `~/shared`.
@@ -87,10 +108,10 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 02:01:**
-  - `main`: full backend live on the VM, evidence captured in `evidence/`. 194 tests green on s390x, 98% coverage.
+- **As of 2026-10-18 04:42:**
+  - `main`: full backend live on the VM + home-sensor probe; 198 tests green on s390x, 98% coverage.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
-  - All other docs stay local and are never pushed: the PRD, briefs, decisions and research.
+  - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
 
 ---
 
@@ -104,7 +125,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Shipped: used the team key once to add Sali's own ed25519 public key to `linux1`'s `authorized_keys`; Sali now logs in with their own key (`ssh datathon`). Probe saved above. No other VM change.
 - Touched: VM `~/.ssh/authorized_keys` (append only). Nothing removed.
 - ⚠️ Conflicts: @ahmed: you own VM keys. Nothing of yours was changed, and the team key + your key are still there. Still yours: remove the leaked team key once everyone has their own, delete the Drive link, and change the portal password (it was in the form). Docker isn't installed yet; tell Sali if you want them to run HANDOFF §3.1.
-- Conflict status: open
+- Conflict status: key part resolved by @sali 2026-10-18 (leaked key removed); Drive link + portal password still open with @ahmed
 
 ### 2026-10-17 22:15 — VM platform setup (Docker + Jupyter) — @sali
 - Shipped: Docker CE 29.8 + Compose v5 on the VM (HANDOFF §3.1); `linux1` in the docker group. Jupyter container `notebook` on :38888 with a custom token (stored in `~/.secrets/jupyter_token`, mode 600; never in git or chat); iptables ACCEPT 38888, persisted via iptables-persistent. Pulled the IBM lab image (9.85 GB).
@@ -248,4 +269,52 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts:
   - @ahmed: once all three of you confirm you can log in, the leaked `Generated-by-Nova` key gets removed. Also: turn off the Drive link and change the portal password. Is the unlabelled key `SHA256:2rIcU3uJ…MHHI` yours? If nobody claims it, it goes too.
   - @rama: your key was labelled from its `G.R.P.Bhaskara2@newcastle.ac.uk` comment; say if that's wrong.
+- Conflict status: resolved by @sali 2026-10-18 (see the next entry)
+
+### 2026-10-18 03:09 — leaked shared VM key removed — @sali
+- Shipped: removed the leaked `Generated-by-Nova` key (the `DatathonKey1.pem` from the Drive link) and one unlabelled key nobody claimed from `linux1`'s `authorized_keys`.
+  - The VM now accepts only individual keys: `006saliha@gmail.com`, `ahmed`, `nate`, `rama`.
+  - Verified: the old `.pem` gets `Permission denied`, and individual keys log in. SSH log confirms Sali, Ahmed and Nate.
+  - Backup on the VM: `~/.ssh/authorized_keys.bak-20261018020911`.
+- Touched: VM `~/.ssh/authorized_keys`
+- ⚠️ Conflicts:
+  - @rama: your key is installed but hasn't logged in yet. Run `ssh linux1@148.100.78.95 "hostname; uname -m"`; if it's refused, resend your public key to Sali.
+  - @ahmed: still yours: **turn off the Drive link** to the `.pem` and **change the L1CC portal password** (both were in the form). If the removed unlabelled key was yours, you don't need it, since your labelled key works.
+  - Anyone still using the old `.pem`: it no longer works; use your own key.
+- Conflict status: open
+
+### 2026-10-18 04:02 — home-sensor precursor probe — @sali
+- Shipped: `backend/app/probe_precursor.py` run on the VM over a real Accra GridWatch week: own-sensor model ROC AUC 0.668, PR AUC 0.089 (4.2× base), top-1% alerts 19.7% true (9.3× the 2.1% base); district context adds a little (0.684); low voltage alone ≈ chance (0.514). Evidence in `evidence/07_precursor_probe.txt`; no-leakage tests. 198 tests on s390x.
+- Touched: `backend/app/probe_precursor.py`, `backend/tests/test_probe_precursor.py`, `evidence/07_precursor_probe.txt`; VM `~/data/raw/accra/` (7 days, identifying columns removed)
+- ⚠️ Conflicts: @nate: this is the starting point for the home-sensor layer of the new headline (see your brief); stripped Accra data is in `~/data/raw/accra/` on the VM. @rama @ahmed: the headline is now 'predict blackouts before they happen + protect the most vulnerable'. Pitch layer 2 as 'flags the homes most likely to lose power in the next 30 min (1 in 5 top alerts, 9× chance)', never 'predicts every blackout'.
+- Conflict status: open
+
+### 2026-10-18 04:24 — docs merged + `context` branch auto-sync — @sali
+- Shipped:
+  - **Docs consolidated:**
+    - `BLACKNAUGHT.md` = NOW (decisions in force, pending, active tasks) + Part A spec (was the PRD) + Part B backend design (§B1–§B21) + Parked + History;
+    - `DATATHON-CONTEXT.md` = rules, judging, what wins, why Blacknaught.
+  - **Archived (local `_archive/`):** off-vision material, i.e. other ideas' plans and research §7–§8.
+  - **New `context` branch** (docs only) + `scripts/sync-context.sh` (pull, report changes) + `scripts/publish-context.sh` (publish, refuses to clobber newer edits or credentials).
+  - **CLAUDE.md** now makes every agent sync at the start of every prompt.
+- Touched: `scripts/sync-context.sh`, `scripts/publish-context.sh`, `progress.md`; new branch `context`
+- ⚠️ Conflicts: @ahmed @nate @rama: run `bash scripts/sync-context.sh` once in your clone (after `git pull` on `main`). Your briefs now point at `BLACKNAUGHT.md`; old `BLACKNAUGHT-PRD.md` / `system-design-choices.md` copies on your machine are stale, so delete them.
+- Conflict status: open
+
+### 2026-10-18 04:28 — rule: publish every doc edit + log every task — @sali
+- Shipped:
+  - **CLAUDE.md now requires:** any edit to a shared doc is published to `context` in the same turn (so every agent gets it next prompt); shared docs never go to `main`.
+  - **Every completed task** gets a `progress.md` entry with name, date and time, pushed to `main` straight away.
+  - Published to `context`.
+- Touched: `progress.md` ("How we work"); `CLAUDE.md` on `context`
+- ⚠️ Conflicts: @ahmed @nate @rama: your agents follow this from their next sync. Log your finished tasks here.
+- Conflict status: open
+
+### 2026-10-18 04:42 — briefs brought in line with the new rules — @sali
+- Shipped:
+  - **All four briefs** now say: sync `context` first on every prompt; log **every** finished task here (name, date, time) and push to `main` straight away; publish doc edits with `scripts/publish-context.sh`, never to `main`.
+  - **Sali's brief:** new prioritised ▶ Current tasks block (unblock team → submission blockers → risk-level feature → freeze + evidence → pitch + submit). Build tasks 1–20 kept below as done.
+  - Published to `context` (deb0d7a).
+- Touched: `builder-file-{sali,ahmed,nate,rama}.md` on `context`; `progress.md` (Latest)
+- ⚠️ Conflicts: @ahmed @nate @rama: your brief changed; your agent picks it up on its next sync. No task of yours changed.
 - Conflict status: open

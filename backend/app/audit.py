@@ -33,7 +33,7 @@ async def append(db: Db, kind: str, actor: str, ref: str | None, data: dict[str,
 
 
 class HttpSigner:
-    """Client for Ahmed's signer container (contract: system-design-choices.md §12)."""
+    """Client for Ahmed's signer container (contract: BLACKNAUGHT.md §B12)."""
 
     def __init__(self, client: httpx.AsyncClient, url: str):
         self.client = client
