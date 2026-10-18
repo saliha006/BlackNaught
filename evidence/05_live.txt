@@ -1,0 +1,10 @@
+
+=== Live service (2026-10-18T01:01:24Z) ===
+{"ok":true,"db":true,"writer_lag":0,"model":"m1-km-enwl","uptime_s":10944}
+ukpn ok 53
+npg ok 245
+ssen ok 2
+elexon ok 5
+ioda ok 6
+triage: 105 ranked, 96 escalate, model m1-km-enwl
+grades: [('npg', 2, 0, None), ('ssen', 2, 8, 0.1146), ('ukpn', 2, 150, 0.1862)]

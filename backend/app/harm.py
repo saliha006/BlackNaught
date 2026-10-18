@@ -49,7 +49,7 @@ def assess(quantiles: dict[str, float], surv: list[float], reserve_left_h: float
     elif reserve_left_h > 2 * quantiles["q50"]:
         q_used, why = "q50", [f"reserve {reserve_left_h:.1f} h > 2 × q50 → q50"]
     else:
-        q_used, why = "q75", ["backup, reserve not ample → q75"]
+        q_used, why = "q75", [f"reserve {reserve_left_h:.1f} h not ample → q75"]
     q_hours = quantiles[q_used]
     harm = severity * (OTHER_BACKUP_FACTOR if other_backup else 1.0) * expected_excess(surv, reserve_left_h)
     escalate = q_hours > reserve_left_h

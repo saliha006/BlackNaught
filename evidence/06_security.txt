@@ -1,0 +1,20 @@
+
+=== Security (2026-10-18T01:01:24Z) ===
+Audit chain:
+{"ok":true,"rows":51,"first_bad_seq":null,"reason":null,"last_checkpoint":{"seq":50,"sig_ok":null,"head_matches":true},"took_ms":1}
+Approve without login → 401
+AES-256-GCM via libcrypto (CPACF): NIST vectors
+======================= 3 passed, 7 deselected in 0.30s ========================
+Database roles (least privilege):
+ bn_agent    | 
+ bn_api      | 
+ bn_ingest   | 
+ bn_migrator | 
+ bn_owner    | Cannot login
+Firewall:
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     6    --  0.0.0.0/0            0.0.0.0/0            tcp dpt:38888
+ACCEPT     0    --  127.0.0.0/8          127.0.0.0/8         
+ACCEPT     6    --  0.0.0.0/0            0.0.0.0/0            ctstate NEW tcp dpt:22
+ACCEPT     1    --  0.0.0.0/0            0.0.0.0/0           

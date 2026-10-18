@@ -1,0 +1,17 @@
+
+=== Platform (2026-10-18T01:00:55Z) ===
+datathon4musketeers
+s390x
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+Architecture:                            s390x
+Byte Order:                              Big Endian
+CPU(s):                                  3
+Model name:                              -
+Machine type:                            9175
+Hypervisor:                              z/VM 7.3.0
+Hypervisor vendor:                       IBM
+NUMA node0 CPU(s):                       0-2
+NNPA flag: nnpa
+               total        used        free      shared  buff/cache   available
+Mem:           7.8Gi       1.6Gi       242Mi        89Mi       6.2Gi       6.2Gi
+/dev/dasda1      50G   14G   35G  28% /

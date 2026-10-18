@@ -1,0 +1,22 @@
+
+=== Training on LinuxONE: outage-duration model (Kaplan–Meier) on 312,936 ENWL outages (2026-10-18T01:00:55Z) ===
+s390x
+fitted on 312936 outages; S(1h)=0.823 S(4h)=0.448
+
+real	0m1.905s
+user	0m1.846s
+sys	0m0.033s
+
+=== Training on LinuxONE: district fault-risk climatology on ENWL 1997–2026 (2026-10-18T01:00:58Z) ===
+s390x
+12 districts, years [1997, 2026]
+
+real	0m2.022s
+user	0m1.964s
+sys	0m0.026s
+
+=== Training data on the VM (2026-10-18T01:01:01Z) ===
+-rw-rw-r-- 1 linux1 linux1 80M Oct 17 21:16 /home/linux1/data/raw/enwl_unplanned-outages.csv
+-rw-rw-r-- 1 linux1 linux1 51M Oct 17 21:17 /home/linux1/data/raw/ukpn_ukpn-iis.csv
+157e4a8f34925bd7ce02521851f2e86fca5521fc0563e00f01e9e326da2104cd  enwl_unplanned-outages.csv
+34bc3fba93e9d01288fcdcdcd16f3a7b119359e98303a8affeef798d581c30f4  ukpn_ukpn-iis.csv

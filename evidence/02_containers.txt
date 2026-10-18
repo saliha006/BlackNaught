@@ -1,0 +1,8 @@
+
+=== Containers (all s390x) (2026-10-18T01:00:55Z) ===
+NAME               IMAGE           COMMAND                  SERVICE   CREATED       STATUS                 PORTS
+bn-backend-app-1   bn-app:latest   "/usr/bin/tini -g --…"   app       4 hours ago   Up 3 hours             3000/tcp, 5000/tcp, 8888/tcp, 38888/tcp, 127.0.0.1:8000->8000/tcp
+bn-backend-db-1    postgres:17     "docker-entrypoint.s…"   db        4 hours ago   Up 4 hours (healthy)   127.0.0.1:5432->5432/tcp
+bn-app:latest → s390x
+postgres:17 → s390x
+registry.linuxone.cloud.marist.edu/l1cc/jupyterlab-image-s390x:latest → s390x
