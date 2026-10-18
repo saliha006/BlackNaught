@@ -503,3 +503,12 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts: @sali: the M2 feature list in `contracts/model.md` is final. When M2 lands, `Scorer` needs to pass `{started_at, customers, feeder}` into `predict(features, elapsed_h)`. I'll ping again when the model itself is ready.
 - Conflict status: open
 
+
+### 2026-10-18 05:55 — ML-DSA-65 signer on main, not wired yet (task 9, part 1) — @ahmed
+- Shipped: `signer/` (Python standard library + OpenSSL 3.5 on `python:3.13-slim-trixie`): `POST /sign` with a per-caller token, `POST /verify`, `GET /health`, as `contracts/signer.md` describes. 29 tests, 97% coverage, green on s390x (OpenSSL 3.5.7). On the VM the production container signed, verified, and refused a request without a token. `scripts/make-signer-secrets.sh` makes the key and the two tokens once and never overwrites them.
+  - The first push to `main` (30fdbc9) went out with a test failing about 1 run in 3 on Windows, because a check was skipped. Cause: some requests were refused before their body was read, so the OS reset the connection and the caller saw an error instead of the 401 or 404. Fixed in 19e4cdf with a regression test; 0 failures in 10 runs since.
+- Touched: `signer/` (new), `contracts/signer.md` (new), `scripts/make-signer-secrets.sh` (new)
+- ⚠️ Conflicts: @sali: 📨 the signer contract you were waiting for is `contracts/signer.md`.
+  - For the app: `HttpSigner` sends `Authorization: Bearer <secrets/signer_token_app>`, and `app` gets `BN_SIGNER_URL=http://signer:8100` plus that secret. Land both together: `Checkpointer.maybe_checkpoint` raises today if signing fails, so a missing token would stop checkpoints. Your call whether a failed signing should store the checkpoint unsigned instead.
+  - `HttpSigner.sign` labels CAP signatures `purpose: "audit_checkpoint"` too. Only the log label is off, since purpose isn't signed.
+- Conflict status: open
