@@ -1,55 +1,23 @@
 #!/bin/bash
 # Pull the latest shared docs (CLAUDE.md, BLACKNAUGHT.md, briefs, research...) from the `context` branch into this
 # folder. Files are unpacked, never staged: main's .gitignore ignores them, so they can't be committed by accident.
-# A doc you edited but haven't published is copied to .git/context-backup/ before it's replaced, so no edit is lost.
 # Prints what changed since the last sync so Claude can tell the user before working.
 set -euo pipefail
-# Git Bash on Windows rewrites "rev:.claude/..." arguments as Windows paths unless this is set
-export MSYS_NO_PATHCONV=1
 cd "$(git rev-parse --show-toplevel)"
 git fetch -q origin context
 new=$(git rev-parse origin/context)
-gitdir=$(git rev-parse --git-dir)
-stamp="$gitdir/context-synced"
+stamp="$(git rev-parse --git-dir)/context-synced"
 old=$(cat "$stamp" 2>/dev/null || echo none)
 if [ "$new" = "$old" ]; then
   echo "context: up to date (${new:0:7})"
   exit 0
 fi
-
-if [ "$old" != none ] && git cat-file -e "$old^{commit}" 2>/dev/null; then
-  incoming=$(git diff --name-only --diff-filter=d "$old" "$new")
-else
-  incoming=$(git ls-tree -r --name-only "$new")
-fi
-backup="$gitdir/context-backup/$(date +%Y%m%d-%H%M%S)"
-saved=()
-while IFS= read -r f; do
-  [ -n "$f" ] || continue
-  latest=$(git rev-parse "$new:$f")
-  if [ -f "$f" ]; then
-    mine=$(git hash-object "$f")
-    [ "$mine" = "$latest" ] && continue
-    base=$(git rev-parse -q --verify "$old:$f" 2>/dev/null || echo none)
-    if [ "$mine" != "$base" ]; then
-      mkdir -p "$backup/$(dirname "$f")"
-      cp "$f" "$backup/$f"
-      saved+=("$f")
-    fi
-  fi
-  mkdir -p "$(dirname "$f")"
-  git cat-file blob "$latest" > "$f"
-done <<< "$incoming"
+git archive --format=tar origin/context | tar -xf -
 echo "$new" > "$stamp"
-
 if [ "$old" = none ]; then
   echo "context: first sync at ${new:0:7}. Read BLACKNAUGHT.md (NOW) and your builder-file-<name>.md."
 else
   echo "context: UPDATED ${old:0:7} -> ${new:0:7}"
   git log --format='  %h %s (%an, %ar)' "$old..$new"
   git diff --stat "$old" "$new" | tail -n +1
-fi
-if [ ${#saved[@]} -gt 0 ]; then
-  echo "context: you had unpublished edits, saved in $backup. Re-apply them, then publish:"
-  printf '  %s\n' "${saved[@]}"
 fi
