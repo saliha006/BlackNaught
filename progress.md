@@ -12,6 +12,15 @@
 - Conflict status: open | resolved by @<Name> <date>
 ```
 
+## Headline (changed 2026-10-18)
+**Blacknaught predicts blackouts before they happen and protects the people they'd hurt most.**
+- **Predict**, with honest lead times:
+  1. district fault risk for tomorrow (hours to days);
+  2. homes most likely to lose power in the next 30 min, from fuse-box/meter sensors (minutes; real Accra data: 1 in 5 top alerts come true, 9× chance);
+  3. grid-wide stress (seconds).
+- **Protect:** triage + alerts for electricity-dependent people.
+- **Never pitch:** "predicts every blackout", "minutes ahead from frequency" or "voltage dips warn of blackouts".
+
 ## Start here (teammates, first 15 minutes)
 1. **GitHub:** accept the collaborator invite for `saliha006/BlackNaught` (check your email or github.com/notifications). Then:
    ```bash
@@ -54,7 +63,7 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 |---|---|---|---|---|
 | **Sali** `saliha006` | Backend; repo + docs owner | `sali-backend` | `/backend`, `/db`, `contracts/openapi.yaml`. Ingest, triage, grading, audit chain, operator login + approvals, SSE `/stream`, k≥11 map, area-risk baseline, CAP export, `/me/home`, IODA. **Status: brief tasks 1–20 done and live on the VM** | Everything is served under `/api/*` (docs at `/api/docs`) |
 | **Ahmed** `meep-boop` | Platform + agent; **VM owner** | `ahmed-platform` | `/infra` (team compose, nginx edge with PQ TLS, LUKS), `/agent` (agent loop, evidence combiner), signer (ML-DSA), sensor simulator, Granite, NNPA serving, VM keys + portal restarts | Agent creates decisions with `app.decisions.create()`; signer contract `POST /sign`, `POST /verify` (set `BN_SIGNER_URL`); simulator publishes events per `contracts/events.schema.json` |
-| **Nate** `aldrichbanas07` | Data + ML | `nate-ml` | `/ml`, `grids/*.yaml`, `contracts/model.md`. M2 duration model, M8 weather fault risk, LR table, household distributions, evaluation numbers | M2 replaces `KmModel` behind `predict(elapsed_h) → {quantiles, surv[24]}`; M8 replaces `arearisk.area_risk()`; data in `~/data/raw/` on the VM |
+| **Nate** `aldrichbanas07` | Data + ML | `nate-ml` | `/ml`, `grids/*.yaml`, `contracts/model.md`. M2 duration model, **M8 weather fault risk (prediction layer 1)**, **home-sensor early-warning model (layer 2; start from `backend/app/probe_precursor.py`)**, M4 grid stress (layer 3), LR table, evaluation numbers | M2 replaces `KmModel` behind `predict(elapsed_h) → {quantiles, surv[24]}`; M8 replaces `arearisk.area_risk()`; data in `~/data/raw/` on the VM |
 | **Rama** `rama0623` | Frontend; video edit lead | `Rama-Frontend` | `/frontend` (Vite + TS + MapLibre): map, triage list, two-houses card, agent panel, audit view, CAP/SMS previews, "my home"; screen recordings + video edit | Builds against the live `/api/*` + `/stream` (mocks in `fixtures/api/`); `dist/` is served by Ahmed's nginx |
 
 **Shared** (anyone may edit; flag it): `contracts/*`, `fixtures/*`, `docker-compose.yml`.
