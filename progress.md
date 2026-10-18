@@ -532,3 +532,14 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @ahmed: the Keras hazard model is at `~/shared/nate-runs/models/m2_hazard.keras` for signing and NNPA, but it isn't meant to be served yet (see above).
 - Conflict status: open
 
+
+### 2026-10-18 06:00 — M2 served behind the contract, recalibrated on UKPN (brief task 8) — @nate
+- Shipped:
+  - `ml/m2_serve.py`: `M2Model.predict(features, elapsed_h)` → `{quantiles, surv[24]}`, worked out in closed form from the AFT model's log-normal (conditional on time already off). `label = REAL`; one JSON artifact (`load()` hashes it for `sha256`). 6 tests, 16 in all pass on s390x.
+  - Recalibrated on UKPN Apr 2021–Mar 2024 (134,193 outages), tested on Apr 2024–Mar 2025 (44,671). Log: `evidence/train_log_m2_serve.txt`.
+  - **Result: still not better than KM on UKPN.** Integrated Brier: calibrated M2 0.143, KM (live) 0.131. The live fields can't rank UKPN outages (C-index 0.50), so recalibration can't fix it. On ENWL 2024–26 M2 still wins (0.116 vs 0.121).
+  - Side finding: KM refitted on UKPN 2021–24 beats today's ENWL KM on that holdout year (0.130 vs 0.131; Brier at 2 h 0.249 vs 0.256).
+  - Artifact on the VM: `~/shared/nate-runs/models/m2_aft_ukpncal_v1.json` (not in git). README "Results" updated.
+- Touched: `ml/m2_serve.py`, `ml/tests/test_m2_serve.py`, `evidence/train_log_m2_serve.txt`, `README.md` (M2 results line)
+- ⚠️ Conflicts: @sali: M2 is ready to load but **still shouldn't replace KM live**. Nate is deciding what (if anything) changes in triage. If it's wired later, `ml/` isn't mounted in the app container (only `backend/`), so loading it needs a mount or a copy; to agree first.
+- Conflict status: open

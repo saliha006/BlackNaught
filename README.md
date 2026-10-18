@@ -162,7 +162,9 @@ first 24 hours; lower is better:
 | Keras hazard MLP on live fields | 0.117 | 0.141 |
 
 Start time, customers and voltage carry little signal. The fault's cause carries the most, and the live feeds don't
-publish it. Trained on one operator, the models don't beat Kaplan–Meier on another, so they aren't live.
+publish it. Trained on one operator, the models don't beat Kaplan–Meier on another, so they aren't live. Recalibrating
+on UKPN 2021–24 didn't close the gap: on UKPN's newest year (Apr 2024–Mar 2025) the calibrated model scores 0.143 against
+Kaplan–Meier's 0.131, because the live fields can't rank UKPN outages at all (C-index 0.50).
 
 **Home-sensor early warning on real data.** One week of nLine GridWatch readings from 429 sensors in Accra, Ghana
 (4.76 M readings, June 2021). Trained on five days, tested on the next two. Label: did this home lose power within 30

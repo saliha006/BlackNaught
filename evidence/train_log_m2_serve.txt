@@ -1,0 +1,17 @@
+=== M2 recalibration + serving artifact on LinuxONE (2026-10-18T04:58:57Z), commit 1e855de ===
+s390x
+calibrated on 134,193 UKPN outages: mu shift -0.018, sigma 1.421
+            model                   test  brier_2h  brier_4h  brier_8h  ibs_24h  c_index     n
+  M1 Kaplan-Meier UKPN Apr 2024-Mar 2025    0.2559    0.2424    0.1727   0.1311   0.5000 44671
+  M1 Kaplan-Meier           ENWL 2024-26    0.2334    0.2460    0.1708   0.1210   0.5000 27253
+M2 AFT, ENWL only UKPN Apr 2024-Mar 2025    0.2745    0.2617    0.1907   0.1434   0.5020 44671
+M2 AFT, ENWL only           ENWL 2024-26    0.2234    0.2367    0.1654   0.1144   0.5958 27253
+m2-aft-ukpncal-v1 UKPN Apr 2024-Mar 2025    0.2689    0.2577    0.1891   0.1429   0.5020 44671
+m2-aft-ukpncal-v1           ENWL 2024-26    0.2237    0.2361    0.1663   0.1162   0.5958 27253
+total 1016
+drwxr-xr-x 2 ibm-user ibm-user   4096 Oct 18 04:59 .
+drwxrwxr-x 3 ibm-user ibm-user   4096 Oct 18 04:53 ..
+-rw-r--r-- 1 ibm-user ibm-user 530322 Oct 18 04:53 m2_aft.json
+-rw-r--r-- 1 ibm-user ibm-user 386997 Oct 18 04:59 m2_aft_ukpncal_v1.json
+-rw-r--r-- 1 ibm-user ibm-user 106080 Oct 18 04:53 m2_hazard.keras
+-rw-r--r-- 1 ibm-user ibm-user   2340 Oct 18 04:53 m2_metrics.json
