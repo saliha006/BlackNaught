@@ -108,8 +108,8 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 04:42:**
-  - `main`: full backend live on the VM + home-sensor probe; 198 tests green on s390x, 98% coverage.
+- **As of 2026-10-18 05:15:**
+  - `main`: full backend live on the VM + home-sensor probe; 198 tests green on s390x, 96% coverage (proof.sh re-run 05:10). README for judges is live.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - Shared docs (CLAUDE.md, `BLACKNAUGHT.md`, briefs, research) live on the `context` branch, never on `main`.
 
@@ -317,4 +317,87 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - Published to `context` (deb0d7a).
 - Touched: `builder-file-{sali,ahmed,nate,rama}.md` on `context`; `progress.md` (Latest)
 - ⚠️ Conflicts: @ahmed @nate @rama: your brief changed; your agent picks it up on its next sync. No task of yours changed.
+- Conflict status: open
+
+### 2026-10-18 04:54 — team blockers cleared — @sali
+- Shipped:
+  - **GitHub:** `meep-boop`, `aldrichbanas07`, `rama0623` all have Write access.
+  - **Team name chosen; Sali is the registered team leader**, so Sali submits.
+  - **IBM labs 01 + 02** done by @ahmed (his task 5 ✅).
+  - **#helpdesk NNPA-timing question** handed to @ahmed (added to his brief).
+  - New freeze time: deferred, Sali decides later.
+- Touched: briefs (Sali, Ahmed) + `BLACKNAUGHT.md` NOW on `context` (54f8f79)
+- ⚠️ Conflicts: @ahmed: new task in your brief (ask #helpdesk, post the answer here).
+- Conflict status: open
+
+### 2026-10-18 05:07 — VM ML checks: GO (brief task 3) — @nate
+- Shipped:
+  - `ml/vm_checks.py`, run in the Jupyter `notebook` container on the VM. All GO:
+    - XGBoost `survival:aft` and `count:poisson` train;
+    - XGBoost JSON and `.keras` round-trips give identical predictions on s390x;
+    - `ibm-zdnn-plugin` 2.3.0 kernels load;
+    - pandas 3.0.6 handles ENWL-shaped data.
+  - Output: `evidence/08_ml_stack_checks.txt`. Both files are on `nate-ml` (17fda21), **not merged**.
+  - VM: `~/work/nate` (tests) and `~/shared/nate` (Jupyter) track `nate-ml`. Raw data is hard-linked into `~/shared/nate/data/` (git-ignored, no extra disk, SHA256 OK).
+  - **Decision (Nate): M2 uses live fields only** (start time, customers affected, voltage with "unknown"). The full ENWL whitelist (cause, primary substation, district) is an offline benchmark only if time allows. The exact list goes into `contracts/model.md`.
+- Touched: `ml/vm_checks.py`, `evidence/08_ml_stack_checks.txt` (both on `nate-ml`); VM `~/work/nate`, `~/shared/nate`
+- ⚠️ Conflicts:
+  - @sali:
+    - **M2 features (above):** `triage.py` will need to pass `features` into `predict(features, elapsed_h)`, as `contracts/model.md` already says.
+    - **Bug in your Elexon ingest:** Elexon published 182 readings of **0 Hz** on 2026-08-06, 11:13–12:54 UTC. `parse_elexon` stores whatever arrives, and `stress.state(0)` returns EMERGENCY, so a repeat during the demo shows a false GB emergency. Dropping readings outside 45–55 Hz fixes it.
+    - **Doc accuracy:**
+      - UKPN IIS's 316,435 rows are restoration stages (180,059 incidents), not outages.
+      - My brief's `predict()` return (`p_exceeds_reserve, eta_h, interval`) differs from `contracts/model.md` (`quantiles, surv[24]`). I'm following `model.md`.
+      - My brief §5 "waiting on" lines are all done.
+  - @ahmed: the zDNN plugin adds **no TF device** (`list_physical_devices()` shows only CPU); check for `_z_ops.so` instead. No NNPA benchmark run, pending your #helpdesk answer (ToU §5).
+- Conflict status: open
+
+
+### 2026-10-18 05:07 — event contract frozen (task 6) — @ahmed
+- Shipped: ✅ `contracts/events.schema.json` as it stands. All seven kinds are there, plus `source_state`; the `sim` and `accra_replay` sources and the `SIMULATED` / `REPLAY` labels cover the simulator and the Accra replay.
+  - Decision (Ahmed): a sensor's type (home, anchor or control) and the link from a home sensor to its enrolled household go in a new `sensors` table, not in event payloads. Heartbeats stay small (about 5k a minute), and the home link is stored once.
+- Touched: nothing (the contract is unchanged)
+- ⚠️ Conflicts:
+  - @sali: 📨 Ahmed needs a `sensors` table in `/db` before F2 (the simulator): `sensor_id` (PK), `type` (home, anchor or control), `household_id` (null for anchors and controls), `cell_l1`. Your migration and naming; tell Ahmed if you'd shape it differently.
+  - @nate: event payloads don't change; read a sensor's type from that table.
+- Conflict status: open
+
+
+### 2026-10-18 05:10 — compose layout chosen (task 7) — @ahmed
+- Shipped: decision (Ahmed): `infra/docker-compose.yml` will `include:` `backend/compose.backend.yml`, keep the project name `bn-backend`, and add `edge`, `signer` and `granite`. The running db, app and `pgdata` volume carry on as they are: no second Postgres, and your compose file stays yours. Nothing gets built until you agree.
+- Touched: nothing yet
+- ⚠️ Conflicts: @sali: 📨 please OK this layout (your 02:36 ask). Once it lands, the VM deploy becomes `cd ~/BlackNaught && sudo docker compose -f infra/docker-compose.yml up -d`, and `restart app` takes the same `-f`.
+- Conflict status: open
+
+### 2026-10-18 05:12 — commit-msg hook now runs on Mac and Linux — @ahmed
+- Shipped: `scripts/git-hooks/commit-msg` was committed without its executable bit (mode 100644), so git on Mac and Linux skipped it silently and AI trailers got through there. It's 100755 now; Windows behaves as before.
+- Touched: `scripts/git-hooks/commit-msg` (file mode only)
+- ⚠️ Conflicts: @sali: your hook, mode change only. @nate @rama: on Mac or Linux, `git pull` and the hook starts working.
+- Conflict status: open
+
+### 2026-10-18 05:15 — secret scan before every commit (task 1, part) — @ahmed
+- Shipped: `scripts/git-hooks/pre-commit` runs gitleaks on staged changes and blocks a commit that adds something that looks like a secret. The repo is public, so this is the last point where a leak can still be stopped. Without gitleaks it only warns. `scripts/test-git-hooks.sh` runs real commits through both hooks in a throwaway repo: 4/4 pass.
+- Touched: `scripts/git-hooks/pre-commit` (new), `scripts/test-git-hooks.sh` (new)
+- ⚠️ Conflicts: @sali @nate @rama: your next commit runs this hook (you already use `scripts/git-hooks`). Install gitleaks for the scan: `winget install Gitleaks.Gitleaks` or `brew install gitleaks`. A false positive: add its `Fingerprint` line to `.gitleaksignore`.
+- Conflict status: open
+
+### 2026-10-18 05:15 — new task for Ahmed: public alert broadcast, mocked — @ahmed
+- Shipped: decision (Ahmed, from a team idea): Ahmed adds an Amber-alert-style public alert. For the demo it's a mock: an operator-approved CAP alert reaches Ahmed's Android phone (developer settings on). The sending side sits behind a channel interface, so a government alerting service can replace the phone later.
+- Touched: nothing yet
+- ⚠️ Conflicts:
+  - @sali: 📨 please add this to Ahmed's brief and NOW. It reuses your CAP 1.2 export and the operator approval (CAP alerts already need a human OK).
+  - @rama: the phone receiving the alert could be a shot in the video.
+  - Pitch wording: "Blacknaught drafts standard CAP 1.2 alerts that a government alerting service can broadcast; in the demo a phone stands in for that channel." Not "we send alerts to the public".
+
+### 2026-10-18 05:15 — README for judges + fresh evidence — @sali
+- Shipped:
+  - **`README.md`** rewritten for judges and senior devs: problem, what it does, triage + architecture + outage-lifecycle diagrams (Mermaid), why LinuxONE, live results (grades, Accra probe), data + licences, stack, how to run, endpoints, what went wrong, limits, team, open-source list.
+  - **Evidence re-run** with `scripts/proof.sh` on the VM (05:10): 198 tests / 96%, 5 sources LIVE, audit chain OK. `evidence/01–06` refreshed.
+  - **Decision (Sali): home dashboard = option C** (Low / Elevated / High headline + three layer gauges). Rules still being confirmed.
+  - **Team name: The 4 Musketeers**; Sali is team leader and submits.
+- Touched: `README.md`, `evidence/01–06_*.txt`; `BLACKNAUGHT.md` NOW, briefs (Sali, Rama), `DATATHON-CONTEXT.md`, CLAUDE.md on `context`
+- ⚠️ Conflicts:
+  - @rama: option C changes the "my home" view (badge + three gauges); spec in your brief. The `risk` field lands in `/api/me/home` after the rules are confirmed.
+  - @ahmed @nate @rama: the README's Team row, status and "Known limits" describe your parts as in progress. Update your row when your part lands on `main`.
+  - @ahmed: seen your `sensors` table + compose layout asks; Sali is answering next. @nate: seen the Elexon 0 Hz bug; fix queued.
 - Conflict status: open
