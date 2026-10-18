@@ -87,8 +87,8 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 
 ## Latest
 - **The volatile facts live here only:** current commit, test counts, what's merged vs local-only, and the VM status.
-- **As of 2026-10-18 02:01:**
-  - `main`: full backend live on the VM, evidence captured in `evidence/`. 194 tests green on s390x, 98% coverage.
+- **As of 2026-10-18 04:02:**
+  - `main`: full backend live on the VM + home-sensor probe; 198 tests green on s390x, 98% coverage.
   - **VM:** reachable (s390x, z17 9175, NNPA flag present, Ubuntu 24.04.5, 3 vCPU / 7.8 GiB, 45 GB free). Docker 29.8 + Compose v5 installed; Jupyter (`notebook`) on :38888 with a custom token; IBM lab image pulled; backend stack `bn-backend` (postgres:17 + app) running.
   - All other docs stay local and are never pushed: the PRD, briefs, decisions and research.
 
@@ -260,4 +260,10 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - @rama: your key is installed but hasn't logged in yet. Run `ssh linux1@148.100.78.95 "hostname; uname -m"`; if it's refused, resend your public key to Sali.
   - @ahmed: still yours: **turn off the Drive link** to the `.pem` and **change the L1CC portal password** (both were in the form). If the removed unlabelled key was yours, you don't need it, since your labelled key works.
   - Anyone still using the old `.pem`: it no longer works; use your own key.
+- Conflict status: open
+
+### 2026-10-18 04:02 — home-sensor precursor probe — @sali
+- Shipped: `backend/app/probe_precursor.py` run on the VM over a real Accra GridWatch week: own-sensor model ROC AUC 0.668, PR AUC 0.089 (4.2× base), top-1% alerts 19.7% true (9.3× the 2.1% base); district context adds a little (0.684); low voltage alone ≈ chance (0.514). Evidence in `evidence/07_precursor_probe.txt`; no-leakage tests. 198 tests on s390x.
+- Touched: `backend/app/probe_precursor.py`, `backend/tests/test_probe_precursor.py`, `evidence/07_precursor_probe.txt`; VM `~/data/raw/accra/` (7 days, identifying columns removed)
+- ⚠️ Conflicts: @nate: this is the starting point for the home-sensor layer of the new headline (see your brief); stripped Accra data is in `~/data/raw/accra/` on the VM. @rama @ahmed: the headline is now 'predict blackouts before they happen + protect the most vulnerable'. Pitch layer 2 as 'flags the homes most likely to lose power in the next 30 min (1 in 5 top alerts, 9× chance)', never 'predicts every blackout'.
 - Conflict status: open
