@@ -64,6 +64,10 @@
 ---
 
 ## 3. ▶ Current tasks (2026-10-18 06:05), in order
+**▶ 2026-10-18 08:52 (from Sali): public map + operator dashboard split (Sali's call, from a teammate's idea).**
+- **Map (everyone, tablet-first):** filters on top, a **Forecast** dropdown (the three Predict cards), and one scrollable **Power cuts** column on the right (phone: a short strip at the bottom), each card with the severity in words, sorted by distance after **Near me**. Dots shrink when zoomed out.
+- **Operator dashboard** (landing menu "Dashboard", or the top-bar button): your Predict cards, Two houses, and the Power cuts / Triage / Agent & audit panel with the charts. Your views and tests are intact; they just live there now.
+
 **▶ 2026-10-18 08:27 (from Sali): control room made map-first (Sali's brief to make it readable on a tablet, for older users).** Your views and choices are kept; what moved:
 - **Predict** is a narrow column down the left edge (was a strip across the top). **Two houses** folds to one line ("House A: Escalate · House B: SMS check" + "Show both houses"); on a phone it hides until a fault has the pair.
 - **Severity fog** on the map: a red (severe) or amber (moderate) glow over each live cut, with a hover/tap label in words. Severe = someone in it needs escalating, or region/system scale.

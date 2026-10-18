@@ -21,6 +21,7 @@ Compiled 2026-10-16, the night before kick-off, from nine passes. Known gap acro
 | Backend system-design pass (2026-10-17) | s390x package/image checks (pydantic-core, cryptography, pg8000, sse-starlette, llama_cpp server extras, postgres/nginx/trixie), nginx SSE, LUKS loop, CAP 1.2, pg8000 threading, audit triggers, session auth, cell suppression, censored grading, live-feed field checks | Backend build decisions; full rationale in `../system-design-choices.md` |
 | Home-sensor precursor probe (2026-10-18) | Can a fuse-box/meter sensor predict its own power cut? Real Accra GridWatch week on the VM: modest early warning (ROC AUC 0.67, top-1% alerts 9× chance); low voltage alone ≈ chance | **Pitch wording for layer 2** ("flags homes most likely to lose power", not "predicts") |
 | Frontend accessibility + dialog pass (2026-10-18) | Native `<dialog>` + `showModal()` vs custom overlay + `inert`; focus on open; `aria-live` on refreshing lists; confirm steps for irreversible actions; tabs activation; contrast thresholds | Control-room modal / triage / approval fixes before the 09:30 submission |
+| README structure pass (2026-10-18) | What a good project README contains and in what order; GitHub rendering limits (Mermaid, relative links, 500 KiB) | Rewriting `README.md` for judges before the 09:30 submission |
 
 ---
 
@@ -2272,3 +2273,33 @@ Timezone and weekend values are IANA conventions and were not web-checked. They 
 | "Always add a JS focus trap inside a modal" (older APG reading, some design systems) | Zell Liew / CSS-Tricks 2026 + APA WG view cited there: with `showModal()` the page is inert; Tab may reach browser chrome by design |
 
 **Final call:** professional + community agree: switch `modal.ts` to `<dialog>.showModal()`, focus Close (Cancel on confirms), one `role="status"` region instead of live lists, keep automatic tabs, add a confirm only to 999 / public-alert approvals.
+
+## README structure pass (2026-10-18)
+
+**Question:** what makes a good, senior-level README, so a judge can tell in 30 seconds what Blacknaught is, then run it?
+
+### KEEP
+| Source | Supports |
+|---|---|
+| GitHub Docs, "About READMEs" (docs.github.com, fetched 18 Oct 2026) | A README says what the project does, why it's useful, how to get started, where to get help, who maintains it; longer docs belong elsewhere; use relative links; content past 500 KiB is truncated |
+| Make a README (makeareadme.com, undated, widely linked) | Order: name, description, badges, visuals, installation (with requirements), usage, support, roadmap, contributing, authors, licence, status; "too long is better than too short", but move depth out rather than cut it |
+| banesullivan/README (GitHub, 172 stars) | Highlights near the top, a short overview, minimal usage, install with minimum requirements; help a reader decide fast: does it solve my problem, can I use it, who made it |
+| Jeffrey Paul, "How to write a README" (sneak.berlin, 24 Dec 2024) | A complete one-sentence description first; assume no prior knowledge; expand acronyms; copy-paste build commands for a fresh system; good headings make length fine |
+| GitHub Docs, "Creating diagrams" (fetched 18 Oct 2026) | Mermaid fenced blocks render in Markdown files on GitHub; not every Mermaid feature is supported, so keep syntax conservative and validate |
+
+**Consensus (≥ 2 sources each):** lead with what it does and why (GitHub Docs, makeareadme, banesullivan, sneak.berlin); copy-paste setup steps with prerequisites (makeareadme, sneak.berlin, banesullivan); keep depth in linked docs, not the README (GitHub Docs, makeareadme, banesullivan).
+
+### WEAK
+| Source | Why weak |
+|---|---|
+| Real Python, "Creating Great README Files for Your Python Projects" | Returned HTTP 403 when fetched; its section list (problem, tech and why, features, getting started, help) only seen via search snippet |
+| Blog posts in the search results (kodekloud notes, fosshub, kunalganglani, rivereditor) | Not fetched; tutorials/SEO pages; same advice as the KEEP sources |
+| Community consensus (HN / Reddit) | Searched; no on-topic thread surfaced. The sneak.berlin essay is the kind HN threads link, but its HN reception wasn't confirmed |
+
+### DO NOT USE
+| Claim | Why |
+|---|---|
+| "Repositories with comprehensive READMEs get 5–8× more stars and contributions" (blog, attributed to GitHub data) | No primary source; couldn't be verified |
+
+**Final call:** professional sources agree and the community search added nothing contrary: one-line pitch + live link at the top, what it does, diagrams for system and user flow, a tech-stack table, compact results, copy-paste LinuxONE setup, then data, limits, team and open source; depth stays in `evidence/` and `contracts/`.
+
