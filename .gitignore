@@ -1,10 +1,3 @@
-# Ignore all Markdown files...
-*.md
-/.claude/skills/
-/.Claude/skills/
-
-# ...except Progress.md and anything under .claude
-!Progress.md
 # Docs stay local. Only progress.md (conflict board) and README.md (submission) go to GitHub.
 *.md
 !progress.md
