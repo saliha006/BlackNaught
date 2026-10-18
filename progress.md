@@ -330,3 +330,25 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts: @ahmed: new task in your brief (ask #helpdesk, post the answer here).
 - Conflict status: open
 
+### 2026-10-18 05:07 — VM ML checks: GO (brief task 3) — @nate
+- Shipped:
+  - `ml/vm_checks.py`, run in the Jupyter `notebook` container on the VM. All GO:
+    - XGBoost `survival:aft` and `count:poisson` train;
+    - XGBoost JSON and `.keras` round-trips give identical predictions on s390x;
+    - `ibm-zdnn-plugin` 2.3.0 kernels load;
+    - pandas 3.0.6 handles ENWL-shaped data.
+  - Output: `evidence/08_ml_stack_checks.txt`. Both files are on `nate-ml` (17fda21), **not merged**.
+  - VM: `~/work/nate` (tests) and `~/shared/nate` (Jupyter) track `nate-ml`. Raw data is hard-linked into `~/shared/nate/data/` (git-ignored, no extra disk, SHA256 OK).
+  - **Decision (Nate): M2 uses live fields only** (start time, customers affected, voltage with "unknown"). The full ENWL whitelist (cause, primary substation, district) is an offline benchmark only if time allows. The exact list goes into `contracts/model.md`.
+- Touched: `ml/vm_checks.py`, `evidence/08_ml_stack_checks.txt` (both on `nate-ml`); VM `~/work/nate`, `~/shared/nate`
+- ⚠️ Conflicts:
+  - @sali:
+    - **M2 features (above):** `triage.py` will need to pass `features` into `predict(features, elapsed_h)`, as `contracts/model.md` already says.
+    - **Bug in your Elexon ingest:** Elexon published 182 readings of **0 Hz** on 2026-08-06, 11:13–12:54 UTC. `parse_elexon` stores whatever arrives, and `stress.state(0)` returns EMERGENCY, so a repeat during the demo shows a false GB emergency. Dropping readings outside 45–55 Hz fixes it.
+    - **Doc accuracy:**
+      - UKPN IIS's 316,435 rows are restoration stages (180,059 incidents), not outages.
+      - My brief's `predict()` return (`p_exceeds_reserve, eta_h, interval`) differs from `contracts/model.md` (`quantiles, surv[24]`). I'm following `model.md`.
+      - My brief §5 "waiting on" lines are all done.
+  - @ahmed: the zDNN plugin adds **no TF device** (`list_physical_devices()` shows only CPU); check for `_z_ops.so` instead. No NNPA benchmark run, pending your #helpdesk answer (ToU §5).
+- Conflict status: open
+
