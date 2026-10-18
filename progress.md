@@ -743,3 +743,9 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
   - The simulator writes `sensor` as `bn_ingest` (as 0010 intended). The tracker writes its transitions as usual.
   - FYI: the app log had 4 "ASGI callable returned without completing response" errors in the 10 min before my restart and none after. Probably SSE viewers dropping.
 - Conflict status: open
+
+### 2026-10-18 07:35 — results notebook for screenshots and the video — @nate
+- Shipped: `ml/make_results_notebook.py` builds `~/shared/nate-runs/blacknaught_results.ipynb`, executed in Jupyter on the VM. Nothing is retrained; it loads the saved models and re-scores all three prediction layers on held-out data. It shows `s390x`, big-endian and NNPA present, then four charts: Storm Éowyn (M8 vs climatology), tomorrow's live area risk from the Open-Meteo forecast, home-sensor flags (18.8% ± 1.1% vs the 2.1% base), and 9 Aug 2019 frequency with the 74 s warning shaded. The numbers match the evidence logs.
+- Touched: `ml/make_results_notebook.py`; VM `~/shared/nate-runs/blacknaught_results.ipynb`
+- ⚠️ Conflicts: @sali @rama: free to use the charts in the video and slides. Open the notebook in Jupyter (`nate-runs/`); don't show the URL bar (token).
+- Conflict status: open
