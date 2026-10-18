@@ -105,10 +105,6 @@
 - **Live grading is already scoring the KM model** (150+ real UKPN predictions, Brier ≈ 0.19 at 2 h). Your M2 gets graded the same way, side by side.
 - **Training notebook pattern:** `notebooks/train_on_linuxone.ipynb` (executed in Jupyter on the VM, which is the evidence).
 
-5. ⬜ **M1 baselines on the VM:** Kaplan–Meier per cause, plus log-linear. Brier at 2/4/8 h and C-index logged.
-6. ⬜ **M2 XGBoost AFT on the VM.** Beats or matches the baselines on the 2024–26 test, with the margin reported. UKPN cross-check.
-7. ⬜ **M2 Keras hazard MLP on the VM** (24 bins). Save `.keras` and hand it to Ahmed for signing and NNPA. `[⚠ @ahmed signing + NNPA]`
-8. ⬜ **The real `predict()`:** conditional survival P(T > t + r | T > t) plus expected harm-hours. Unit tests, including r → 0. `[⚠ @sali triage calls it]`
 9. ⬜ **M5 LR table** (hand-set and documented; only the GB DNO-feed weight is learnable), plus household distributions (device, reserve, backup) for Ahmed's simulator. `[⚠ @ahmed]`
 10. ⬜ **`grids/gb.yaml`** plus the target-grid YAMLs (§5, once countries are confirmed). Fields per PRD §5, including `labels_source`.
 11. ⬜ **M8 area fault risk (P1, first in)**
@@ -133,6 +129,10 @@
 17. ⬜ **Video:** your segment (model + risk map) and one line.
 
 ## 4. Done log (newest first)
+- ✅ **8. The real `predict()`** (done 2026-10-18 06:00): `ml/m2_serve.py`, closed-form conditional survival + quantiles from the AFT log-normal, recalibrated on UKPN 2021–24. Artifact `~/shared/nate-runs/models/m2_aft_ukpncal_v1.json`. Still worse than KM on UKPN 2024–25 (IBS 0.143 vs 0.131; C 0.50), so **not live**. Harm-hours stay in Sali's `harm.py`, which integrates `surv`.
+- ✅ **7. Keras hazard MLP** (done 2026-10-18 05:58): 24 bins, trained on the VM; `~/shared/nate-runs/models/m2_hazard.keras` offered to Ahmed for signing/NNPA (not to be served yet).
+- ✅ **6. XGBoost AFT** (done 2026-10-18 05:58): ENWL 2024–26 IBS 0.114 vs KM 0.121 (−5.5%, C 0.60); UKPN cross-check 0.149 vs 0.138 (worse). Notebook `ml/notebooks/m2_duration.ipynb`.
+- ✅ **5. M1 baselines** (done 2026-10-18 05:58): KM, KM per cause (best on ENWL, 0.109, offline only), log-linear (no gain). Brier 2/4/8 h, IBS, C-index in `evidence/m2_metrics.json`.
 - ✅ **4. ENWL + UKPN prep** (done 2026-10-18 05:46): `ml/prep.py` on the VM. 5-min cut, UKPN stages rolled into incidents, ENWL split 2000–22 / 2023 / 2024–26 with storms kept whole. ENWL 306,251 kept, UKPN 178,864. Tables in `~/shared/nate/data/prepared/`; log `evidence/train_log_prep.txt`.
 - ✅ **2. Contract freeze** (done 2026-10-18 05:46): M2 features final in `contracts/model.md` (option A1: start time, customers, voltage LV/HV/unknown; ENWL-trained, UKPN cross-check). Sali wires `features` into `predict()` when M2 lands.
 - ✅ **3. VM ML checks** (done 2026-10-18 05:07): all GO in the `notebook` container. XGBoost `survival:aft` + `count:poisson` train; JSON and `.keras` round-trips are exact on s390x; pandas 3.0.6 works. The zDNN plugin adds **no TF device**: it loads NNPA kernels from `tensorflow/core/kernels/_z_ops.so`, which is the check. Evidence: `evidence/08_ml_stack_checks.txt` (`nate-ml`); go/no-go posted in `progress.md`.
