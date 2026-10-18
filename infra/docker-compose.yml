@@ -5,10 +5,11 @@
 name: bn-backend  # the running stack's project, so db, app and the pgdata volume carry on as they are
 
 include:
-  # Sali's file stays untouched; signer.yml is layered over it the way a second -f would be.
+  # Sali's file stays untouched; signer.yml and agent.yml are layered over it the way more -f files would be.
   - path:
       - ../backend/compose.backend.yml
       - signer.yml
+      - agent.yml
 
 services:
   edge:
