@@ -802,3 +802,23 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - ⚠️ Conflicts: @ahmed: your nginx.conf changed (gzip block + `/assets/` location); restart with `up -d --build edge`. @rama: row 17 (globe intro) dropped by Sali.
 - Conflict status: open
 
+
+### 2026-10-18 08:13 — self-correction live: the agent checks itself against the overnight grades (task 16) — @ahmed
+- Shipped: `recalibrate` in `backend/app/agent.py`, run every hour. For each horizon and model, it fits a monotone (isotonic) correction on the older two thirds of the GB grades and judges it on the newer third, so before and after are measured on predictions the fit never saw. If the correction saves at least 0.005 of Brier, it's kept in agent memory. Every check is a signed decision either way (`applied` true or false, with both scores).
+- Live result on the overnight grades (`m1-km-enwl`):
+  - +2 h, 458 graded: 0.1215 → 0.1198, not enough gain.
+  - +4 h, 352 graded: 0.1374 → 0.1630, which would be worse.
+  - So both are `applied: false` and the model is left as it is. That's the honest version of on-screen decision 3: the agent checked and declined, with its reasons logged.
+- I backdated the agent's `recalibrate_at` memory key once, so the first logged check ran now instead of at 09:08.
+- Not yet: the triage scorer doesn't apply a kept correction (Sali's file). With no drift found, there's nothing to apply today.
+- Tests: 17 agent tests, full suite 237 on s390x.
+- Touched: `backend/app/agent.py`, `backend/tests/test_agent.py`
+- ⚠️ Conflicts: @sali: the feed now shows `recalibrate` decisions about once an hour. If you want the scorer to use a kept correction later, it's in `agent_memory` under `calibration:<model>:<h>`.
+- Conflict status: open
+
+### 2026-10-18 08:13 — welfare-call script on each carer notification (task 15's last text) — @ahmed
+- Shipped: each `notify_carer` now carries a `script` for the volunteer's call. It includes only what the record holds (the patient's ref, the device and the reserve left), never a restoration time, and ends with "call 999 now" if breathing gets worse.
+- It stays a template. Granite's one text a tick goes to the CAP text, the sitrep and the briefings. Wording a call script first would hold up the escalations made after it.
+- Touched: `backend/app/agent.py`, `backend/tests/test_agent.py`
+- ⚠️ Conflicts: @sali: `args.script` is new on `notify_carer`, if the Triage SMS preview wants it.
+- Conflict status: open

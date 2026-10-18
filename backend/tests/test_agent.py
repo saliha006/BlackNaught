@@ -124,6 +124,8 @@ async def test_one_tick_plans_acts_and_leaves_reach_to_people_for_a_human(agent_
     assert made["escalate"][0][0] == made["draft_cap_alert"][0][0] == "awaiting_approval"
     assert made["assign_visit"][0][0] == made["notify_carer"][0][0] == made["write_sitrep"][0][0] == "auto_done"
     assert made["escalate"][0][1]["service"] == "ambulance"
+    script = made["notify_carer"][0][1]["script"]
+    assert made["notify_carer"][0][1]["patient"] in script and "ventilator" in script and "11.0 h of reserve" in script
     cap_args = made["draft_cap_alert"][0][1]
     assert cap_args["outage_id"] == 1 and cap_args["area"] == "N1" and cap_args["writer"] == "template"
     assert cap_args["description"].startswith("There is a power cut in N1. It started at 21:00 UTC")

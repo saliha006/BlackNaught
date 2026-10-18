@@ -94,6 +94,13 @@ class Patient:
         return f"{self.ref}:{self.outage_id}"
 
 
+def welfare_script(p: Patient) -> str:
+    """What the volunteer says on the welfare call: only what the record holds, and never a restoration time."""
+    return (f"Hello, this is the Blacknaught welfare line about {p.ref}. There's a power cut in your area and no "
+            f"responder can reach you this round. Is the {p.device.replace('_', ' ')} running on its backup? The "
+            f"record shows about {p.reserve_left_h:.1f} h of reserve left. If breathing gets worse, call 999 now.")
+
+
 def from_row(r: dict[str, Any]) -> Patient:
     why = r["why"]
     return Patient(r["ref"], r["outage_id"], r["source"], r["device"], r["other_backup"], r["harm"], r["escalate"],
@@ -283,7 +290,8 @@ class Agent:
             for p, why in untold:
                 calls += await self.call_once(f"notify_carer:{p.key}", "notify_carer",
                                               {"patient": p.ref, "outage_id": p.outage_id,
-                                               "template": "power_cut_waiting"}, [why], now)
+                                               "template": "power_cut_waiting", "script": welfare_script(p)},
+                                              [why], now)
         for p, why in waits:
             if p.reserve_left_h * 60 < SHIFT_MIN:
                 calls += await self.call_once(f"request_supplier:{p.key}", "request_supplier",
