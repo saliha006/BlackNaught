@@ -20,6 +20,17 @@ export const SCALE_RADIUS: Record<Scale, number> = {
   unresolved: 5,
 };
 
+// How far an outage's footprint reaches, in metres: roughly what its scale implies. The sweep and the fog grain share it.
+export const SWEEP_RADIUS_M: Record<Scale, number> = {
+  home: 120,
+  street: 320,
+  area: 800,
+  region: 2500,
+  system: 6000,
+  brownout: 320,
+  unresolved: 200,
+};
+
 export type Severity = 'severe' | 'moderate';
 
 /**
@@ -107,3 +118,22 @@ export function cellsToGeoJSON(cells: Cell[]): FeatureCollection<Polygon> {
     })),
   };
 }
+
+// Three stacked discs per cut: the grain overlaps most at the centre and thins towards the edge, like the fog it sits in
+const FOG_RINGS = [0.55, 0.8, 1];
+const FOG_SIDES = 48;
+
+/** Ground discs under each live cut, coloured by severity, for the fog's grain texture. */
+export function fogAreasToGeoJSON(outages: Outage[], escalated: Set<number> = new Set()): FeatureCollection<Polygon> {
+  return {
+    type: 'FeatureCollection',
+    features: outages.filter(isLocated).flatMap((o) =>
+      FOG_RINGS.map((k) => ({
+        type: 'Feature' as const,
+        geometry: { type: 'Polygon' as const, coordinates: [circleRing(o.centroid[0], o.centroid[1], SWEEP_RADIUS_M[o.scale] * k, FOG_SIDES)] },
+        properties: { id: o.id, severity: severityOf(o, escalated) },
+      })),
+    ),
+  };
+}
+

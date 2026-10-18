@@ -240,7 +240,8 @@
   width: min(520px, 90vw);
   height: 380px;
   cursor: grab;
-  touch-action: none;
+  /* pan-y, not none: a vertical swipe over the bolt must still scroll the page on a phone */
+  touch-action: pan-y;
 }
 
 .l-bolt:active {
@@ -966,3 +967,11 @@
     display: none;
   }
 }
+
+@media (max-width: 720px) {
+  /* One hero object on a phone: the bolt shrinks so the headline and the glance window stay near the top */
+  .l-bolt {
+    height: 200px;
+  }
+}
+

@@ -1,17 +1,7 @@
 import type { Feature, FeatureCollection, LineString, Polygon } from 'geojson';
-import { circleRing, type Located, offsetLonLat } from './geo';
-import type { Scale } from './types';
+import { circleRing, type Located, offsetLonLat, SWEEP_RADIUS_M } from './geo';
 
-// How far the sensor sweep reaches around an outage, in metres: roughly the footprint its scale implies.
-export const SWEEP_RADIUS_M: Record<Scale, number> = {
-  home: 120,
-  street: 320,
-  area: 800,
-  region: 2500,
-  system: 6000,
-  brownout: 320,
-  unresolved: 200,
-};
+export { SWEEP_RADIUS_M };
 
 export const SWEEP_PERIOD_S = 3.6;
 export const PULSE_PERIOD_S = 2.4;

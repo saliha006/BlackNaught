@@ -10,7 +10,8 @@ import {
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
-import { beamsToGeoJSON, cellsToGeoJSON, isLocated, type Located, outagesToGeoJSON } from './geo';
+import { beamsToGeoJSON, cellsToGeoJSON, fogAreasToGeoJSON, isLocated, type Located, outagesToGeoJSON } from './geo';
+import { grainTile } from './grain';
 import { sweepFeatures } from './sweep';
 import type { Cell, Outage } from './types';
 
@@ -217,6 +218,57 @@ function addBeamLayers(map: MapLibreMap) {
   });
 }
 
+/**
+ * Labelled pins: each cut says "● Severe" or "● Moderate" in words on the map, and nearby cuts merge into one
+ * "2 cuts" bubble that zooms in on tap. Home-scale cuts keep only their glow, so a single house is never pinned.
+ * The words need the basemap's glyphs; on the plain fallback style only the bubbles draw.
+ */
+function addPinLayers(map: MapLibreMap) {
+  const font = map
+    .getStyle()
+    .layers.map((l) => (l.type === 'symbol' ? (l.layout?.['text-font'] as string[] | undefined) : undefined))
+    .find((f) => Array.isArray(f));
+  map.addLayer({
+    id: 'pin-cluster',
+    type: 'circle',
+    source: 'outage-pins',
+    filter: ['has', 'point_count'],
+    paint: {
+      'circle-radius': 18,
+      'circle-color': ['case', ['>', ['get', 'severe'], 0], FOG.severe, FOG.moderate],
+      'circle-stroke-color': '#07090c',
+      'circle-stroke-width': 2,
+    },
+  });
+  if (!font) return;
+  map.addLayer({
+    id: 'pin-cluster-count',
+    type: 'symbol',
+    source: 'outage-pins',
+    filter: ['has', 'point_count'],
+    layout: { 'text-field': ['concat', ['get', 'point_count_abbreviated'], ' cuts'], 'text-font': font, 'text-size': 13 },
+    paint: { 'text-color': '#07090c' },
+  });
+  map.addLayer({
+    id: 'pin-label',
+    type: 'symbol',
+    source: 'outage-pins',
+    filter: ['all', ['!', ['has', 'point_count']], ['!=', ['get', 'scale'], 'home']],
+    layout: {
+      'text-field': ['match', ['get', 'severity'], 'severe', '● Severe', '● Moderate'],
+      'text-font': font,
+      'text-size': 15,
+      'text-anchor': 'bottom',
+      'text-offset': [0, -1.2],
+    },
+    paint: {
+      'text-color': ['match', ['get', 'severity'], 'severe', FOG.severe, FOG.moderate],
+      'text-halo-color': '#07090c',
+      'text-halo-width': 2,
+    },
+  });
+}
+
 /** `padding` returns the space the page's panels cover, so camera moves centre on what is actually visible. */
 export async function createMap(container: HTMLElement, padding: () => Padding): Promise<OutageMap> {
   const map = new MapLibreMap({
@@ -254,6 +306,18 @@ export async function createMap(container: HTMLElement, padding: () => Padding):
 
   map.addSource('cells', { type: 'geojson', data: cellsToGeoJSON([]) });
   map.addSource('outages', { type: 'geojson', data: outagesToGeoJSON([]) });
+  map.addSource('fog-areas', { type: 'geojson', data: fogAreasToGeoJSON([]) });
+  // A copy of the cuts for the labelled pins: clustered, so two cuts side by side read as "2 cuts", not two markers
+  map.addSource('outage-pins', {
+    type: 'geojson',
+    data: outagesToGeoJSON([]),
+    cluster: true,
+    clusterRadius: 48,
+    clusterMaxZoom: 14,
+    clusterProperties: { severe: ['+', ['case', ['==', ['get', 'severity'], 'severe'], 1, 0]] },
+  });
+  map.addImage('grain-severe', grainTile(FOG.severe, 7));
+  map.addImage('grain-moderate', grainTile(FOG.moderate, 11));
   map.addSource('beams', { type: 'geojson', data: beamsToGeoJSON([]) });
   map.addSource('sweep', { type: 'geojson', data: sweepFeatures([], 0) });
 
@@ -292,6 +356,17 @@ export async function createMap(container: HTMLElement, padding: () => Padding):
       'circle-pitch-alignment': 'map',
     },
   });
+  // Still grain inside the fog once streets are in view: it reads as a layer over that area without moving or hiding the map
+  map.addLayer({
+    id: 'fog-grain',
+    type: 'fill',
+    source: 'fog-areas',
+    minzoom: 12,
+    paint: {
+      'fill-pattern': ['match', ['get', 'severity'], 'severe', 'grain-severe', 'grain-moderate'],
+      'fill-opacity': 0.25,
+    },
+  });
   map.addLayer({
     id: 'outage-halo',
     type: 'circle',
@@ -316,10 +391,21 @@ export async function createMap(container: HTMLElement, padding: () => Padding):
     },
   });
   addBeamLayers(map);
+  addPinLayers(map);
 
   // Hover (or a tap, on a tablet) names the severity in words, so the colour is never the only signal
   const label = new Popup({ closeButton: false, closeOnClick: false, className: 'fog-label', offset: 12 });
-  for (const layer of ['severity-fog', 'outage-dot']) {
+  map.on('click', 'pin-cluster', async (e) => {
+    const feature = e.features?.[0];
+    if (!feature) return;
+    const zoom = await (map.getSource('outage-pins') as GeoJSONSource).getClusterExpansionZoom(feature.properties.cluster_id);
+    map.easeTo({ center: (feature.geometry as GeoJSON.Point).coordinates as [number, number], zoom, padding: padding() });
+  });
+  for (const layer of ['pin-cluster', 'pin-label']) {
+    map.on('mouseenter', layer, () => (map.getCanvas().style.cursor = 'pointer'));
+    map.on('mouseleave', layer, () => (map.getCanvas().style.cursor = ''));
+  }
+  for (const layer of ['severity-fog', 'outage-dot', 'pin-label']) {
     map.on('click', layer, (e) => {
       const id = e.features?.[0]?.properties?.id;
       if (typeof id === 'number') selectHandler(id);
@@ -383,6 +469,8 @@ export async function createMap(container: HTMLElement, padding: () => Padding):
     setData(outages, cells, escalated) {
       located = outages.filter(isLocated);
       (map.getSource('outages') as GeoJSONSource).setData(outagesToGeoJSON(outages, escalated));
+      (map.getSource('outage-pins') as GeoJSONSource).setData(outagesToGeoJSON(outages, escalated));
+      (map.getSource('fog-areas') as GeoJSONSource).setData(fogAreasToGeoJSON(outages, escalated));
       (map.getSource('beams') as GeoJSONSource).setData(beamsToGeoJSON(outages));
       (map.getSource('cells') as GeoJSONSource).setData(cellsToGeoJSON(cells));
     },

@@ -109,7 +109,8 @@ $('#sign-out').addEventListener('click', async () => {
 
 const filters: Filters = { operators: allOperators(), escalationsOnly: false };
 // Cells start off: the severity fog now shows where cuts are, and the fixed patient-count squares read as noise
-const layers: Record<LayerGroup, boolean> = { beams: true, sweep: true, cells: false };
+// Beams start off as well: labelled pins say what each cut is, and the pillars read as abstract to non-technical eyes
+const layers: Record<LayerGroup, boolean> = { beams: false, sweep: true, cells: false };
 
 const controls = renderControls($('#controls'), filters, layers, {
   filters: render,
