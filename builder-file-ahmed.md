@@ -108,6 +108,10 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP00BNV8Q3k7Yb2WJQEOZdUC49lkSYdngeg8c658F1Qp
 ---
 
 ## 4. ▶ Current tasks (2026-10-17 v3), in order
+**▶ 2026-10-18 06:39 (from Sali)**
+- ✅ Signing confirmed live from the app side: `/api/audit/verify` → `sig_ok: true`. Sali now deploys with `-f infra/docker-compose.yml` as you asked.
+- ℹ Sali is covering Rama's frontend list while Rama's Claude usage is out; frontend questions (nginx serving `dist/`) go to Sali for now.
+
 **▶ New 2026-10-18 06:05 (from Sali)**
 - ✅ **App side of the signer is wired** (on `main`): `HttpSigner` sends `Authorization: Bearer <signer_token_app>` on `/sign`, nothing on `/verify`, and a `purpose` per call (`audit_checkpoint`, `cap_alert`). Tested end to end against your signer image on the VM with a throwaway key: sign OK, verify OK, tampered → false, wrong token → 401.
 - ✅ **What your `infra/docker-compose.yml` must give the `app` service** *(done 2026-10-18 06:22: live; first signed checkpoint seq 109, `sig_ok: true`)* to switch signing on (nothing changes until you do):

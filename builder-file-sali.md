@@ -109,6 +109,9 @@
 ---
 
 ## 4. ▶ Current tasks (2026-10-18 04:40), in priority order
+**▶ 2026-10-18 06:39: frontend cover.** Rama's Claude usage is out, so Sali carries on his list in `builder-file-rama.md` §3 on branch `Rama-Frontend`, keeping his choices. Open there: 5 triage + approvals, 6 ping, 8 decision feed, 10 audit view, 11 CAP + SMS preview, 12 my home (option C risk), 13 labels, then 14–16. Frontend skills apply (`design-direction`, `ui-audit`, `motion-review` for any animation). Backend is paused but live.
+- ✅ *(06:39)* **Signing live** (Ahmed's infra compose; `sig_ok: true`). ✅ **Live curve = `m1-km-ukpn`** (Nate's decision C). ✅ **Seed fix** + two-houses pair on UKPN 133.
+
 **Headline (18 Oct):** "Blacknaught **predicts blackouts before they happen** and **protects the people they'd hurt most**."
 - **Backend build tasks 1–20 are done and live** (list below, kept for reference).
 - What's left is unblocking the team, submission blockers, one small feature, then evidence and the pitch.

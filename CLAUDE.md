@@ -19,7 +19,7 @@ Blacknaught predicts blackouts before they happen and protects the people they'd
 | Briefs | `builder-file-<name>.md` in the repo root (on the `context` branch). Only Sali edits briefs, except your one self-edit (§2a) |
 | Project doc | `BLACKNAUGHT.md`: NOW at the top, Part A spec, Part B backend design (§B1–§B21), Parked, History. Event rules: `DATATHON-CONTEXT.md` |
 | Mirror docs | `BLACKNAUGHT.md` (NOW), `builder-file-*.md`, vault Hub + Log, `progress.md` (Headline + "Who owns what"). Update all of them whenever a decision, ownership or status changes |
-| Team | **Sali** `saliha006`: backend; repo + docs owner · **Ahmed** `meep-boop`: platform + agent; **VM owner** · **Nate** `aldrichbanas07`: data/ML · **Rama** `rama0623`: frontend |
+| Team | **Sali** `saliha006`: backend; repo + docs owner; **also covering Rama's frontend list from 06:39 while Rama's Claude usage is out** · **Ahmed** `meep-boop`: platform + agent; **VM owner** · **Nate** `aldrichbanas07`: data/ML · **Rama** `rama0623`: frontend |
 | Run · Test | On the VM: `cd ~/BlackNaught/backend && sudo docker compose -f compose.backend.yml up -d` · `sudo docker compose -f compose.backend.yml run --rm --no-deps app pytest --cov=app` (tests run on s390x against `blacknaught_test`) |
 | Scale | Demo: ~1–2k events/s on 3 vCPU / 8 GB |
 | Deploy | LinuxONE Community Cloud VM `148.100.78.95` (s390x, z17, NNPA), user `linux1`, SSH key only, Docker Compose. Handoff: `DATATHON INFO/IBMZ_Datathon_ClaudeCode_Handoff/HANDOFF.md` |

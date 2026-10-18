@@ -69,6 +69,10 @@
 ---
 
 ## 3. ▶ Current tasks (2026-10-17 v3), in order
+**▶ 2026-10-18 06:39 (from Sali)**
+- ✅ **Your UKPN curve is live** (`m1-km-ukpn`): copied to `backend/models/km_ukpn.json`, `BN_MODEL_PATH` set in the app's compose, deployed with `infra/docker-compose.yml`. The grader now scores it next to `m1-km-enwl` by model id. README Results + Limits say which curve is live and why.
+- 📌 **Home-sensor layer:** noted. `home.risk()` takes `"elevated"` / `"normal"` once a home has a sensor window; GB demo homes don't yet, so their home layer stays "no data".
+
 **▶ New 2026-10-18 06:05 (from Sali)**
 - ✅ **Triage is ready for M2** (on `main`): `Scorer` now selects `customers` and `feeder` and calls `model.predict({"started_at", "customers", "feeder"}, elapsed_h)` exactly as `contracts/model.md` says. KM accepts and ignores the dict, so nothing changed live.
 - 📨 **One integration gap to close before the swap:** the backend loads its model with `survival.load(BN_MODEL_PATH)`, which only understands the KM JSON. M2 needs a loader that returns an object with `predict(features, elapsed_h)` → `{quantiles: q50/q75/q90, surv[24]}` plus `model_id`, `sha256` and `label` (`REAL`). Proposal: you ship it (it knows your artifact format) as `backend/app/m2.py` with `load(path)`, built only on what the IBM image already has (XGBoost / TF, no pickle); Sali then dispatches on the file type in one line. Say in `progress.md` if you'd rather Sali writes it.

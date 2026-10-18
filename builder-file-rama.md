@@ -64,6 +64,12 @@
 ---
 
 ## 3. ▶ Current tasks (2026-10-18 06:05), in order
+**▶ 2026-10-18 06:39 (from Sali): Sali is continuing this list while Rama's Claude usage is out.**
+- Sali works on **`Rama-Frontend`** (synced with `main` at 06:39, 0 behind / 0 ahead) and follows this table. Everything Rama built stays as it is; Sali ticks rows here as they land and logs each in `progress.md` as @sali.
+- Checked at handover: `npm test` 111/111 pass, 89.7% lines covered; `npm run build` passes.
+- ✅ **Two-houses pair seeded** on live UKPN fault 133 (Rama's 06:14 ask): the oxygen concentrator escalates, the ventilator gets an SMS check. Re-seeded on a fresh fault right before recording.
+- **When Rama is back:** run the sync, read the `progress.md` entries since 06:39, then carry on from whatever is still ⬜ / 🟡.
+
 **How you build it is your call.** Layout, components, visual direction and how each view looks are your decisions: keep making them, and log the big ones in `progress.md` so Sali can mirror them. What this list fixes is **coverage**: every backend feature below needs a place in the UI before the recordings, because the video and the README promise them.
 
 **Keep this list honest:** when you finish a task, mark it ✅ here (your one self-edit), publish with `bash scripts/publish-context.sh "..."`, and add a `progress.md` entry with your name, date and time. **Push your work to `Rama-Frontend` as you go.** Right now the branch has no frontend code on it, so nobody, Sali included, can see what's already done. Run `git config blacknaught.builder rama` once (publish refuses without it).
@@ -77,7 +83,7 @@
 | # | Feature | Endpoint(s) | Must show | Status |
 |---|---|---|---|---|
 | 3 | Map | `GET /api/outages`, `GET /api/cells?level=1` (or 2, 3) | Live outages by scale (home / street / area / region / system); fixed k≥11 cells only, never a home | ✅ 06:05 |
-| 4 | **Two-houses card** (demo centrepiece) | `GET /api/triage`; Sali seeds the pair on a fresh real fault with `python -m app.seed --two-houses <outage_id>` | Same fault, different answers: one escalates, one gets an SMS check. Readable in under 10 s | ✅ 06:14: card built; live shows "no pair yet" until Sali seeds one (📨 in progress.md) |
+| 4 | **Two-houses card** (demo centrepiece) | `GET /api/triage`; Sali seeds the pair on a fresh real fault with `python -m app.seed --two-houses <outage_id>` | Same fault, different answers: one escalates, one gets an SMS check. Readable in under 10 s | ✅ 06:14: card built; live shows "no pair yet" until Sali seeds one (📨 in progress.md) *(Sali 06:39: pair seeded on UKPN 133)* |
 | 5 | Triage list + approvals | `GET /api/triage`; `POST /api/auth/login` (operator); `POST /api/decisions/{id}/approve` | Rank; expected case then range (`remaining_h` q50 / q75 / q90 and `q_used`); harm-hours; the `why` lines; escalate flag; approve button behind the operator login | ⬜ |
 | 6 | Live updates | SSE `GET /stream` (sample: `fixtures/stream_sample.txt`) | New outages and re-ranks appear without a reload, with a small ping | 🟡 06:05: refetch on `/stream` + events/s; ping not yet |
 | 7 | **Predict strip** (top of the control room) | `GET /api/areas/risk`, `GET /api/grids/gb/stress`; home layer from Nate later | The three layers with honest lead times: area tomorrow (label BASELINE), grid now, homes at risk in 30 min ("no data" until Nate's model is served) | ✅ 06:05 |
