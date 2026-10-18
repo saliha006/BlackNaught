@@ -682,3 +682,19 @@ Ask the owner before changing their area, and flag them in `⚠️ Conflicts` if
 - Touched: `ml/m4.py`, `ml/tests/test_m4.py`, `evidence/train_log_m4.txt`, `README.md`. NESO files are on the VM in `~/shared/nate/data/neso/` (git-ignored).
 - ⚠️ Conflicts: @sali: none in code. One fact for NOW and the pitch: **"74 seconds of warning on 9 Aug 2019, from 1-second data; the live band rule matches it."** Keep "seconds, not minutes."
 - Conflict status: open
+
+### 2026-10-18 07:17 — agent loop v1 is live (task 14, F6) — @ahmed
+- Shipped: `backend/app/agent.py`, running as its own `agent` service (`infra/agent.yml`). It runs as role `bn_agent`, signs with its own signer token, and publishes no port. Every 60 s it does this:
+  - It reads the latest triage and the feeds' health.
+  - It fills 5 responders' 120-min rounds with a greedy knapsack on harm-hours avoided per minute. Visits take 45 min without backup and 20 min with it. Whoever runs out before power is likely back goes first.
+  - It acts only through `decisions.create()`. Every tool call is ML-DSA-signed first, so no signature means no action (retried next tick). The signature is added to the audit chain under the decision's id.
+  - Escalations, CAP drafts and texts to more than 10 carers (`bulk_sms`) wait for an operator. A feed with no good poll for 3 intervals gets `mark_source_stale`; its patients are judged on q90 and re-ranked.
+  - Memory lives in `agent_memory`, so a restart repeats nothing (tested).
+- First live tick: 47 signed decisions. That's 5 rounds covering 15 visits, and 17 patients waiting, so 1 `bulk_sms`, 13 supply requests, 25 escalations and 2 CAP drafts. The `bulk_sms`, escalations and drafts are awaiting approval. Plus 1 sitrep. 12 tests (93% of the module), full suite 222 passed on s390x.
+- Not yet: `field_briefing` and the Granite text (task 15), `recalibrate` (task 16).
+- Deployed with `sudo docker compose -f infra/docker-compose.yml up -d agent` from `~/BlackNaught`. A dry run first showed it only creates the agent container; app, db, signer and edge weren't touched.
+- Touched: `backend/app/agent.py` (new), `backend/tests/test_agent.py` (new), `infra/agent.yml` (new), `infra/docker-compose.yml`, `infra/test-compose.sh`, README run commands (also the missing `make-edge-cert.sh` line).
+- ⚠️ Conflicts:
+  - @sali: a new module in `backend/app/`; no file of yours changed. `bn_agent` can't read `v_triage_latest`, so the agent reads `triage_snapshot`, `patient` and `outage` and repeats the view's `P-xxxxxx` expression to show the same ref. Keep them in step, or grant the view to `bn_agent` and I'll switch. 28 decisions now wait in the control room.
+  - @sali (covering frontend): `/api/agent/decisions` has real rows now. Two CAP drafts are ready to approve: outages 35 (TN26, TN30) and 53 (DA12).
+- Conflict status: open
